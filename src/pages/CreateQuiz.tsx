@@ -6,15 +6,16 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { ArrowLeft, Sparkles, Clock, Target, Globe, Zap } from 'lucide-react';
 import { calculateQuizStructure } from '../services/gemini';
+import type { QuizGenRequest } from '../types/quiz';
 
 export const CreateQuiz: React.FC = () => {
   const { generateQuiz, createSession, setCurrentView, isLoading } = useQuizStore();
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<QuizGenRequest>({
     theme: '',
     duration: 30,
-    difficulty: 'medium' as 'easy' | 'medium' | 'hard',
-    language: 'english',
+    difficulty: 'medium',
+    language: 'en',
     includeJokers: true,
   });
 
@@ -72,7 +73,7 @@ export const CreateQuiz: React.FC = () => {
               <Input
                 type="text"
                 value={formData.theme}
-                onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, theme: e.target.value })}
                 placeholder="e.g., 'World History', 'Pop Culture 2000s', 'Science & Nature'"
                 required
                 disabled={isLoading}
@@ -90,7 +91,7 @@ export const CreateQuiz: React.FC = () => {
               </label>
               <Select
                 value={formData.duration.toString()}
-                onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
                 disabled={isLoading}
               >
                 <option value="15">15 minutes (~10 questions)</option>
@@ -131,14 +132,14 @@ export const CreateQuiz: React.FC = () => {
               </label>
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { value: 'easy', label: 'Easy', emoji: '😊', desc: 'Everyone can play' },
-                  { value: 'medium', label: 'Medium', emoji: '🤔', desc: 'Balanced challenge' },
-                  { value: 'hard', label: 'Hard', emoji: '🔥', desc: 'For experts' },
+                  { value: 'easy' as const, label: 'Easy', emoji: '😊', desc: 'Everyone can play' },
+                  { value: 'medium' as const, label: 'Medium', emoji: '🤔', desc: 'Balanced challenge' },
+                  { value: 'hard' as const, label: 'Hard', emoji: '🔥', desc: 'For experts' },
                 ].map((level) => (
                   <button
                     key={level.value}
                     type="button"
-                    onClick={() => setFormData({ ...formData, difficulty: level.value as any })}
+                    onClick={() => setFormData({ ...formData, difficulty: level.value })}
                     disabled={isLoading}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       formData.difficulty === level.value
@@ -162,14 +163,15 @@ export const CreateQuiz: React.FC = () => {
               </label>
               <Select
                 value={formData.language}
-                onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, language: e.target.value as QuizGenRequest['language'] })}
                 disabled={isLoading}
               >
-                <option value="english">English</option>
-                <option value="french">Français</option>
-                <option value="spanish">Español</option>
-                <option value="german">Deutsch</option>
-                <option value="italian">Italiano</option>
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
+                <option value="de">Deutsch</option>
+                <option value="it">Italiano</option>
+                <option value="pt">Português</option>
               </Select>
             </Card>
 
@@ -179,7 +181,7 @@ export const CreateQuiz: React.FC = () => {
                 <input
                   type="checkbox"
                   checked={formData.includeJokers}
-                  onChange={(e) => setFormData({ ...formData, includeJokers: e.target.checked })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, includeJokers: e.target.checked })}
                   disabled={isLoading}
                   className="w-6 h-6 rounded accent-qb-magenta"
                 />

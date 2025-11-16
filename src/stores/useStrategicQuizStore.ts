@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { supabase } from '../services/supabase/client';
 import type { JokerType } from '../types/joker';
 import type { Question } from '../types/quiz';
-import { GamePhase, PHASE_DURATIONS, PHASE_ORDER, INITIAL_JOKER_INVENTORY } from '../types/gamePhases';
+import type { GamePhase } from '../types/gamePhases';
+import { PHASE_DURATIONS, INITIAL_JOKER_INVENTORY } from '../types/gamePhases';
 
 interface PhaseData {
   phase: GamePhase;
@@ -103,7 +104,6 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       currentThemeTitle: data.themeTitle || null,
     });
 
-    // Reset pour nouvelle question (phase theme_announcement)
     if (data.phase === 'theme_announcement') {
       set({
         activeEffects: {
@@ -123,7 +123,6 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     const { playerInventory, activeEffects, currentPhase } = get();
     const playerId = 'current-player-id';
     
-    // Jokers can only be activated during theme_announcement phase
     if (currentPhase !== 'theme_announcement') {
       throw new Error('Jokers can only be activated during theme announcement');
     }

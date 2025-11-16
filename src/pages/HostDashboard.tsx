@@ -14,7 +14,8 @@ import {
   Monitor,
   RefreshCw
 } from 'lucide-react';
-import { GamePhase, PHASE_DURATIONS, PHASE_ORDER } from '../types/gamePhases';
+import type { GamePhase } from '../types/gamePhases';
+import { PHASE_DURATIONS, PHASE_ORDER } from '../types/gamePhases';
 import type { Question } from '../types/quiz';
 
 export const HostDashboard: React.FC = () => {
@@ -66,16 +67,13 @@ export const HostDashboard: React.FC = () => {
     const currentIndex = PHASE_ORDER.indexOf(currentPhaseState);
     
     if (currentIndex < PHASE_ORDER.length - 1) {
-      // Next phase in sequence
       const nextPhase = PHASE_ORDER[currentIndex + 1];
       changePhase(nextPhase);
     } else {
-      // End of cycle (after intermission), move to next question
       if (currentQuestionIndex < allQuestions.length - 1) {
         setCurrentQuestionIndex((prev) => prev + 1);
         changePhase('theme_announcement');
       } else {
-        // Quiz finished
         setIsPlaying(false);
         alert('🎉 Quiz completed! All questions answered.');
       }
@@ -176,7 +174,6 @@ export const HostDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-qb-dark p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-white mb-2">{currentQuiz.title}</h1>
@@ -197,9 +194,7 @@ export const HostDashboard: React.FC = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left - Phase Control */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Current Phase Display */}
             <Card className={`p-8 bg-gradient-to-br ${getPhaseColor(currentPhaseState)}`}>
               <div className="text-center space-y-4">
                 <div className="text-8xl animate-pulse">{getPhaseIcon(currentPhaseState)}</div>
@@ -218,7 +213,6 @@ export const HostDashboard: React.FC = () => {
               </div>
             </Card>
 
-            {/* Playback Controls */}
             <Card gradient className="p-6">
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <Button
@@ -241,7 +235,6 @@ export const HostDashboard: React.FC = () => {
                 </Button>
               </div>
 
-              {/* Phase Selector */}
               <div className="grid grid-cols-5 gap-2">
                 {PHASE_ORDER.map((phase) => (
                   <Button
@@ -257,7 +250,6 @@ export const HostDashboard: React.FC = () => {
               </div>
             </Card>
 
-            {/* Current Question Display */}
             <Card gradient className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-white">Current Question</h3>
@@ -315,35 +307,28 @@ export const HostDashboard: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8 text-white/50">
-                  No question data
-                </div>
+                <div className="text-center py-8 text-white/50">No question data</div>
               )}
             </Card>
           </div>
 
-          {/* Right - Stats & Players */}
           <div className="space-y-6">
-            {/* Quiz Progress */}
             <Card gradient className="p-6">
               <h3 className="text-xl font-bold text-white mb-4">Quiz Progress</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm text-white/70 mb-2">
-                    <span>Questions</span>
-                    <span>{currentQuestionIndex + 1} / {allQuestions.length}</span>
-                  </div>
-                  <div className="h-3 bg-qb-darker rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-qb-cyan to-qb-purple transition-all"
-                      style={{ width: `${((currentQuestionIndex + 1) / allQuestions.length) * 100}%` }}
-                    />
-                  </div>
+              <div>
+                <div className="flex justify-between text-sm text-white/70 mb-2">
+                  <span>Questions</span>
+                  <span>{currentQuestionIndex + 1} / {allQuestions.length}</span>
+                </div>
+                <div className="h-3 bg-qb-darker rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-qb-cyan to-qb-purple transition-all"
+                    style={{ width: `${((currentQuestionIndex + 1) / allQuestions.length) * 100}%` }}
+                  />
                 </div>
               </div>
             </Card>
 
-            {/* Live Stats */}
             <Card gradient className="p-6">
               <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
@@ -360,32 +345,17 @@ export const HostDashboard: React.FC = () => {
                     {players.filter(p => p.is_connected).length}
                   </span>
                 </div>
-                <div className="flex justify-between text-white">
-                  <span>Avg Score:</span>
-                  <span className="font-bold text-qb-yellow">
-                    {Math.round(players.reduce((sum, p) => sum + p.total_score, 0) / players.length || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-white">
-                  <span>Top Score:</span>
-                  <span className="font-bold text-qb-magenta">
-                    {Math.max(...players.map(p => p.total_score), 0)}
-                  </span>
-                </div>
               </div>
             </Card>
 
-            {/* Leaderboard */}
             <Card gradient className="p-6">
               <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-yellow-400" />
-                Live Leaderboard
+                Leaderboard
               </h3>
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {players.length === 0 ? (
-                  <div className="text-center py-8 text-white/50">
-                    No players yet
-                  </div>
+                  <div className="text-center py-8 text-white/50">No players yet</div>
                 ) : (
                   players
                     .sort((a, b) => b.total_score - a.total_score)
@@ -393,43 +363,25 @@ export const HostDashboard: React.FC = () => {
                     .map((player, index) => (
                       <div
                         key={player.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                          index === 0
-                            ? 'bg-yellow-500/20 border-2 border-yellow-500 scale-105'
-                            : index === 1
-                            ? 'bg-gray-400/20 border border-gray-400'
-                            : index === 2
-                            ? 'bg-orange-700/20 border border-orange-700'
-                            : 'bg-qb-darker'
+                        className={`flex items-center gap-3 p-3 rounded-lg ${
+                          index === 0 ? 'bg-yellow-500/20 border-2 border-yellow-500' : 'bg-qb-darker'
                         }`}
                       >
-                        <div className="text-2xl font-bold text-white/50 w-8">
-                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                        </div>
+                        <div className="text-2xl">{index + 1}</div>
                         <div className="text-2xl">{player.avatar_emoji}</div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-bold text-white truncate">
-                            {player.player_name}
-                          </div>
-                          <div className="text-xs text-white/50">
-                            {player.correct_answers}/{player.questions_answered} correct
-                          </div>
-                        </div>
-                        <div className="text-xl font-bold text-qb-cyan">
-                          {player.total_score}
-                        </div>
+                        <div className="flex-1 text-white truncate">{player.player_name}</div>
+                        <div className="text-xl font-bold text-qb-cyan">{player.total_score}</div>
                       </div>
                     ))
                 )}
               </div>
             </Card>
 
-            {/* All Players */}
             <Card gradient className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  All Players ({players.length})
+                  Players ({players.length})
                 </h3>
                 <Button
                   size="sm"
@@ -442,19 +394,12 @@ export const HostDashboard: React.FC = () => {
               </div>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {players.map((player) => (
-                  <div
-                    key={player.id}
-                    className="flex items-center gap-3 p-2 bg-qb-darker rounded-lg"
-                  >
+                  <div key={player.id} className="flex items-center gap-3 p-2 bg-qb-darker rounded-lg">
                     <div className="text-xl">{player.avatar_emoji}</div>
-                    <div className="flex-1 text-white text-sm truncate">
-                      {player.player_name}
-                    </div>
+                    <div className="flex-1 text-white text-sm truncate">{player.player_name}</div>
                     <div
                       className="w-2 h-2 rounded-full"
-                      style={{
-                        backgroundColor: player.is_connected ? '#10B981' : '#EF4444',
-                      }}
+                      style={{ backgroundColor: player.is_connected ? '#10B981' : '#EF4444' }}
                     />
                   </div>
                 ))}
