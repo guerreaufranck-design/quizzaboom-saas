@@ -53,6 +53,7 @@ export interface AIQuizResponse {
       points: number;
       time_limit: number;
       difficulty: string;
+      micro_theme?: string; // ✅ Ajouté
     }>;
   }>;
 }
