@@ -3,7 +3,6 @@ import { useQuizStore } from '../stores/useQuizStore';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Timer } from '../components/ui/Timer';
 import { 
   Play, 
   Pause, 
@@ -33,7 +32,7 @@ export const HostDashboard: React.FC = () => {
     results: 5,
   };
 
-  const totalQuestions = 15; // Mock for now
+  const totalQuestions = 15;
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -54,21 +53,17 @@ export const HostDashboard: React.FC = () => {
   }, [isPlaying, phaseTimeRemaining]);
 
   const handlePhaseComplete = () => {
-    // Auto-advance to next phase
     const phaseOrder: Phase[] = ['announcement', 'jokers', 'question', 'results'];
     const currentIndex = phaseOrder.indexOf(currentPhaseState);
     
     if (currentIndex < phaseOrder.length - 1) {
-      // Next phase in sequence
       const nextPhase = phaseOrder[currentIndex + 1];
       changePhase(nextPhase);
     } else {
-      // End of cycle, move to next question
       if (currentQuestionIndex < totalQuestions - 1) {
         setCurrentQuestionIndex((prev) => prev + 1);
         changePhase('announcement');
       } else {
-        // Quiz finished
         setIsPlaying(false);
       }
     }
@@ -79,7 +74,6 @@ export const HostDashboard: React.FC = () => {
     setPhaseTimeRemaining(phaseDurations[newPhase]);
     setCurrentPhase(newPhase);
     
-    // Broadcast to all players
     broadcastPhaseChange({
       phase: newPhase,
       questionIndex: currentQuestionIndex,

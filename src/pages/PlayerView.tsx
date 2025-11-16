@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Timer } from '../components/ui/Timer';
 import { AnswerOption } from '../components/ui/AnswerOption';
 import { Shield, Ban, Coins, Star } from 'lucide-react';
 
@@ -11,7 +10,6 @@ export const PlayerView: React.FC = () => {
   const { currentPlayer } = useQuizStore();
   const {
     currentPhase,
-    phaseTimeRemaining,
     currentTheme,
     playerInventory,
     activeEffects,
@@ -21,7 +19,6 @@ export const PlayerView: React.FC = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [hasAnswered, setHasAnswered] = useState(false);
 
-  // Mock question for now
   const currentQuestion = {
     question_text: "What is the capital of France?",
     options: ["London", "Paris", "Berlin", "Madrid"],
@@ -31,8 +28,6 @@ export const PlayerView: React.FC = () => {
   const handleJokerAction = async (jokerType: 'protection' | 'block' | 'steal' | 'double_points') => {
     if (!playerInventory) return;
     
-    // For block and steal, we'd need to show a player selector
-    // For now, we'll just execute protection and double_points
     if (jokerType === 'protection' || jokerType === 'double_points') {
       try {
         await executeJokerAction(jokerType);
@@ -44,14 +39,12 @@ export const PlayerView: React.FC = () => {
 
   const handleAnswerSelect = (answer: string) => {
     if (hasAnswered) return;
-    if (activeEffects.blocks[currentPlayer?.id || '']) return; // Blocked!
+    if (activeEffects.blocks[currentPlayer?.id || '']) return;
     
     setSelectedAnswer(answer);
     setHasAnswered(true);
-    // TODO: Submit answer to backend
   };
 
-  // Phase 1: Announcement
   if (currentPhase === 'announcement') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 flex items-center justify-center p-4">
@@ -61,13 +54,6 @@ export const PlayerView: React.FC = () => {
           <div className="text-3xl font-bold text-white/90 mb-8">
             Theme: {currentTheme || "General Knowledge"}
           </div>
-          <Timer
-            duration={12}
-            onComplete={() => {}}
-            variant="circular"
-            size="lg"
-            color="warning"
-          />
           <p className="text-xl text-white/70 mt-6">
             Prepare your strategy...
           </p>
@@ -76,7 +62,6 @@ export const PlayerView: React.FC = () => {
     );
   }
 
-  // Phase 2: Jokers
   if (currentPhase === 'jokers') {
     const isProtected = activeEffects.protections[currentPlayer?.id || ''];
     const hasDoublePoints = activeEffects.doublePoints[currentPlayer?.id || ''];
@@ -87,15 +72,8 @@ export const PlayerView: React.FC = () => {
           <Card className="p-8 text-center bg-white/10 backdrop-blur-lg border-white/20">
             <div className="text-6xl mb-4">⚡</div>
             <h1 className="text-4xl font-bold text-white mb-4">JOKER PHASE</h1>
-            <Timer
-              duration={12}
-              onComplete={() => {}}
-              variant="linear"
-              color="danger"
-            />
           </Card>
 
-          {/* Active Effects */}
           {(isProtected || hasDoublePoints) && (
             <Card className="p-6 bg-green-500/20 border-green-500/50">
               <h3 className="text-xl font-bold text-white mb-3">Active Effects:</h3>
@@ -116,7 +94,6 @@ export const PlayerView: React.FC = () => {
             </Card>
           )}
 
-          {/* Joker Buttons */}
           <div className="grid grid-cols-2 gap-4">
             <Button
               size="xl"
@@ -175,31 +152,17 @@ export const PlayerView: React.FC = () => {
     );
   }
 
-  // Phase 3: Question
   if (currentPhase === 'question') {
     const isBlocked = activeEffects.blocks[currentPlayer?.id || ''];
 
     return (
       <div className="min-h-screen bg-qb-dark flex items-center justify-center p-4">
         <div className="max-w-4xl w-full space-y-6">
-          {/* Timer */}
-          <div className="flex justify-center">
-            <Timer
-              duration={30}
-              onComplete={() => {}}
-              variant="circular"
-              size="lg"
-              color="primary"
-            />
-          </div>
-
-          {/* Question */}
           <Card gradient className="p-8">
             <h2 className="text-3xl font-bold text-white text-center mb-8">
               {currentQuestion.question_text}
             </h2>
 
-            {/* Blocked Warning */}
             {isBlocked && (
               <div className="mb-6 p-4 bg-red-500/20 border-2 border-red-500 rounded-xl text-center">
                 <Ban className="w-12 h-12 mx-auto mb-2 text-red-500" />
@@ -209,7 +172,6 @@ export const PlayerView: React.FC = () => {
               </div>
             )}
 
-            {/* Answers */}
             <div className="space-y-4">
               {currentQuestion.options.map((option, index) => (
                 <AnswerOption
@@ -223,7 +185,6 @@ export const PlayerView: React.FC = () => {
               ))}
             </div>
 
-            {/* Active Effects Indicator */}
             <div className="mt-6 flex gap-4 justify-center">
               {activeEffects.protections[currentPlayer?.id || ''] && (
                 <div className="px-4 py-2 bg-blue-500/20 border border-blue-500 rounded-lg flex items-center gap-2">
@@ -244,7 +205,6 @@ export const PlayerView: React.FC = () => {
     );
   }
 
-  // Phase 4: Results
   if (currentPhase === 'results') {
     const isCorrect = selectedAnswer === currentQuestion.correct_answer;
     const points = isCorrect ? 100 : 0;
@@ -264,7 +224,6 @@ export const PlayerView: React.FC = () => {
             {isCorrect ? 'CORRECT!' : 'WRONG!'}
           </h1>
           
-          {/* Points Earned */}
           <div className="mb-8">
             <p className="text-2xl text-white/80 mb-2">Points Earned:</p>
             <p className="text-6xl font-bold text-white">+{finalPoints}</p>
@@ -275,7 +234,6 @@ export const PlayerView: React.FC = () => {
             )}
           </div>
 
-          {/* Explanation */}
           <div className="p-6 bg-white/10 rounded-xl mb-6">
             <p className="text-lg text-white/90">
               <span className="font-bold">Correct Answer:</span> {currentQuestion.correct_answer}
@@ -284,19 +242,11 @@ export const PlayerView: React.FC = () => {
               Fun fact: Paris is known as the "City of Light"!
             </p>
           </div>
-
-          <Timer
-            duration={5}
-            onComplete={() => {}}
-            variant="linear"
-            color="success"
-          />
         </Card>
       </div>
     );
   }
 
-  // Default/Loading
   return (
     <div className="min-h-screen bg-qb-dark flex items-center justify-center">
       <p className="text-white text-2xl">Waiting for next phase...</p>
