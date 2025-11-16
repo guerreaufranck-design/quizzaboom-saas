@@ -4,6 +4,23 @@ import type { QuizGenRequest, AIQuizResponse } from '../types/quiz';
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
+// Time calculation constants
+const SECONDS_PER_QUESTION = 86; // 25 + 15 + 20 + 20 + 6
+const MINUTES_PER_QUESTION = SECONDS_PER_QUESTION / 60; // ≈ 1.43 minutes
+const QUESTIONS_PER_STAGE = 5;
+
+export const calculateQuizStructure = (durationMinutes: number) => {
+  const totalQuestions = Math.floor(durationMinutes / MINUTES_PER_QUESTION);
+  const totalStages = Math.ceil(totalQuestions / QUESTIONS_PER_STAGE);
+  const questionsPerStage = Math.ceil(totalQuestions / totalStages);
+  
+  return {
+    totalQuestions,
+    totalStages,
+    questionsPerStage,
+  };
+};
+
 export const generateMultiStageQuiz = async (
   request: QuizGenRequest
 ): Promise<AIQuizResponse> => {
@@ -13,6 +30,16 @@ export const generateMultiStageQuiz = async (
 
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    
+    // Calculate quiz structure based on duration
+    const structure = calculateQuizStructure(request.duration);
+    
+    console.log('📊 Quiz structure:', {
+      duration: `${request.duration} minutes`,
+      totalQuestions: structure.totalQuestions,
+      totalStages: structure.totalStages,
+      questionsPerStage: structure.questionsPerStage,
+    });
 
     const prompt = `You are a professional quiz creator. Create a REAL, high-quality quiz on "${request.theme}" in ${request.language}.
 
@@ -25,49 +52,63 @@ CRITICAL REQUIREMENTS:
 
 QUIZ PARAMETERS:
 - Duration: ${request.duration} minutes
+- Total Questions: ${structure.totalQuestions} (calculated for ${request.duration} min)
+- Total Stages: ${structure.totalStages}
+- Questions per Stage: ${structure.questionsPerStage}
 - Difficulty: ${request.difficulty}
 - Language: ${request.language}
 - Include strategic joker rounds: ${request.includeJokers}
 
-STRUCTURE CALCULATION:
-- For ${request.duration} min quiz: Generate ${Math.floor(request.duration / 2)} questions
-- Organize in ${Math.ceil(request.duration / 15)} stages
-- Each question should take ~2 minutes (including reading, thinking, jokers, results)
+TIME CALCULATION:
+Each question takes approximately 1.5 minutes (including all phases: theme announcement, question reading, answer selection, results, and intermission).
+For a ${request.duration}-minute quiz, we need exactly ${structure.totalQuestions} questions organized in ${structure.totalStages} stages.
+
+STAGE ORGANIZATION:
+Create ${structure.totalStages} stages, each with ${structure.questionsPerStage} questions.
+Each stage should have a specific sub-theme related to "${request.theme}".
 
 DIFFICULTY LEVELS:
-- easy: Common knowledge, straightforward questions
-- medium: Requires general culture and reasoning
-- hard: Specialist knowledge, complex questions
+- easy: Common knowledge, straightforward questions, suitable for general audience
+- medium: Requires general culture and reasoning, moderately challenging
+- hard: Specialist knowledge, complex reasoning, challenging for experts
 
-EXAMPLE OF GOOD QUESTION (${request.theme}):
+EXAMPLE OF GOOD QUESTION FORMAT:
 {
   "question_text": "Which country won the FIFA World Cup in 2018?",
   "question_type": "multiple_choice",
   "options": ["Germany", "France", "Brazil", "Argentina"],
   "correct_answer": "France",
-  "explanation": "France won the 2018 FIFA World Cup held in Russia, defeating Croatia 4-2 in the final.",
-  "fun_fact": "This was France's second World Cup victory, their first being in 1998 when they hosted the tournament.",
+  "explanation": "France won the 2018 FIFA World Cup held in Russia, defeating Croatia 4-2 in the final. It was their second World Cup victory.",
+  "fun_fact": "France's coach Didier Deschamps became only the third person to win the World Cup as both a player (1998) and a coach (2018).",
   "points": 100,
   "time_limit": 20,
   "difficulty": "${request.difficulty}"
 }
 
-BAD EXAMPLE (DO NOT DO THIS):
-{
-  "question_text": "Sample question about ${request.theme}",
-  "options": ["Option A", "Option B", "Option C", "Option D"],
-  "explanation": "This is correct because..."
-}
+BAD EXAMPLES (DO NOT DO THIS):
+❌ "Sample question about ${request.theme}"
+❌ Options: ["Option A", "Option B", "Option C", "Option D"]
+❌ Explanation: "This is correct because..."
+❌ Fun fact: "Did you know... interesting fact about ${request.theme}!"
 
-Return ONLY valid JSON in this EXACT format:
+IMPORTANT CONTENT GUIDELINES:
+- Questions must be specific, not generic templates
+- Options must be realistic alternatives that could plausibly be correct
+- Correct answers must be factually accurate
+- Explanations should teach something valuable
+- Fun facts should be genuinely interesting and true
+- All content must be in ${request.language} language
+- Difficulty must match ${request.difficulty} level
+
+Return ONLY valid JSON in this EXACT format (no markdown, no code blocks):
 {
-  "title": "Engaging Quiz Title",
-  "description": "Brief description",
+  "title": "Engaging Quiz Title About ${request.theme}",
+  "description": "A ${request.difficulty} quiz with ${structure.totalQuestions} questions covering various aspects of ${request.theme}",
   "estimatedDuration": ${request.duration},
   "stages": [
     {
       "stageNumber": 1,
-      "theme": "Specific Sub-Topic",
+      "theme": "First Specific Sub-Topic of ${request.theme}",
       "questions": [
         {
           "question_text": "REAL SPECIFIC QUESTION with factual content",
@@ -85,12 +126,13 @@ Return ONLY valid JSON in this EXACT format:
   ]
 }
 
-IMPORTANT: 
-- NO generic "Option A/B/C/D" 
-- NO template questions
-- ONLY real, factual, specific content
-- Questions must be appropriate for ${request.difficulty} difficulty
-- All content in ${request.language} language`;
+STRUCTURE REQUIREMENTS:
+- Generate exactly ${structure.totalStages} stages
+- Each stage must have exactly ${structure.questionsPerStage} questions
+- Total questions across all stages must equal ${structure.totalQuestions}
+- Each stage should have a distinct sub-theme related to "${request.theme}"
+
+START GENERATING NOW - Remember: ONLY real, factual, specific content in ${request.language}!`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -104,8 +146,18 @@ IMPORTANT:
 
     const parsed = JSON.parse(cleanedText);
     
-    console.log('✅ Gemini generated quiz:', parsed.title);
-    console.log('📊 Total questions:', parsed.stages.reduce((sum: number, s: any) => sum + s.questions.length, 0));
+    const actualQuestions = parsed.stages.reduce((sum: number, s: any) => sum + s.questions.length, 0);
+    
+    console.log('✅ Gemini generated quiz:', {
+      title: parsed.title,
+      targetQuestions: structure.totalQuestions,
+      actualQuestions: actualQuestions,
+      stages: parsed.stages.length,
+    });
+    
+    if (actualQuestions < structure.totalQuestions * 0.8) {
+      console.warn('⚠️ Generated fewer questions than expected:', actualQuestions, 'vs', structure.totalQuestions);
+    }
     
     return parsed;
   } catch (error) {
