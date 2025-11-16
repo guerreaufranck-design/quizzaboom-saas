@@ -5,7 +5,7 @@ import { Card } from '../components/ui/Card';
 import { ArrowLeft, QrCode, UserCircle } from 'lucide-react';
 
 export const JoinQuiz: React.FC = () => {
-  const { setCurrentView, joinSession, sessionCode, isLoading, error } = useQuizStore();
+  const { setCurrentView, joinSession, isLoading, error } = useQuizStore();
   
   const [code, setCode] = useState('');
   const [playerName, setPlayerName] = useState('');

@@ -76,7 +76,7 @@ export class StrategicGameEngine {
 
   // Validate if a player can perform an action
   validatePlayerAction(
-    playerId: string,
+    _playerId: string,
     actionType: JokerType,
     inventory: Record<string, number>
   ): boolean {

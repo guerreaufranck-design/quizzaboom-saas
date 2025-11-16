@@ -28,7 +28,7 @@ export const QuizLobby: React.FC = () => {
     return () => {
       cleanupRealtime();
     };
-  }, [sessionCode]);
+  }, [sessionCode, setupRealtimeSubscription, cleanupRealtime]);
 
   const copySessionCode = () => {
     if (sessionCode) {
@@ -194,7 +194,7 @@ export const QuizLobby: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {players.map((player, index) => (
+                    {players.map((player) => (
                       <div
                         key={player.id}
                         className="flex items-center gap-4 p-4 bg-qb-darker rounded-xl"

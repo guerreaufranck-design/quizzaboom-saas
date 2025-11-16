@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Sparkles, Users, Zap, Trophy, Shield, Target } from 'lucide-react';
+import { Sparkles, Users, Zap } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
   const { setCurrentView } = useQuizStore();
@@ -192,7 +192,7 @@ export const HomePage: React.FC = () => {
                 <Button fullWidth variant="secondary">Start Trial</Button>
               </Card>
 
-              <Card gradient className="text-center space-y-6 p-8 border-2 border-qb-magenta">
+              <Card gradient className="text-center space-y-6 p-8 border-2 border-qb-magenta relative">
                 <div className="absolute top-4 right-4 bg-qb-magenta text-white text-xs px-3 py-1 rounded-full font-bold">
                   POPULAR
                 </div>

@@ -54,13 +54,11 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
 
   checkQuizLimit: () => {
     const { currentOrganization } = get();
-    if (!currentOrganization) return false;
+    if (!currentOrganization) return true; // Allow if no organization (dev mode)
     if (currentOrganization.subscription_plan === 'pro') return true;
     
-    return (
-      currentOrganization.quizzes_used_this_month 
-      (currentOrganization.monthly_quiz_limit || 0)
-    );
+    const limit = currentOrganization.monthly_quiz_limit ?? 0;
+    return currentOrganization.quizzes_used_this_month < limit;
   },
 
   incrementQuizUsage: async () => {
