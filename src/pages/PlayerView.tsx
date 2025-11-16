@@ -23,10 +23,15 @@ export const PlayerView: React.FC = () => {
   } = useStrategicQuizStore();
 
   useEffect(() => {
+    console.log('📱 PlayerView initializing...');
+    
     if (currentQuiz?.id) {
+      console.log('📚 Loading questions for quiz:', currentQuiz.id);
       loadQuestions(currentQuiz.id);
     }
+    
     if (sessionCode) {
+      console.log('👂 Setting up phase listener for session:', sessionCode);
       listenToPhaseChanges(sessionCode);
     }
   }, [currentQuiz?.id, sessionCode]);
@@ -81,7 +86,7 @@ export const PlayerView: React.FC = () => {
             <div className="text-6xl mb-4">🎯</div>
             <h2 className="text-3xl font-bold text-white mb-4">NEXT THEME</h2>
             <div className="text-4xl font-bold text-yellow-300 mb-6">
-              {currentThemeTitle || 'Loading...'}
+              {currentThemeTitle || currentQuestion?.stage_id || 'Loading...'}
             </div>
             <div className="flex items-center justify-center gap-3 text-white">
               <Clock className="w-8 h-8 animate-pulse" />
@@ -325,7 +330,12 @@ export const PlayerView: React.FC = () => {
   return (
     <div className="min-h-screen bg-qb-dark flex items-center justify-center">
       <PlayerHeader />
-      <p className="text-white text-2xl">Waiting...</p>
+      <div className="text-center">
+        <div className="text-8xl mb-6 animate-pulse">⏳</div>
+        <p className="text-white text-2xl">Waiting for quiz to start...</p>
+        <p className="text-white/50 text-lg mt-2">Session: {sessionCode}</p>
+        <p className="text-white/50 text-sm mt-4">Phase: {currentPhase}</p>
+      </div>
     </div>
   );
 };
