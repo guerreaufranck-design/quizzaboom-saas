@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { QuizGenRequest, AIQuizResponse } from '../types/quiz';
+import { generateMockQuiz } from './mockQuiz';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
@@ -24,32 +25,40 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const generateMultiStageQuiz = async (
   request: QuizGenRequest,
-  retries = 3
+  retries = 2
 ): Promise<AIQuizResponse> => {
-  if (!genAI) {
-    throw new Error('Gemini API key not configured. Please add VITE_GEMINI_API_KEY to your .env file.');
-  }
-
   const structure = calculateQuizStructure(request.duration);
   
-  console.log('🎨 Starting quiz generation:', {
+  console.log('🎨 Quiz generation requested:', {
     theme: request.theme,
     totalQuestions: structure.totalQuestions,
     stages: structure.totalStages,
     difficulty: request.difficulty,
     language: request.language,
+    hasApiKey: !!GEMINI_API_KEY,
   });
+
+  if (!genAI || !GEMINI_API_KEY) {
+    console.warn('⚠️ No Gemini API key found, using mock quiz');
+    return generateMockQuiz(
+      request.theme,
+      structure.totalQuestions,
+      structure.totalStages,
+      structure.questionsPerStage,
+      request.difficulty,
+      request.language,
+      request.duration
+    );
+  }
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      console.log(`📡 Attempt ${attempt}/${retries}...`);
+      console.log(`📡 Gemini attempt ${attempt}/${retries}...`);
       
       const model = genAI.getGenerativeModel({ 
         model: 'gemini-2.0-flash-exp',
         generationConfig: {
           temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
           maxOutputTokens: 8192,
         },
       });
@@ -63,95 +72,80 @@ export const generateMultiStageQuiz = async (
         'pt': 'Portuguese',
       };
 
-      const fullLanguage = languageMap[request.language] || 'English';
+      const fullLanguage = languageMap[request.language] || 'French';
 
-      // Prompt ultra simplifié
-      const prompt = `Create a quiz in ${fullLanguage}.
+      const prompt = `Create a quiz in ${fullLanguage} about: ${request.theme}
 
-Theme: ${request.theme}
-Questions: ${structure.totalQuestions} total
-Stages: ${structure.totalStages} stages with ${structure.questionsPerStage} questions each
-Difficulty: ${request.difficulty}
+Generate EXACTLY ${structure.totalQuestions} questions organized in ${structure.totalStages} stages.
+Each stage has ${structure.questionsPerStage} questions.
 
-Rules:
-- Real factual questions only
-- Real answer options (not "Option A/B/C/D")
-- ${request.difficulty} difficulty level
-- Language: ${fullLanguage}
+CRITICAL REQUIREMENTS:
+1. Each question must have a SPECIFIC MICRO-THEME (1-3 words) that describes what it's about
+   Examples: "French Cheese", "Roman History", "NBA Players", "Ocean Animals", "Renaissance Art"
+2. The micro-theme should be SPECIFIC to that question, not generic
+3. Use real facts, real answers (not "Option A/B/C/D")
+4. Difficulty: ${request.difficulty}
+5. Language: ${fullLanguage}
 
-Return ONLY this JSON structure (no markdown, no code blocks):
+Return ONLY valid JSON (no markdown):
 {
   "title": "Quiz Title",
-  "description": "Quiz description",
+  "description": "Description",
   "estimatedDuration": ${request.duration},
   "stages": [
     {
       "stageNumber": 1,
-      "theme": "Stage Theme",
+      "theme": "General Stage Theme",
       "questions": [
         {
-          "question_text": "Question?",
+          "question_text": "Real question?",
           "question_type": "multiple_choice",
-          "options": ["Answer1", "Answer2", "Answer3", "Answer4"],
-          "correct_answer": "Answer1",
+          "options": ["Real answer 1", "Real answer 2", "Real answer 3", "Real answer 4"],
+          "correct_answer": "Real answer X",
           "explanation": "Why this is correct",
           "fun_fact": "Interesting fact",
           "points": 100,
           "time_limit": 20,
-          "difficulty": "${request.difficulty}"
+          "difficulty": "${request.difficulty}",
+          "micro_theme": "Specific 1-3 word theme for THIS question"
         }
       ]
     }
   ]
-}
+}`;
 
-Generate ${structure.totalQuestions} questions now.`;
-
-      console.log('📤 Sending request to Gemini...');
+      console.log('📤 Sending to Gemini...');
       
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
 
-      console.log('📥 Received response, length:', text.length);
+      console.log('📥 Response received, length:', text.length);
 
-      // Nettoyer le texte
-      let cleanedText = text.trim();
-      
-      // Enlever les markdown code blocks
-      cleanedText = cleanedText.replace(/```json\s*/g, '');
-      cleanedText = cleanedText.replace(/```\s*/g, '');
-      cleanedText = cleanedText.trim();
+      let cleanedText = text.trim()
+        .replace(/```json\s*/g, '')
+        .replace(/```\s*/g, '')
+        .trim();
 
-      // Si le texte commence par autre chose que {, trouver le premier {
       const firstBrace = cleanedText.indexOf('{');
-      if (firstBrace > 0) {
-        cleanedText = cleanedText.substring(firstBrace);
-      }
+      if (firstBrace > 0) cleanedText = cleanedText.substring(firstBrace);
 
-      // Si le texte se termine par autre chose que }, trouver le dernier }
       const lastBrace = cleanedText.lastIndexOf('}');
       if (lastBrace < cleanedText.length - 1) {
         cleanedText = cleanedText.substring(0, lastBrace + 1);
       }
 
-      console.log('🧹 Cleaned text, length:', cleanedText.length);
-      console.log('🔍 First 200 chars:', cleanedText.substring(0, 200));
+      console.log('🧹 Cleaned, parsing...');
 
       const parsed = JSON.parse(cleanedText);
       
       const actualQuestions = parsed.stages.reduce((sum: number, s: any) => sum + s.questions.length, 0);
       
-      console.log('✅ Quiz successfully generated:', {
+      console.log('✅ Gemini success:', {
         title: parsed.title,
-        targetQuestions: structure.totalQuestions,
-        actualQuestions: actualQuestions,
+        questions: actualQuestions,
         stages: parsed.stages.length,
       });
-
-      if (actualQuestions < structure.totalQuestions * 0.5) {
-        throw new Error(`Not enough questions generated: ${actualQuestions} < ${structure.totalQuestions}`);
-      }
       
       return parsed;
       
@@ -159,16 +153,31 @@ Generate ${structure.totalQuestions} questions now.`;
       console.error(`❌ Attempt ${attempt} failed:`, error.message);
       
       if (attempt < retries) {
-        const waitTime = attempt * 2000; // 2s, 4s, 6s
-        console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+        const waitTime = attempt * 1000;
+        console.log(`⏳ Retry in ${waitTime}ms...`);
         await sleep(waitTime);
       } else {
-        // Dernière tentative échouée
-        console.error('❌ All attempts failed');
-        throw new Error(`Failed after ${retries} attempts: ${error.message}`);
+        console.warn('⚠️ Gemini failed, falling back to mock quiz');
+        return generateMockQuiz(
+          request.theme,
+          structure.totalQuestions,
+          structure.totalStages,
+          structure.questionsPerStage,
+          request.difficulty,
+          request.language,
+          request.duration
+        );
       }
     }
   }
 
-  throw new Error('Failed to generate quiz');
+  return generateMockQuiz(
+    request.theme,
+    structure.totalQuestions,
+    structure.totalStages,
+    structure.questionsPerStage,
+    request.difficulty,
+    request.language,
+    request.duration
+  );
 };

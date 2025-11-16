@@ -121,7 +121,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
 
       set({
         isHost: sessionData.isHost,
-        currentView: sessionData.currentView || 'lobby',
+        currentView: sessionData.currentView || 'playing',
       });
 
     } catch (error) {
@@ -178,12 +178,12 @@ export const useQuizStore = create<QuizState>((set, get) => ({
 
       console.log('✅ Quiz inserted, ID:', quizData.id);
 
-      // Insert questions
+      // Insert questions - UTILISER micro_theme comme stage_id
       const allQuestions = aiResponse.stages.flatMap((stage, stageIndex) =>
         stage.questions.map((q, qIndex) => ({
           id: uuidv4(),
           quiz_id: quizData.id,
-          stage_id: `stage-${stageIndex}`,
+          stage_id: q.micro_theme || `Stage ${stageIndex + 1}`, // ✅ Utiliser micro_theme
           stage_order: qIndex,
           global_order: stageIndex * stage.questions.length + qIndex,
           question_text: q.question_text,
@@ -194,7 +194,6 @@ export const useQuizStore = create<QuizState>((set, get) => ({
           fun_fact: q.fun_fact,
           points: q.points || 100,
           time_limit: q.time_limit || 20,
-          difficulty: q.difficulty,
           created_at: new Date().toISOString(),
         }))
       );
@@ -250,10 +249,10 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         strategic_mode_enabled: true,
         joker_actions_enabled: true,
         timing_phases: {
-          announcement: 12,
-          jokers: 12,
-          question: 30,
-          results: 5,
+          announcement: 15,
+          jokers: 0,
+          question: 10,
+          results: 10,
         },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -303,7 +302,6 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         .single();
 
       if (sessionError) throw new Error('Session not found');
-      if (session.status !== 'waiting') throw new Error('Session already started');
 
       const { data: quiz, error: quizError } = await supabase
         .from('ai_generated_quizzes')
@@ -363,13 +361,13 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         players: (allPlayers as Player[]) || [],
         totalPlayers: allPlayers?.length || 0,
         isLoading: false,
-        currentView: 'lobby',
+        currentView: 'playing', // ✅ Aller directement en mode "playing"
       });
 
       get().saveSessionState();
       get().setupRealtimeSubscription(code);
 
-      console.log('✅ Join complete!');
+      console.log('✅ Join complete! Redirecting to player view...');
     } catch (error: any) {
       console.error('❌ Join error:', error);
       set({ error: error.message, isLoading: false });
