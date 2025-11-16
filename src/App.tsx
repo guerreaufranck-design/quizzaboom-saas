@@ -5,10 +5,12 @@ import { HomePage } from './pages/HomePage';
 import { CreateQuiz } from './pages/CreateQuiz';
 import { JoinQuiz } from './pages/JoinQuiz';
 import { QuizLobby } from './pages/QuizLobby';
+import { PlayerView } from './pages/PlayerView';
+import { HostDashboard } from './pages/HostDashboard';
 
 function App() {
   const { initialize } = useAuthStore();
-  const { currentView, setCurrentView } = useQuizStore();
+  const { currentView, setCurrentView, isHost } = useQuizStore();
 
   useEffect(() => {
     initialize();
@@ -46,14 +48,8 @@ function App() {
       case 'lobby':
         return <QuizLobby />;
       case 'playing':
-        return (
-          <div className="min-h-screen bg-qb-dark flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <h1 className="text-4xl font-bold text-white">Playing Quiz</h1>
-              <p className="text-xl text-white/70">Coming Soon...</p>
-            </div>
-          </div>
-        );
+        // Host voit le dashboard, joueurs voient PlayerView
+        return isHost ? <HostDashboard /> : <PlayerView />;
       default:
         return <HomePage />;
     }

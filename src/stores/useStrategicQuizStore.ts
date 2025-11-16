@@ -1,111 +1,122 @@
 import { create } from 'zustand';
-import type { GamePhase, JokerAction, JokerInventory, JokerEffects } from '../types/joker';
-import { gameEngine } from '../services/strategicGameEngine';
 import { supabase } from '../services/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
+import type { JokerType } from '../types/joker';
+
+type Phase = 'announcement' | 'jokers' | 'question' | 'results';
 
 interface StrategicQuizState {
-  // Current phase
-  currentPhase: GamePhase | null;
+  currentPhase: Phase;
   phaseTimeRemaining: number;
   currentTheme: string | null;
-  
-  // Joker system
-  pendingJokerActions: JokerAction[];
-  activeEffects: JokerEffects;
-  playerInventory: JokerInventory | null;
+  playerInventory: {
+    protection: number;
+    block: number;
+    steal: number;
+    double_points: number;
+  } | null;
+  activeEffects: {
+    protections: Record<string, boolean>;
+    blocks: Record<string, boolean>;
+    steals: Record<string, string>; // victimId -> thiefId
+    doublePoints: Record<string, boolean>;
+  };
   
   // Actions
-  setPhase: (phase: GamePhase, duration: number, theme?: string) => void;
-  updateTimer: (timeRemaining: number) => void;
-  executeJokerAction: (actionType: JokerAction['action_type'], targetId?: string) => Promise<void>;
-  resolveJokerPhase: () => Promise<void>;
-  resetPhase: () => void;
+  setCurrentPhase: (phase: Phase) => void;
+  setPhaseTimeRemaining: (time: number) => void;
+  executeJokerAction: (jokerType: JokerType, targetPlayerId?: string) => Promise<void>;
+  broadcastPhaseChange: (data: { phase: Phase; questionIndex: number; timeRemaining: number }) => void;
 }
 
 export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
-  currentPhase: null,
-  phaseTimeRemaining: 0,
+  currentPhase: 'announcement',
+  phaseTimeRemaining: 12,
   currentTheme: null,
-  pendingJokerActions: [],
-  activeEffects: {
-    protections: {},
-    blocks: {},
-    steals: {},
-    doublePoints: {},
-  },
   playerInventory: {
     protection: 2,
     block: 10,
     steal: 10,
     double_points: 5,
   },
-
-  setPhase: (phase, duration, theme) => {
-    set({
-      currentPhase: phase,
-      phaseTimeRemaining: duration,
-      currentTheme: theme,
-    });
+  activeEffects: {
+    protections: {},
+    blocks: {},
+    steals: {},
+    doublePoints: {},
   },
 
-  updateTimer: (timeRemaining) => {
-    set({ phaseTimeRemaining: timeRemaining });
-  },
+  setCurrentPhase: (phase) => set({ currentPhase: phase }),
+  
+  setPhaseTimeRemaining: (time) => set({ phaseTimeRemaining: time }),
 
-  executeJokerAction: async (actionType, targetId) => {
-    const { playerInventory, pendingJokerActions } = get();
+  executeJokerAction: async (jokerType, targetPlayerId) => {
+    const { playerInventory, activeEffects } = get();
     
-    if (!playerInventory || !gameEngine.validatePlayerAction('current-player', actionType, playerInventory as any)) {
-      throw new Error('Not enough joker uses remaining');
+    if (!playerInventory || playerInventory[jokerType] <= 0) {
+      throw new Error('No uses remaining for this joker');
     }
 
-    const action: JokerAction = {
-      id: uuidv4(),
-      session_id: 'current-session',
-      player_id: 'current-player',
-      question_number: 1,
-      question_theme: get().currentTheme || '',
-      action_type: actionType,
-      target_player_id: targetId,
-      timestamp: Date.now(),
-      action_order: pendingJokerActions.length,
-      response_time: 0,
-      resolution_status: 'pending',
-    };
-
-    // Save to database
-    await supabase.from('joker_actions').insert(action);
-
-    // Update local state
+    // Decrement inventory
     set({
-      pendingJokerActions: [...pendingJokerActions, action],
       playerInventory: {
         ...playerInventory,
-        [actionType]: playerInventory[actionType] - 1,
+        [jokerType]: playerInventory[jokerType] - 1,
       },
     });
+
+    // Apply effect
+    const playerId = 'current-player-id'; // TODO: Get from useQuizStore
+    
+    switch (jokerType) {
+      case 'protection':
+        set({
+          activeEffects: {
+            ...activeEffects,
+            protections: { ...activeEffects.protections, [playerId]: true },
+          },
+        });
+        break;
+      
+      case 'double_points':
+        set({
+          activeEffects: {
+            ...activeEffects,
+            doublePoints: { ...activeEffects.doublePoints, [playerId]: true },
+          },
+        });
+        break;
+      
+      case 'block':
+        if (targetPlayerId) {
+          set({
+            activeEffects: {
+              ...activeEffects,
+              blocks: { ...activeEffects.blocks, [targetPlayerId]: true },
+            },
+          });
+        }
+        break;
+      
+      case 'steal':
+        if (targetPlayerId) {
+          set({
+            activeEffects: {
+              ...activeEffects,
+              steals: { ...activeEffects.steals, [targetPlayerId]: playerId },
+            },
+          });
+        }
+        break;
+    }
   },
 
-  resolveJokerPhase: async () => {
-    const { pendingJokerActions } = get();
-    
-    const resolution = gameEngine.resolveJokerActions(pendingJokerActions);
-    
-    set({
-      activeEffects: resolution.effects,
-      pendingJokerActions: [],
-    });
-
-    return Promise.resolve();
-  },
-
-  resetPhase: () => {
-    set({
-      currentPhase: null,
-      phaseTimeRemaining: 0,
-      currentTheme: null,
-      pendingJokerActions: [],
+  broadcastPhaseChange: (data) => {
+    // Broadcast via Supabase Realtime
+    const channel = supabase.channel('quiz-phases');
+    channel.send({
+      type: 'broadcast',
+      event: 'phase_change',
+      payload: data,
     });
   },
 }));

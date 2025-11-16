@@ -36,6 +36,7 @@ interface QuizState {
   generateQuiz: (request: QuizGenRequest) => Promise<Quiz>;
   createSession: (quizId: string) => Promise<string>;
   joinSession: (code: string, playerName: string, email?: string) => Promise<void>;
+  loadPlayers: (sessionId: string) => Promise<void>;
   startSession: () => Promise<void>;
   setupRealtimeSubscription: (sessionCode: string) => void;
   cleanupRealtime: () => void;
@@ -69,8 +70,6 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       const aiResponse = await generateMultiStageQuiz(request);
       
       const { data: { user } } = await supabase.auth.getUser();
-      
-      // Generate a valid UUID for creator_id (use user id or generate new one)
       const creatorId = user?.id || uuidv4();
       
       const quiz: Partial<Quiz> = {
@@ -101,7 +100,6 @@ export const useQuizStore = create<QuizState>((set, get) => ({
 
       if (error) throw error;
 
-      // Insert questions
       const allQuestions = aiResponse.stages.flatMap((stage, stageIndex) =>
         stage.questions.map((q, qIndex) => ({
           ...q,
@@ -131,10 +129,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
       const sessionCode = await generateUniqueSessionCode();
-      
-      // Generate a valid UUID for host_id (use user id or generate new one)
       const hostId = user?.id || uuidv4();
       
       const session: Partial<QuizSession> = {
@@ -188,6 +183,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   joinSession: async (code, playerName, email) => {
     set({ isLoading: true, error: null });
     try {
+      // 1. Get session
       const { data: session, error: sessionError } = await supabase
         .from('quiz_sessions')
         .select('*')
@@ -197,6 +193,16 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       if (sessionError) throw new Error('Session not found');
       if (session.status !== 'waiting') throw new Error('Session already started');
 
+      // 2. Get quiz details
+      const { data: quiz, error: quizError } = await supabase
+        .from('ai_generated_quizzes')
+        .select('*')
+        .eq('id', session.quiz_id)
+        .single();
+
+      if (quizError) throw new Error('Quiz not found');
+
+      // 3. Create player
       const player: Partial<Player> = {
         id: uuidv4(),
         session_id: session.id,
@@ -232,15 +238,47 @@ export const useQuizStore = create<QuizState>((set, get) => ({
 
       if (playerError) throw playerError;
 
+      // 4. Load all players
+      await get().loadPlayers(session.id);
+
+      // 5. Set state
       set({
         currentSession: session as QuizSession,
+        currentQuiz: quiz as Quiz,
         currentPlayer: playerData as Player,
         sessionCode: code,
+        isHost: false,
         isLoading: false,
       });
+
+      console.log('✅ Successfully joined session:', {
+        session: session.session_code,
+        quiz: quiz.title,
+        player: playerData.player_name,
+      });
     } catch (error: any) {
+      console.error('❌ Join session error:', error);
       set({ error: error.message, isLoading: false });
       throw error;
+    }
+  },
+
+  loadPlayers: async (sessionId) => {
+    try {
+      const { data, error } = await supabase
+        .from('session_players')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('joined_at', { ascending: true });
+
+      if (error) throw error;
+
+      set({
+        players: (data as Player[]) || [],
+        totalPlayers: data?.length || 0,
+      });
+    } catch (error) {
+      console.error('Failed to load players:', error);
     }
   },
 
@@ -259,6 +297,9 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   },
 
   setupRealtimeSubscription: (sessionCode) => {
+    const { currentSession } = get();
+    if (!currentSession) return;
+
     const channel = supabase.channel(`quiz_session_${sessionCode}`);
 
     channel
@@ -266,10 +307,10 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         event: '*',
         schema: 'public',
         table: 'session_players',
-        filter: `session_id=eq.${get().currentSession?.id}`,
+        filter: `session_id=eq.${currentSession.id}`,
       }, (payload) => {
         console.log('Player update:', payload);
-        // Update players list
+        get().loadPlayers(currentSession.id);
       })
       .on('broadcast', { event: 'phase_change' }, (payload) => {
         console.log('Phase change:', payload);
