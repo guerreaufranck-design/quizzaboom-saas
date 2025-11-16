@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
-import { useQuizStore } from '../stores/useQuizStore';
 import { supabase } from '../services/supabase/client';
 import { Card } from '../components/ui/Card';
 import { Clock, Trophy, Star } from 'lucide-react';
@@ -16,8 +15,6 @@ export const TVDisplay: React.FC = () => {
     listenToPhaseChanges,
     loadQuestions,
   } = useStrategicQuizStore();
-
-  const { currentQuiz, setCurrentView } = useQuizStore();
 
   const [sessionCode, setSessionCode] = useState<string>('');
   const [topPlayers, setTopPlayers] = useState<Player[]>([]);
