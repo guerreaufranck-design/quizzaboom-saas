@@ -68,11 +68,12 @@ export const HostDashboard: React.FC = () => {
     
     if (currentIndex < PHASE_ORDER.length - 1) {
       const nextPhase = PHASE_ORDER[currentIndex + 1];
-      changePhase(nextPhase);
+      changePhase(nextPhase, currentQuestionIndex); // ✅ Passer l'index actuel
     } else {
       if (currentQuestionIndex < allQuestions.length - 1) {
-        setCurrentQuestionIndex((prev) => prev + 1);
-        changePhase('theme_announcement');
+        const nextIndex = currentQuestionIndex + 1;
+        setCurrentQuestionIndex(nextIndex);
+        changePhase('theme_announcement', nextIndex); // ✅ Passer le NOUVEL index
       } else {
         setIsPlaying(false);
         alert('🎉 Quiz completed!');
@@ -80,24 +81,28 @@ export const HostDashboard: React.FC = () => {
     }
   };
 
-  const changePhase = (newPhase: GamePhase) => {
-    const stageNumber = Math.floor(currentQuestionIndex / 5);
+  const changePhase = (newPhase: GamePhase, questionIndex: number) => {
+    const stageNumber = Math.floor(questionIndex / 5);
+    const question = allQuestions[questionIndex]; // ✅ Utiliser directement l'index passé en paramètre
     
     setCurrentPhaseState(newPhase);
     setPhaseTimeRemaining(PHASE_DURATIONS[newPhase]);
 
     const phaseData = {
       phase: newPhase,
-      questionIndex: currentQuestionIndex,
+      questionIndex: questionIndex,
       stageNumber,
       timeRemaining: PHASE_DURATIONS[newPhase],
-      currentQuestion: allQuestions[currentQuestionIndex] || null,
-      themeTitle: currentQuestion?.stage_id || 'General Knowledge',
+      currentQuestion: question || null,
+      themeTitle: question?.stage_id || 'General Knowledge', // ✅ Utiliser la question depuis l'array directement
     };
 
-    console.log('📤 Broadcasting phase change:', phaseData);
+    console.log('📤 Broadcasting phase change:', {
+      phase: newPhase,
+      questionIndex,
+      theme: phaseData.themeTitle,
+    });
     
-    // IMPORTANT: Passer le sessionCode au broadcaster
     if (sessionCode) {
       broadcastPhaseChange(sessionCode, phaseData);
     }
@@ -106,7 +111,7 @@ export const HostDashboard: React.FC = () => {
   const handleStartPause = () => {
     setIsPlaying(!isPlaying);
     if (!isPlaying && currentPhaseState === 'theme_announcement' && currentQuestionIndex === 0) {
-      changePhase('theme_announcement');
+      changePhase('theme_announcement', 0);
     }
   };
 
@@ -119,7 +124,7 @@ export const HostDashboard: React.FC = () => {
       alert('⏸️ Pause the quiz first');
       return;
     }
-    changePhase(phase);
+    changePhase(phase, currentQuestionIndex);
   };
 
   const getPhaseColor = (phase: GamePhase) => {
@@ -211,6 +216,11 @@ export const HostDashboard: React.FC = () => {
                 <div className="text-xl text-white/90">
                   Question {currentQuestionIndex + 1} / {allQuestions.length}
                 </div>
+                {currentQuestion && (
+                  <div className="text-2xl text-yellow-300 font-bold">
+                    Theme: {currentQuestion.stage_id}
+                  </div>
+                )}
                 <div className="inline-flex px-4 py-2 bg-white/20 rounded-full text-white font-bold">
                   {isPlaying ? '▶️ Playing' : '⏸️ Paused'}
                 </div>

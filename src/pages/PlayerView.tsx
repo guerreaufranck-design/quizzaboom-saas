@@ -6,7 +6,7 @@ import { Card } from '../components/ui/Card';
 import { Shield, Ban, Coins, Star, Clock } from 'lucide-react';
 
 export const PlayerView: React.FC = () => {
-  const { currentPlayer, sessionCode, currentQuiz, restoreSession } = useQuizStore();
+  const { currentPlayer, sessionCode, currentQuiz } = useQuizStore();
   const {
     currentPhase,
     phaseTimeRemaining,
@@ -23,10 +23,12 @@ export const PlayerView: React.FC = () => {
   } = useStrategicQuizStore();
 
   useEffect(() => {
-    console.log('📱 PlayerView initializing...');
-    
-    // Restaurer la session si refresh
-    restoreSession();
+    console.log('📱 PlayerView mounted with:', {
+      hasQuiz: !!currentQuiz,
+      hasSession: !!sessionCode,
+      hasPlayer: !!currentPlayer,
+      currentPhase,
+    });
     
     if (currentQuiz?.id) {
       console.log('📚 Loading questions for quiz:', currentQuiz.id);
@@ -37,7 +39,7 @@ export const PlayerView: React.FC = () => {
       console.log('👂 Setting up phase listener for session:', sessionCode);
       listenToPhaseChanges(sessionCode);
     }
-  }, [currentQuiz?.id, sessionCode]);
+  }, [currentQuiz?.id, sessionCode]); // ✅ Ne PAS appeler restoreSession ici
 
   const handleJokerAction = async (jokerType: 'protection' | 'block' | 'steal' | 'double_points') => {
     try {
@@ -77,9 +79,7 @@ export const PlayerView: React.FC = () => {
   const hasDoublePoints = activeEffects.doublePoints[currentPlayer?.id || ''];
   const isBlocked = activeEffects.blocks[currentPlayer?.id || ''];
   
-  // Déterminer si les jokers sont activables
   const jokersEnabled = currentPhase === 'theme_announcement';
-  // Déterminer si les réponses sont activables
   const answersEnabled = currentPhase === 'answer_selection' && !isBlocked && !hasAnswered;
 
   return (
@@ -133,7 +133,7 @@ export const PlayerView: React.FC = () => {
           </Card>
         )}
 
-        {/* Joker Buttons - TOUJOURS VISIBLES */}
+        {/* Joker Buttons */}
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
             Jokers {jokersEnabled ? '(Choose Now!)' : '(Wait for theme)'}
@@ -185,7 +185,7 @@ export const PlayerView: React.FC = () => {
           </div>
         </Card>
 
-        {/* Answer Buttons - TOUJOURS VISIBLES */}
+        {/* Answer Buttons */}
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
             Answers {answersEnabled ? '(Select Now!)' : '(Wait for answer time)'}
