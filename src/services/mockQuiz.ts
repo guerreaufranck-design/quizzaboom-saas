@@ -14,7 +14,7 @@ export const generateMockQuiz = (
   totalStages: number,
   questionsPerStage: number,
   difficulty: string,
-  language: string,
+  _language: string, // Préfixe avec _ pour indiquer qu'il n'est pas utilisé
   duration: number
 ): AIQuizResponse => {
   console.log('🎭 Generating MOCK quiz (Gemini unavailable)');
