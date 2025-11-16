@@ -3,7 +3,7 @@ import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Select } from '../components/ui/Select';
-import { ArrowLeft, Sparkles, Clock, Target, Globe, Zap } from 'lucide-react';
+import { ArrowLeft, Sparkles, Clock, Target, Globe, Zap, Loader2 } from 'lucide-react';
 import { calculateQuizStructure } from '../services/gemini';
 import { THEMES, THEME_MODES, type ThemeCategory, type ThemeMode } from '../types/themes';
 import type { QuizGenRequest } from '../types/quiz';
@@ -16,9 +16,11 @@ export const CreateQuiz: React.FC = () => {
   const [formData, setFormData] = useState({
     duration: 30,
     difficulty: 'medium' as 'easy' | 'medium' | 'hard',
-    language: 'en' as QuizGenRequest['language'],
+    language: 'fr' as QuizGenRequest['language'],
     includeJokers: true,
   });
+
+  const [generationStep, setGenerationStep] = useState<string>('');
 
   const quizStructure = calculateQuizStructure(formData.duration);
   const currentTheme = THEMES.find(t => t.category === selectedTheme);
@@ -27,7 +29,8 @@ export const CreateQuiz: React.FC = () => {
     e.preventDefault();
 
     try {
-      console.log('🎨 Generating quiz with AI...');
+      setGenerationStep('🤖 Connecting to AI...');
+      console.log('🎨 Starting quiz generation...');
       
       const request: QuizGenRequest = {
         theme: `${currentTheme?.label} - ${THEME_MODES[selectedMode].label}`,
@@ -36,17 +39,33 @@ export const CreateQuiz: React.FC = () => {
         language: formData.language,
         includeJokers: formData.includeJokers,
       };
-      
+
+      setGenerationStep(`🎨 Generating ${quizStructure.totalQuestions} questions...`);
       const quiz = await generateQuiz(request);
       
-      console.log('📝 Creating session...');
+      setGenerationStep('📝 Creating session...');
       await createSession(quiz.id);
       
-      console.log('✅ Redirecting to lobby...');
-      setCurrentView('lobby');
-    } catch (error) {
+      setGenerationStep('✅ Ready!');
+      setTimeout(() => {
+        setCurrentView('lobby');
+      }, 500);
+      
+    } catch (error: any) {
       console.error('Failed to create quiz:', error);
-      alert('Failed to generate quiz. Please try again.');
+      setGenerationStep('');
+      
+      let errorMessage = 'Failed to generate quiz. ';
+      
+      if (error.message.includes('API key')) {
+        errorMessage += 'API key not configured properly.';
+      } else if (error.message.includes('attempts')) {
+        errorMessage += 'The AI service is taking too long. Please try again.';
+      } else {
+        errorMessage += 'Please try again.';
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -60,6 +79,7 @@ export const CreateQuiz: React.FC = () => {
               variant="ghost"
               onClick={() => setCurrentView('home')}
               icon={<ArrowLeft />}
+              disabled={isLoading}
             >
               Back
             </Button>
@@ -68,6 +88,24 @@ export const CreateQuiz: React.FC = () => {
               <p className="text-white/70 mt-2">AI-powered quiz generation in seconds</p>
             </div>
           </div>
+
+          {/* Loading Overlay */}
+          {isLoading && (
+            <Card className="mb-6 p-8 text-center bg-gradient-to-br from-qb-purple to-qb-cyan">
+              <Loader2 className="w-16 h-16 text-white animate-spin mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-2">
+                {generationStep || 'Generating Quiz...'}
+              </h2>
+              <p className="text-white/80">
+                This may take up to 30 seconds. Please wait...
+              </p>
+              <div className="mt-4 flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </Card>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Theme Selection */}
@@ -87,7 +125,7 @@ export const CreateQuiz: React.FC = () => {
                       selectedTheme === theme.category
                         ? 'bg-qb-cyan border-qb-cyan scale-105 shadow-lg shadow-qb-cyan/50'
                         : 'bg-qb-darker border-white/20 hover:border-qb-cyan hover:scale-105'
-                    }`}
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <div className="text-5xl mb-3">{theme.emoji}</div>
                     <div className="text-white font-bold text-lg mb-1">{theme.label}</div>
@@ -96,7 +134,6 @@ export const CreateQuiz: React.FC = () => {
                 ))}
               </div>
 
-              {/* Sub-themes Preview */}
               {currentTheme && currentTheme.subThemes && (
                 <div className="mt-4 p-4 bg-qb-darker rounded-lg">
                   <div className="text-sm text-white/70 mb-2">This quiz will include:</div>
@@ -130,7 +167,7 @@ export const CreateQuiz: React.FC = () => {
                       selectedMode === mode.id
                         ? 'bg-qb-magenta border-qb-magenta scale-105'
                         : 'bg-qb-darker border-white/20 hover:border-qb-magenta'
-                    }`}
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <div className="text-4xl mb-2">{mode.emoji}</div>
                     <div className="text-white font-bold">{mode.label}</div>
@@ -198,7 +235,7 @@ export const CreateQuiz: React.FC = () => {
                       formData.difficulty === level.value
                         ? 'bg-qb-yellow border-qb-yellow scale-105'
                         : 'bg-qb-darker border-white/20 hover:border-qb-yellow'
-                    }`}
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <div className="text-3xl mb-2">{level.emoji}</div>
                     <div className="text-white font-bold">{level.label}</div>
@@ -257,9 +294,9 @@ export const CreateQuiz: React.FC = () => {
               fullWidth
               gradient
               disabled={isLoading}
-              icon={<Sparkles />}
+              icon={isLoading ? <Loader2 className="animate-spin" /> : <Sparkles />}
             >
-              {isLoading ? 'Generating Quiz with AI...' : `Generate ${quizStructure.totalQuestions} Questions`}
+              {isLoading ? generationStep || 'Generating...' : `Generate ${quizStructure.totalQuestions} Questions`}
             </Button>
           </form>
 
