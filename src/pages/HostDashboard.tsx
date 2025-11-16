@@ -14,29 +14,20 @@ import {
   Monitor,
   RefreshCw
 } from 'lucide-react';
+import { GamePhase, PHASE_DURATIONS, PHASE_ORDER } from '../types/gamePhases';
 import type { Question } from '../types/quiz';
-
-type Phase = 'announcement' | 'jokers' | 'question' | 'results';
 
 export const HostDashboard: React.FC = () => {
   const { currentQuiz, currentSession, players, sessionCode, loadPlayers } = useQuizStore();
   const { allQuestions, loadQuestions, broadcastPhaseChange } = useStrategicQuizStore();
 
-  const [currentPhaseState, setCurrentPhaseState] = useState<Phase>('announcement');
+  const [currentPhaseState, setCurrentPhaseState] = useState<GamePhase>('theme_announcement');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [phaseTimeRemaining, setPhaseTimeRemaining] = useState(12);
-
-  const phaseDurations: Record<Phase, number> = {
-    announcement: 12,
-    jokers: 12,
-    question: 30,
-    results: 5,
-  };
+  const [phaseTimeRemaining, setPhaseTimeRemaining] = useState(25);
 
   const currentQuestion: Question | null = allQuestions[currentQuestionIndex] || null;
 
-  // Load questions on mount
   useEffect(() => {
     if (currentQuiz?.id) {
       console.log('📚 Loading questions for quiz:', currentQuiz.id);
@@ -44,18 +35,15 @@ export const HostDashboard: React.FC = () => {
     }
   }, [currentQuiz?.id]);
 
-  // Auto-refresh players
   useEffect(() => {
     if (currentSession?.id) {
       const interval = setInterval(() => {
         loadPlayers(currentSession.id);
-      }, 5000); // Refresh every 5s
-
+      }, 5000);
       return () => clearInterval(interval);
     }
   }, [currentSession?.id]);
 
-  // Phase timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
@@ -75,18 +63,17 @@ export const HostDashboard: React.FC = () => {
   }, [isPlaying, phaseTimeRemaining, currentPhaseState, currentQuestionIndex]);
 
   const handlePhaseComplete = () => {
-    const phaseOrder: Phase[] = ['announcement', 'jokers', 'question', 'results'];
-    const currentIndex = phaseOrder.indexOf(currentPhaseState);
+    const currentIndex = PHASE_ORDER.indexOf(currentPhaseState);
     
-    if (currentIndex < phaseOrder.length - 1) {
+    if (currentIndex < PHASE_ORDER.length - 1) {
       // Next phase in sequence
-      const nextPhase = phaseOrder[currentIndex + 1];
+      const nextPhase = PHASE_ORDER[currentIndex + 1];
       changePhase(nextPhase);
     } else {
-      // End of cycle, move to next question
+      // End of cycle (after intermission), move to next question
       if (currentQuestionIndex < allQuestions.length - 1) {
         setCurrentQuestionIndex((prev) => prev + 1);
-        changePhase('announcement');
+        changePhase('theme_announcement');
       } else {
         // Quiz finished
         setIsPlaying(false);
@@ -95,19 +82,19 @@ export const HostDashboard: React.FC = () => {
     }
   };
 
-  const changePhase = (newPhase: Phase) => {
-    const stageNumber = Math.floor(currentQuestionIndex / 5); // 5 questions per stage (adjust as needed)
+  const changePhase = (newPhase: GamePhase) => {
+    const stageNumber = Math.floor(currentQuestionIndex / 5);
     
     setCurrentPhaseState(newPhase);
-    setPhaseTimeRemaining(phaseDurations[newPhase]);
+    setPhaseTimeRemaining(PHASE_DURATIONS[newPhase]);
 
-    // Broadcast to all players
     const phaseData = {
       phase: newPhase,
       questionIndex: currentQuestionIndex,
       stageNumber,
-      timeRemaining: phaseDurations[newPhase],
+      timeRemaining: PHASE_DURATIONS[newPhase],
       currentQuestion: allQuestions[currentQuestionIndex] || null,
+      themeTitle: currentQuestion?.stage_id || 'General Knowledge',
     };
 
     console.log('📤 Broadcasting phase change:', phaseData);
@@ -116,9 +103,8 @@ export const HostDashboard: React.FC = () => {
 
   const handleStartPause = () => {
     setIsPlaying(!isPlaying);
-    if (!isPlaying && currentPhaseState === 'announcement' && currentQuestionIndex === 0) {
-      // First start - broadcast initial state
-      changePhase('announcement');
+    if (!isPlaying && currentPhaseState === 'theme_announcement' && currentQuestionIndex === 0) {
+      changePhase('theme_announcement');
     }
   };
 
@@ -126,29 +112,41 @@ export const HostDashboard: React.FC = () => {
     setPhaseTimeRemaining(1);
   };
 
-  const handleManualPhaseChange = (phase: Phase) => {
+  const handleManualPhaseChange = (phase: GamePhase) => {
     if (isPlaying) {
-      alert('Pause the quiz first to manually change phases');
+      alert('⏸️ Pause the quiz first to manually change phases');
       return;
     }
     changePhase(phase);
   };
 
-  const getPhaseColor = (phase: Phase) => {
+  const getPhaseColor = (phase: GamePhase) => {
     switch (phase) {
-      case 'announcement': return 'from-yellow-500 to-orange-500';
-      case 'jokers': return 'from-purple-500 to-pink-500';
-      case 'question': return 'from-blue-500 to-cyan-500';
+      case 'theme_announcement': return 'from-indigo-500 to-purple-500';
+      case 'question_display': return 'from-blue-500 to-cyan-500';
+      case 'answer_selection': return 'from-cyan-500 to-teal-500';
       case 'results': return 'from-green-500 to-emerald-500';
+      case 'intermission': return 'from-gray-600 to-gray-800';
     }
   };
 
-  const getPhaseIcon = (phase: Phase) => {
+  const getPhaseIcon = (phase: GamePhase) => {
     switch (phase) {
-      case 'announcement': return '📢';
-      case 'jokers': return '⚡';
-      case 'question': return '❓';
+      case 'theme_announcement': return '🎯';
+      case 'question_display': return '📖';
+      case 'answer_selection': return '✍️';
       case 'results': return '📊';
+      case 'intermission': return '⏸️';
+    }
+  };
+
+  const getPhaseLabel = (phase: GamePhase) => {
+    switch (phase) {
+      case 'theme_announcement': return 'Theme + Jokers';
+      case 'question_display': return 'Question';
+      case 'answer_selection': return 'Answers';
+      case 'results': return 'Results';
+      case 'intermission': return 'Break';
     }
   };
 
@@ -169,7 +167,7 @@ export const HostDashboard: React.FC = () => {
         <Card className="p-12 text-center max-w-2xl">
           <div className="text-6xl mb-4">📚</div>
           <h2 className="text-3xl font-bold text-white mb-4">Loading Questions...</h2>
-          <p className="text-white/70">Please wait while we load the quiz questions from AI generation.</p>
+          <p className="text-white/70">Generating quiz with AI...</p>
         </Card>
       </div>
     );
@@ -185,8 +183,12 @@ export const HostDashboard: React.FC = () => {
             <p className="text-white/70">Host Dashboard - Session: {sessionCode}</p>
           </div>
           <div className="flex gap-3">
-            <Button variant="ghost" icon={<Monitor />}>
-              TV Display
+            <Button 
+              variant="ghost" 
+              icon={<Monitor />}
+              onClick={() => window.open(`${window.location.origin}?tv=${sessionCode}`, '_blank')}
+            >
+              Open TV Display
             </Button>
             <Button variant="ghost" icon={<Eye />}>
               Preview Player
@@ -194,7 +196,6 @@ export const HostDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Control Panel */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left - Phase Control */}
           <div className="lg:col-span-2 space-y-6">
@@ -203,13 +204,13 @@ export const HostDashboard: React.FC = () => {
               <div className="text-center space-y-4">
                 <div className="text-8xl animate-pulse">{getPhaseIcon(currentPhaseState)}</div>
                 <h2 className="text-4xl font-bold text-white uppercase">
-                  {currentPhaseState} Phase
+                  {getPhaseLabel(currentPhaseState)}
                 </h2>
                 <div className="text-7xl font-mono font-bold text-white">
                   {phaseTimeRemaining}s
                 </div>
                 <div className="text-xl text-white/90">
-                  Question {currentQuestionIndex + 1} of {allQuestions.length}
+                  Question {currentQuestionIndex + 1} / {allQuestions.length}
                 </div>
                 <div className="inline-flex px-4 py-2 bg-white/20 rounded-full text-white font-bold">
                   {isPlaying ? '▶️ Playing' : '⏸️ Paused'}
@@ -240,17 +241,17 @@ export const HostDashboard: React.FC = () => {
                 </Button>
               </div>
 
-              {/* Manual Phase Selector */}
-              <div className="grid grid-cols-4 gap-2">
-                {(['announcement', 'jokers', 'question', 'results'] as Phase[]).map((phase) => (
+              {/* Phase Selector */}
+              <div className="grid grid-cols-5 gap-2">
+                {PHASE_ORDER.map((phase) => (
                   <Button
                     key={phase}
                     onClick={() => handleManualPhaseChange(phase)}
                     variant={currentPhaseState === phase ? 'primary' : 'ghost'}
                     disabled={isPlaying}
-                    className="capitalize text-xs"
+                    className="text-xs py-2"
                   >
-                    {phase}
+                    {getPhaseLabel(phase)}
                   </Button>
                 ))}
               </div>
@@ -260,9 +261,14 @@ export const HostDashboard: React.FC = () => {
             <Card gradient className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-white">Current Question</h3>
-                <span className="px-3 py-1 bg-qb-cyan rounded-full text-sm font-bold text-qb-darker">
-                  {currentQuestion?.points || 100} pts
-                </span>
+                <div className="flex gap-2">
+                  <span className="px-3 py-1 bg-qb-purple rounded-full text-sm font-bold">
+                    {currentQuestion?.stage_id || 'N/A'}
+                  </span>
+                  <span className="px-3 py-1 bg-qb-cyan rounded-full text-sm font-bold">
+                    {currentQuestion?.points || 100} pts
+                  </span>
+                </div>
               </div>
 
               {currentQuestion ? (
@@ -310,7 +316,7 @@ export const HostDashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center py-8 text-white/50">
-                  No question data available
+                  No question data
                 </div>
               )}
             </Card>
@@ -407,9 +413,6 @@ export const HostDashboard: React.FC = () => {
                           </div>
                           <div className="text-xs text-white/50">
                             {player.correct_answers}/{player.questions_answered} correct
-                            {player.accuracy_percentage > 0 && (
-                              <> • {Math.round(player.accuracy_percentage)}% accuracy</>
-                            )}
                           </div>
                         </div>
                         <div className="text-xl font-bold text-qb-cyan">
@@ -421,7 +424,7 @@ export const HostDashboard: React.FC = () => {
               </div>
             </Card>
 
-            {/* All Players List */}
+            {/* All Players */}
             <Card gradient className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">

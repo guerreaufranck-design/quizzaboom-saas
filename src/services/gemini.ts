@@ -1,105 +1,115 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { QuizGenRequest, AIQuizResponse } from '../types/quiz';
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 export const generateMultiStageQuiz = async (
   request: QuizGenRequest
 ): Promise<AIQuizResponse> => {
+  if (!genAI) {
+    throw new Error('Gemini API key not configured');
+  }
+
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-latest' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
-    const prompt = `Create an interactive multi-stage quiz on "${request.theme}" with EXACT duration ${request.duration} minutes.
+    const prompt = `You are a professional quiz creator. Create a REAL, high-quality quiz on "${request.theme}" in ${request.language}.
 
-REQUIRED DURATION CALCULATIONS:
-- Reading time = (word count × 60) / 200 seconds
-- Thinking time = ${request.difficulty} × 10-20 seconds
-- Response time = 3-5 seconds
-- Total per question = reading + thinking + response
+CRITICAL REQUIREMENTS:
+- Generate REAL questions with REAL facts, not generic templates
+- Each question must have SPECIFIC, FACTUAL content
+- Options must be REAL alternatives, not "Option A/B/C/D"
+- Explanations must be INFORMATIVE and FACTUAL
+- Fun facts must be INTERESTING and TRUE
 
-ADAPTIVE STRUCTURE:
-- 15 min: 3-4 stages, 3-4 questions/stage
-- 30 min: 5-6 stages, 4-6 questions/stage
-- 60 min: 8-10 stages, 6-8 questions/stage
-- 120 min: 12-15 stages, 8-10 questions/stage
+QUIZ PARAMETERS:
+- Duration: ${request.duration} minutes
+- Difficulty: ${request.difficulty}
+- Language: ${request.language}
+- Include strategic joker rounds: ${request.includeJokers}
 
-Include joker rounds: ${request.includeJokers}
-Language: ${request.language}
-Difficulty: ${request.difficulty}
+STRUCTURE CALCULATION:
+- For ${request.duration} min quiz: Generate ${Math.floor(request.duration / 2)} questions
+- Organize in ${Math.ceil(request.duration / 15)} stages
+- Each question should take ~2 minutes (including reading, thinking, jokers, results)
+
+DIFFICULTY LEVELS:
+- easy: Common knowledge, straightforward questions
+- medium: Requires general culture and reasoning
+- hard: Specialist knowledge, complex questions
+
+EXAMPLE OF GOOD QUESTION (${request.theme}):
+{
+  "question_text": "Which country won the FIFA World Cup in 2018?",
+  "question_type": "multiple_choice",
+  "options": ["Germany", "France", "Brazil", "Argentina"],
+  "correct_answer": "France",
+  "explanation": "France won the 2018 FIFA World Cup held in Russia, defeating Croatia 4-2 in the final.",
+  "fun_fact": "This was France's second World Cup victory, their first being in 1998 when they hosted the tournament.",
+  "points": 100,
+  "time_limit": 20,
+  "difficulty": "${request.difficulty}"
+}
+
+BAD EXAMPLE (DO NOT DO THIS):
+{
+  "question_text": "Sample question about ${request.theme}",
+  "options": ["Option A", "Option B", "Option C", "Option D"],
+  "explanation": "This is correct because..."
+}
 
 Return ONLY valid JSON in this EXACT format:
 {
-  "title": "Quiz Title",
-  "description": "Quiz description",
+  "title": "Engaging Quiz Title",
+  "description": "Brief description",
   "estimatedDuration": ${request.duration},
   "stages": [
     {
       "stageNumber": 1,
-      "theme": "Stage Theme",
+      "theme": "Specific Sub-Topic",
       "questions": [
         {
-          "question_text": "Question text",
+          "question_text": "REAL SPECIFIC QUESTION with factual content",
           "question_type": "multiple_choice",
-          "options": ["A", "B", "C", "D"],
-          "correct_answer": "A",
-          "explanation": "Why this is correct",
-          "fun_fact": "Interesting fact",
+          "options": ["Real Option 1", "Real Option 2", "Real Option 3", "Real Option 4"],
+          "correct_answer": "Real Option X",
+          "explanation": "Detailed factual explanation of why this is correct",
+          "fun_fact": "Interesting true fact related to the question",
           "points": 100,
-          "time_limit": 30,
-          "is_joker_question": false
+          "time_limit": 20,
+          "difficulty": "${request.difficulty}"
         }
       ]
     }
   ]
-}`;
+}
+
+IMPORTANT: 
+- NO generic "Option A/B/C/D" 
+- NO template questions
+- ONLY real, factual, specific content
+- Questions must be appropriate for ${request.difficulty} difficulty
+- All content in ${request.language} language`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
 
-    // Clean markdown code blocks if present
+    // Clean markdown code blocks
     const cleanedText = text
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
       .trim();
 
     const parsed = JSON.parse(cleanedText);
+    
+    console.log('✅ Gemini generated quiz:', parsed.title);
+    console.log('📊 Total questions:', parsed.stages.reduce((sum: number, s: any) => sum + s.questions.length, 0));
+    
     return parsed;
   } catch (error) {
     console.error('Gemini API Error:', error);
-    // Return mock quiz as fallback
-    return getMockQuiz(request);
+    throw error;
   }
-};
-
-// Fallback mock quiz generator
-const getMockQuiz = (request: QuizGenRequest): AIQuizResponse => {
-  const stagesCount = Math.max(3, Math.floor(request.duration / 15));
-  const questionsPerStage = 4;
-
-  return {
-    title: `${request.theme} Quiz`,
-    description: `An exciting quiz about ${request.theme}`,
-    estimatedDuration: request.duration,
-    stages: Array.from({ length: stagesCount }, (_, i) => ({
-      stageNumber: i + 1,
-      theme: `${request.theme} - Part ${i + 1}`,
-      questions: Array.from({ length: questionsPerStage }, (_, j) => ({
-        id: `q-${i}-${j}`,
-        quiz_id: '',
-        stage_id: `stage-${i}`,
-        question_text: `Sample question ${j + 1} about ${request.theme}`,
-        question_type: 'multiple_choice' as const,
-        options: ['Option A', 'Option B', 'Option C', 'Option D'],
-        correct_answer: 'Option A',
-        explanation: 'This is the correct answer because...',
-        fun_fact: `Did you know... interesting fact about ${request.theme}!`,
-        points: 100,
-        time_limit: 30,
-        stage_order: j,
-        global_order: i * questionsPerStage + j,
-        is_joker_question: request.includeJokers && j === questionsPerStage - 1,
-      })),
-    })),
-  };
 };

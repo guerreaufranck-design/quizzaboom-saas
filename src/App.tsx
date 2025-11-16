@@ -7,6 +7,7 @@ import { JoinQuiz } from './pages/JoinQuiz';
 import { QuizLobby } from './pages/QuizLobby';
 import { PlayerView } from './pages/PlayerView';
 import { HostDashboard } from './pages/HostDashboard';
+import { TVDisplay } from './pages/TVDisplay';
 
 function App() {
   const { initialize } = useAuthStore();
@@ -16,20 +17,20 @@ function App() {
     const init = async () => {
       await initialize();
       
-      // Try to restore session first
-      await restoreSession();
-
-      // Then check URL parameters
       const urlParams = new URLSearchParams(window.location.search);
+      const tvCode = urlParams.get('tv');
       const code = urlParams.get('code');
       const view = urlParams.get('view');
-      const tvCode = urlParams.get('tv');
 
+      // TV Display mode (for Chromecast)
       if (tvCode) {
-        console.log('TV Display mode:', tvCode);
-        return;
+        return; // TVDisplay component handles its own routing
       }
 
+      // Try to restore session
+      await restoreSession();
+
+      // Direct join link
       if (code && view === 'join') {
         setCurrentView('join');
         return;
@@ -38,6 +39,13 @@ function App() {
 
     init();
   }, []);
+
+  // Check if TV mode
+  const urlParams = new URLSearchParams(window.location.search);
+  const tvCode = urlParams.get('tv');
+  if (tvCode) {
+    return <TVDisplay />;
+  }
 
   const renderView = () => {
     switch (currentView) {

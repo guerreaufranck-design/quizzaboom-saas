@@ -2,36 +2,40 @@ import { create } from 'zustand';
 import { supabase } from '../services/supabase/client';
 import type { JokerType } from '../types/joker';
 import type { Question } from '../types/quiz';
-
-type Phase = 'announcement' | 'jokers' | 'question' | 'results';
+import { GamePhase, PHASE_DURATIONS, PHASE_ORDER, INITIAL_JOKER_INVENTORY } from '../types/gamePhases';
 
 interface PhaseData {
-  phase: Phase;
+  phase: GamePhase;
   questionIndex: number;
   stageNumber: number;
   timeRemaining: number;
   currentQuestion: Question | null;
+  themeTitle?: string;
 }
 
 interface StrategicQuizState {
-  currentPhase: Phase;
+  currentPhase: GamePhase;
   phaseTimeRemaining: number;
   currentStage: number;
   currentQuestionIndex: number;
   currentQuestion: Question | null;
+  currentThemeTitle: string | null;
   allQuestions: Question[];
+  
   playerInventory: {
     protection: number;
     block: number;
     steal: number;
     double_points: number;
-  } | null;
+  };
+  
   activeEffects: {
     protections: Record<string, boolean>;
     blocks: Record<string, boolean>;
     steals: Record<string, string>;
     doublePoints: Record<string, boolean>;
   };
+  
   selectedAnswer: string | null;
   hasAnswered: boolean;
   answerSubmittedAt: number | null;
@@ -46,18 +50,14 @@ interface StrategicQuizState {
 }
 
 export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
-  currentPhase: 'announcement',
-  phaseTimeRemaining: 12,
+  currentPhase: 'theme_announcement',
+  phaseTimeRemaining: 25,
   currentStage: 0,
   currentQuestionIndex: 0,
   currentQuestion: null,
+  currentThemeTitle: null,
   allQuestions: [],
-  playerInventory: {
-    protection: 2,
-    block: 10,
-    steal: 10,
-    double_points: 5,
-  },
+  playerInventory: INITIAL_JOKER_INVENTORY,
   activeEffects: {
     protections: {},
     blocks: {},
@@ -92,7 +92,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     const { allQuestions } = get();
     const question = allQuestions[data.questionIndex] || null;
     
-    console.log('📍 Phase data received:', data);
+    console.log('📍 Phase data received:', data.phase, data);
     
     set({
       currentPhase: data.phase,
@@ -100,9 +100,11 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       currentQuestionIndex: data.questionIndex,
       currentStage: data.stageNumber,
       currentQuestion: question,
+      currentThemeTitle: data.themeTitle || null,
     });
 
-    if (data.phase === 'announcement') {
+    // Reset pour nouvelle question (phase theme_announcement)
+    if (data.phase === 'theme_announcement') {
       set({
         activeEffects: {
           protections: {},
@@ -118,10 +120,15 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   },
 
   executeJokerAction: async (jokerType, targetPlayerId) => {
-    const { playerInventory, activeEffects } = get();
+    const { playerInventory, activeEffects, currentPhase } = get();
     const playerId = 'current-player-id';
     
-    if (!playerInventory || playerInventory[jokerType] <= 0) {
+    // Jokers can only be activated during theme_announcement phase
+    if (currentPhase !== 'theme_announcement') {
+      throw new Error('Jokers can only be activated during theme announcement');
+    }
+    
+    if (playerInventory[jokerType] <= 0) {
       throw new Error('No uses remaining for this joker');
     }
 
