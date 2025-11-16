@@ -75,7 +75,7 @@ export const HostDashboard: React.FC = () => {
         changePhase('theme_announcement');
       } else {
         setIsPlaying(false);
-        alert('🎉 Quiz completed! All questions answered.');
+        alert('🎉 Quiz completed!');
       }
     }
   };
@@ -96,7 +96,11 @@ export const HostDashboard: React.FC = () => {
     };
 
     console.log('📤 Broadcasting phase change:', phaseData);
-    broadcastPhaseChange(phaseData);
+    
+    // IMPORTANT: Passer le sessionCode au broadcaster
+    if (sessionCode) {
+      broadcastPhaseChange(sessionCode, phaseData);
+    }
   };
 
   const handleStartPause = () => {
@@ -112,7 +116,7 @@ export const HostDashboard: React.FC = () => {
 
   const handleManualPhaseChange = (phase: GamePhase) => {
     if (isPlaying) {
-      alert('⏸️ Pause the quiz first to manually change phases');
+      alert('⏸️ Pause the quiz first');
       return;
     }
     changePhase(phase);

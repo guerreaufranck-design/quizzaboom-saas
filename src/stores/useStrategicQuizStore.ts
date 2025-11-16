@@ -47,7 +47,7 @@ interface StrategicQuizState {
   submitAnswer: (answer: string) => Promise<void>;
   resetForNextQuestion: () => void;
   listenToPhaseChanges: (sessionCode: string) => void;
-  broadcastPhaseChange: (data: PhaseData) => Promise<void>;
+  broadcastPhaseChange: (sessionCode: string, data: PhaseData) => Promise<void>;
 }
 
 export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
@@ -211,25 +211,29 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   },
 
   listenToPhaseChanges: (sessionCode) => {
-    console.log('👂 Listening to phase changes for:', sessionCode);
+    console.log('👂 Listening to phase changes for session:', sessionCode);
     
-    const channel = supabase.channel(`phase_changes_${sessionCode}`);
+    // Utiliser le MÊME nom de channel que le broadcaster
+    const channelName = `quiz_session_${sessionCode}`;
+    const channel = supabase.channel(channelName);
 
     channel
       .on('broadcast', { event: 'phase_change' }, (payload) => {
-        console.log('📢 Phase change received:', payload);
+        console.log('📢 Phase change broadcast received:', payload);
         get().setPhaseData(payload.payload as PhaseData);
       })
       .subscribe((status) => {
-        console.log('📡 Phase channel status:', status);
+        console.log('📡 Phase listener status:', status, 'on channel:', channelName);
       });
   },
 
-  broadcastPhaseChange: async (data) => {
+  broadcastPhaseChange: async (sessionCode, data) => {
     try {
-      console.log('📤 Broadcasting phase change:', data);
+      console.log('📤 Broadcasting phase change to session:', sessionCode, data.phase);
       
-      const channel = supabase.channel('phase_broadcast');
+      // Utiliser le MÊME nom de channel que le listener
+      const channelName = `quiz_session_${sessionCode}`;
+      const channel = supabase.channel(channelName);
       
       await channel.send({
         type: 'broadcast',
@@ -237,7 +241,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         payload: data,
       });
 
-      console.log('✅ Phase broadcast sent');
+      console.log('✅ Phase broadcast sent to channel:', channelName);
     } catch (error) {
       console.error('❌ Failed to broadcast phase:', error);
     }
