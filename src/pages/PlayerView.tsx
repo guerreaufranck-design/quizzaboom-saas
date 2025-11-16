@@ -4,8 +4,6 @@ import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Shield, Ban, Coins, Star, Clock } from 'lucide-react';
-
-// ✅ Importer Eruda pour console mobile
 import eruda from 'eruda';
 
 export const PlayerView: React.FC = () => {
@@ -25,7 +23,6 @@ export const PlayerView: React.FC = () => {
     listenToPhaseChanges,
   } = useStrategicQuizStore();
 
-  // ✅ Activer Eruda (console mobile)
   useEffect(() => {
     eruda.init();
     console.log('🔧 Eruda console activated');
@@ -60,13 +57,13 @@ export const PlayerView: React.FC = () => {
   }, [currentQuiz?.id, sessionCode]);
 
   useEffect(() => {
-    console.log('🔄 Phase changed:', {
+    console.log('🔄 Phase state update:', {
       phase: currentPhase,
       time: phaseTimeRemaining,
       theme: currentThemeTitle,
       questionIndex: currentQuestion?.global_order,
     });
-  }, [currentPhase, phaseTimeRemaining]);
+  }, [currentPhase, phaseTimeRemaining, currentThemeTitle]);
 
   const handleJokerAction = async (jokerType: 'protection' | 'block' | 'steal' | 'double_points') => {
     try {
@@ -112,14 +109,15 @@ export const PlayerView: React.FC = () => {
   const jokersEnabled = currentPhase === 'theme_announcement';
   const answersEnabled = currentPhase === 'answer_selection' && !isBlocked && !hasAnswered;
 
-  if (!currentPlayer || !sessionCode) {
+  // ✅ État de chargement uniquement si vraiment pas de données
+  if (!currentPlayer || !sessionCode || !currentQuiz) {
     return (
       <div className="min-h-screen bg-qb-dark flex items-center justify-center">
         <div className="text-center">
           <div className="text-8xl mb-6 animate-pulse">⏳</div>
           <h2 className="text-3xl font-bold text-white mb-4">Loading Player Data...</h2>
           <p className="text-white/70">Please wait...</p>
-          <div className="mt-6 text-sm text-white/50">
+          <div className="mt-6 text-sm text-white/50 space-y-1">
             <p>Player: {currentPlayer ? '✅' : '❌'}</p>
             <p>Session: {sessionCode ? '✅' : '❌'}</p>
             <p>Quiz: {currentQuiz ? '✅' : '❌'}</p>
@@ -129,6 +127,8 @@ export const PlayerView: React.FC = () => {
     );
   }
 
+  // ✅ Afficher l'interface du quiz DÈS QU'ON A LES DONNÉES DE BASE
+  // Peu importe la phase ou le currentView
   return (
     <div className="min-h-screen bg-qb-dark">
       <PlayerHeader />
