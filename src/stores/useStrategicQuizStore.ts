@@ -1,37 +1,65 @@
 import { create } from 'zustand';
 import { supabase } from '../services/supabase/client';
 import type { JokerType } from '../types/joker';
+import type { Question } from '../types/quiz';
 
 type Phase = 'announcement' | 'jokers' | 'question' | 'results';
 
+interface PhaseData {
+  phase: Phase;
+  questionIndex: number;
+  stageNumber: number;
+  timeRemaining: number;
+  currentQuestion: Question | null;
+}
+
 interface StrategicQuizState {
+  // Current state
   currentPhase: Phase;
   phaseTimeRemaining: number;
-  currentTheme: string | null;
+  currentStage: number;
+  currentQuestionIndex: number;
+  currentQuestion: Question | null;
+  allQuestions: Question[];
+  
+  // Player inventory
   playerInventory: {
     protection: number;
     block: number;
     steal: number;
     double_points: number;
   } | null;
+  
+  // Active effects
   activeEffects: {
     protections: Record<string, boolean>;
     blocks: Record<string, boolean>;
-    steals: Record<string, string>; // victimId -> thiefId
+    steals: Record<string, string>;
     doublePoints: Record<string, boolean>;
   };
   
+  // Player answer
+  selectedAnswer: string | null;
+  hasAnswered: boolean;
+  answerSubmittedAt: number | null;
+  
   // Actions
-  setCurrentPhase: (phase: Phase) => void;
-  setPhaseTimeRemaining: (time: number) => void;
+  loadQuestions: (quizId: string) => Promise<void>;
+  setPhaseData: (data: PhaseData) => void;
   executeJokerAction: (jokerType: JokerType, targetPlayerId?: string) => Promise<void>;
-  broadcastPhaseChange: (data: { phase: Phase; questionIndex: number; timeRemaining: number }) => void;
+  submitAnswer: (answer: string) => Promise<void>;
+  resetForNextQuestion: () => void;
+  listenToPhaseChanges: (sessionCode: string) => void;
+  broadcastPhaseChange: (data: PhaseData) => void;
 }
 
 export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   currentPhase: 'announcement',
   phaseTimeRemaining: 12,
-  currentTheme: null,
+  currentStage: 0,
+  currentQuestionIndex: 0,
+  currentQuestion: null,
+  allQuestions: [],
   playerInventory: {
     protection: 2,
     block: 10,
@@ -44,17 +72,69 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     steals: {},
     doublePoints: {},
   },
+  selectedAnswer: null,
+  hasAnswered: false,
+  answerSubmittedAt: null,
 
-  setCurrentPhase: (phase) => set({ currentPhase: phase }),
-  
-  setPhaseTimeRemaining: (time) => set({ phaseTimeRemaining: time }),
+  loadQuestions: async (quizId) => {
+    try {
+      const { data, error } = await supabase
+        .from('ai_questions')
+        .select('*')
+        .eq('quiz_id', quizId)
+        .order('global_order', { ascending: true });
+
+      if (error) throw error;
+
+      console.log('✅ Loaded questions:', data.length);
+      set({ 
+        allQuestions: data as Question[],
+        currentQuestion: data[0] as Question,
+      });
+    } catch (error) {
+      console.error('Failed to load questions:', error);
+    }
+  },
+
+  setPhaseData: (data) => {
+    const { allQuestions } = get();
+    const question = allQuestions[data.questionIndex] || null;
+    
+    console.log('📍 Phase data received:', data);
+    
+    set({
+      currentPhase: data.phase,
+      phaseTimeRemaining: data.timeRemaining,
+      currentQuestionIndex: data.questionIndex,
+      currentStage: data.stageNumber,
+      currentQuestion: question,
+    });
+
+    // Reset effects on new question
+    if (data.phase === 'announcement') {
+      set({
+        activeEffects: {
+          protections: {},
+          blocks: {},
+          steals: {},
+          doublePoints: {},
+        },
+        selectedAnswer: null,
+        hasAnswered: false,
+        answerSubmittedAt: null,
+      });
+    }
+  },
 
   executeJokerAction: async (jokerType, targetPlayerId) => {
     const { playerInventory, activeEffects } = get();
+    const playerId = 'current-player-id'; // TODO: Get from auth
     
     if (!playerInventory || playerInventory[jokerType] <= 0) {
       throw new Error('No uses remaining for this joker');
     }
+
+    console.log('⚡ Executing joker:', jokerType, targetPlayerId);
 
     // Decrement inventory
     set({
@@ -64,9 +144,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       },
     });
 
-    // Apply effect
-    const playerId = 'current-player-id'; // TODO: Get from useQuizStore
-    
+    // Apply effect locally
     switch (jokerType) {
       case 'protection':
         set({
@@ -108,15 +186,61 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         }
         break;
     }
+
+    // TODO: Save to database
+  },
+
+  submitAnswer: async (answer) => {
+    const { hasAnswered, activeEffects, currentQuestion } = get();
+    const playerId = 'current-player-id'; // TODO: Get from auth
+    
+    if (hasAnswered) return;
+    if (activeEffects.blocks[playerId]) return; // Blocked!
+
+    const isCorrect = answer === currentQuestion?.correct_answer;
+    const timestamp = Date.now();
+
+    console.log('✅ Answer submitted:', answer, 'Correct:', isCorrect);
+
+    set({
+      selectedAnswer: answer,
+      hasAnswered: true,
+      answerSubmittedAt: timestamp,
+    });
+
+    // TODO: Save to database and calculate points
+  },
+
+  resetForNextQuestion: () => {
+    set({
+      selectedAnswer: null,
+      hasAnswered: false,
+      answerSubmittedAt: null,
+    });
+  },
+
+  listenToPhaseChanges: (sessionCode) => {
+    const channel = supabase.channel(`phase_changes_${sessionCode}`);
+
+    channel
+      .on('broadcast', { event: 'phase_change' }, (payload) => {
+        console.log('📢 Phase change received:', payload);
+        get().setPhaseData(payload.payload as PhaseData);
+      })
+      .subscribe((status) => {
+        console.log('📡 Phase channel status:', status);
+      });
   },
 
   broadcastPhaseChange: (data) => {
-    // Broadcast via Supabase Realtime
-    const channel = supabase.channel('quiz-phases');
+    const channel = supabase.channel('phase_broadcast');
+    
     channel.send({
       type: 'broadcast',
       event: 'phase_change',
       payload: data,
     });
+
+    console.log('📤 Broadcasting phase:', data);
   },
 }));
