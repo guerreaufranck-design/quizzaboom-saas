@@ -1,3 +1,63 @@
+// Language codes
+export type LanguageCode = 'en' | 'fr' | 'es' | 'de' | 'it' | 'pt';
+
+// Difficulty levels
+export type DifficultyLevel = 'easy' | 'medium' | 'hard';
+
+// Question types
+export type QuestionType = 'multiple_choice' | 'true_false' | 'open_ended';
+
+// Question interface
+export interface Question {
+  id: string;
+  quiz_id: string;
+  stage_id: string;
+  stage_order: number;
+  global_order: number;
+  question_text: string;
+  question_type: QuestionType;
+  options?: string[];
+  correct_answer: string;
+  explanation?: string;
+  fun_fact?: string;
+  points: number;
+  time_limit: number;
+  difficulty: DifficultyLevel;
+  created_at: string;
+}
+
+// Quiz generation request
+export interface QuizGenRequest {
+  theme: string;
+  duration: number;
+  difficulty: DifficultyLevel;
+  language: LanguageCode;
+  includeJokers: boolean;
+}
+
+// AI Quiz Response
+export interface AIQuizResponse {
+  title: string;
+  description: string;
+  estimatedDuration: number;
+  stages: Array<{
+    stageNumber: number;
+    theme: string;
+    questions: Array<{
+      question_text: string;
+      question_type: string;
+      options: string[];
+      correct_answer: string;
+      explanation: string;
+      fun_fact: string;
+      points: number;
+      time_limit: number;
+      difficulty: string;
+    }>;
+  }>;
+}
+
+// Quiz interface
 export interface Quiz {
   id: string;
   creator_id: string;
@@ -7,8 +67,8 @@ export interface Quiz {
   questions_per_stage: number;
   has_joker_rounds: boolean;
   stage_themes: string[];
-  language: 'en' | 'fr' | 'es' | 'de' | 'it' | 'pt';
-  difficulty: 'easy' | 'medium' | 'hard';
+  language: LanguageCode;
+  difficulty: DifficultyLevel;
   estimated_duration: number;
   is_published: boolean;
   is_public: boolean;
@@ -18,33 +78,13 @@ export interface Quiz {
   updated_at: string;
 }
 
-export interface Question {
-  id: string;
-  quiz_id: string;
-  stage_id: string;
-  question_text: string;
-  question_type: 'multiple_choice' | 'true_false';
-  options: string[];
-  correct_answer: string;
-  explanation: string;
-  fun_fact: string;
-  points: number;
-  time_limit: number;
-  stage_order: number;
-  global_order: number;
-  is_joker_question: boolean;
-  joker_type?: string;
-  image_url?: string;
-  audio_url?: string;
-  video_url?: string;
-}
-
+// Quiz Session
 export interface QuizSession {
   id: string;
   quiz_id: string;
   session_code: string;
   host_id: string;
-  status: 'waiting' | 'playing' | 'finished';
+  status: 'waiting' | 'playing' | 'completed';
   current_stage: number;
   current_question: number;
   unlimited_players: boolean;
@@ -61,12 +101,13 @@ export interface QuizSession {
     question: number;
     results: number;
   };
-  started_at?: string;
-  finished_at?: string;
   created_at: string;
   updated_at: string;
+  started_at?: string;
+  completed_at?: string;
 }
 
+// Player
 export interface Player {
   id: string;
   session_id: string;
@@ -85,33 +126,11 @@ export interface Player {
   is_connected: boolean;
   strategic_actions_taken: number;
   successful_strategic_actions: number;
-  threat_level: 'low' | 'medium' | 'high' | 'extreme';
+  threat_level: 'low' | 'medium' | 'high';
   protection_uses_remaining: number;
   block_uses_remaining: number;
   steal_uses_remaining: number;
   double_points_uses_remaining: number;
   joined_at: string;
   last_activity: string;
-}
-
-export interface QuizGenRequest {
-  theme: string;
-  duration: number;
-  difficulty: 'easy' | 'medium' | 'hard';
-  language: 'en' | 'fr' | 'es' | 'de' | 'it' | 'pt';
-  includeJokers: boolean;
-  categories?: string[];
-}
-
-export interface AIQuizResponse {
-  title: string;
-  description: string;
-  stages: QuizStage[];
-  estimatedDuration: number;
-}
-
-export interface QuizStage {
-  stageNumber: number;
-  theme: string;
-  questions: Question[];
 }
