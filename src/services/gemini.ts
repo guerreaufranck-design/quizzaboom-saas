@@ -79,13 +79,29 @@ export const generateMultiStageQuiz = async (
 Generate EXACTLY ${structure.totalQuestions} questions organized in ${structure.totalStages} stages.
 Each stage has ${structure.questionsPerStage} questions.
 
-CRITICAL REQUIREMENTS:
-1. Each question must have a SPECIFIC MICRO-THEME (1-3 words) that describes what it's about
-   Examples: "French Cheese", "Roman History", "NBA Players", "Ocean Animals", "Renaissance Art"
-2. The micro-theme should be SPECIFIC to that question, not generic
-3. Use real facts, real answers (not "Option A/B/C/D")
-4. Difficulty: ${request.difficulty}
-5. Language: ${fullLanguage}
+CRITICAL MICRO-THEME RULES:
+1. The micro_theme must be a GENERAL CATEGORY (2-4 words maximum)
+2. NEVER use specific terms that appear in the answer
+3. Be BROAD, not specific
+
+EXAMPLES:
+✅ GOOD micro_themes:
+- Question about "Capgras Syndrome" → micro_theme: "Medical Syndromes" (NOT "Capgras Syndrome")
+- Question about "Camembert cheese" → micro_theme: "French Cheeses" (NOT "Camembert")
+- Question about "Tour Eiffel" → micro_theme: "Paris Landmarks" (NOT "Eiffel Tower")
+- Question about "1969 Moon Landing" → micro_theme: "Space Exploration" (NOT "Moon Landing")
+- Question about "Vincent Van Gogh" → micro_theme: "Famous Painters" (NOT "Van Gogh")
+
+❌ BAD micro_themes (TOO SPECIFIC):
+- "Capgras Syndrome" when answer contains "Capgras"
+- "Eiffel Tower" when answer is about the tower
+- "1969" when asking about the year
+
+REQUIREMENTS:
+- Use real facts, real answers (not "Option A/B/C/D")
+- Difficulty: ${request.difficulty}
+- Language: ${fullLanguage}
+- Each micro_theme should be a category that groups 5-10 similar questions
 
 Return ONLY valid JSON (no markdown):
 {
@@ -107,7 +123,7 @@ Return ONLY valid JSON (no markdown):
           "points": 100,
           "time_limit": 20,
           "difficulty": "${request.difficulty}",
-          "micro_theme": "Specific 1-3 word theme for THIS question"
+          "micro_theme": "GENERAL category (2-4 words, no specific terms from answer)"
         }
       ]
     }

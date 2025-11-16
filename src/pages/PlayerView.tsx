@@ -23,28 +23,49 @@ export const PlayerView: React.FC = () => {
   } = useStrategicQuizStore();
 
   useEffect(() => {
-    console.log('📱 PlayerView mounted with:', {
+    console.log('📱 PlayerView mounted');
+    console.log('📊 Current state:', {
       hasQuiz: !!currentQuiz,
+      quizId: currentQuiz?.id,
       hasSession: !!sessionCode,
+      sessionCode,
       hasPlayer: !!currentPlayer,
+      playerId: currentPlayer?.id,
       currentPhase,
+      phaseTimeRemaining,
     });
     
     if (currentQuiz?.id) {
       console.log('📚 Loading questions for quiz:', currentQuiz.id);
       loadQuestions(currentQuiz.id);
+    } else {
+      console.warn('⚠️ No quiz ID, cannot load questions');
     }
     
     if (sessionCode) {
       console.log('👂 Setting up phase listener for session:', sessionCode);
       listenToPhaseChanges(sessionCode);
+    } else {
+      console.warn('⚠️ No session code, cannot listen to phases');
     }
-  }, [currentQuiz?.id, sessionCode]); // ✅ Ne PAS appeler restoreSession ici
+  }, [currentQuiz?.id, sessionCode]);
+
+  // Log phase changes
+  useEffect(() => {
+    console.log('🔄 Phase changed:', {
+      phase: currentPhase,
+      time: phaseTimeRemaining,
+      theme: currentThemeTitle,
+      questionIndex: currentQuestion?.global_order,
+    });
+  }, [currentPhase, phaseTimeRemaining]);
 
   const handleJokerAction = async (jokerType: 'protection' | 'block' | 'steal' | 'double_points') => {
     try {
+      console.log('🃏 Activating joker:', jokerType);
       await executeJokerAction(jokerType);
     } catch (error: any) {
+      console.error('❌ Joker error:', error);
       alert(error.message);
     }
   };
@@ -53,6 +74,7 @@ export const PlayerView: React.FC = () => {
     const optionIndex = ['A', 'B', 'C', 'D'].indexOf(letter);
     const answer = currentQuestion?.options?.[optionIndex];
     if (answer) {
+      console.log('✅ Submitting answer:', letter, answer);
       await submitAnswer(answer);
     }
   };
@@ -82,11 +104,34 @@ export const PlayerView: React.FC = () => {
   const jokersEnabled = currentPhase === 'theme_announcement';
   const answersEnabled = currentPhase === 'answer_selection' && !isBlocked && !hasAnswered;
 
+  // Si pas de données de base, afficher un état de chargement
+  if (!currentPlayer || !sessionCode) {
+    return (
+      <div className="min-h-screen bg-qb-dark flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-8xl mb-6 animate-pulse">⏳</div>
+          <h2 className="text-3xl font-bold text-white mb-4">Loading Player Data...</h2>
+          <p className="text-white/70">Please wait...</p>
+          <div className="mt-6 text-sm text-white/50">
+            <p>Player: {currentPlayer ? '✅' : '❌'}</p>
+            <p>Session: {sessionCode ? '✅' : '❌'}</p>
+            <p>Quiz: {currentQuiz ? '✅' : '❌'}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-qb-dark">
       <PlayerHeader />
       
       <div className="max-w-2xl mx-auto p-4 space-y-4">
+        {/* Debug Info (à retirer en prod) */}
+        <div className="text-xs text-white/30 text-center">
+          Phase: {currentPhase} | Time: {phaseTimeRemaining}s | Theme: {currentThemeTitle || 'N/A'}
+        </div>
+
         {/* Timer + Phase Indicator */}
         <Card className="p-4 text-center bg-gradient-to-br from-qb-purple to-qb-cyan">
           <div className="text-xs text-white/70 mb-1 uppercase tracking-wider">
@@ -136,7 +181,7 @@ export const PlayerView: React.FC = () => {
         {/* Joker Buttons */}
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
-            Jokers {jokersEnabled ? '(Choose Now!)' : '(Wait for theme)'}
+            Jokers {jokersEnabled ? '✅ Choose Now!' : '🔒 Wait for theme'}
           </h3>
           <div className="grid grid-cols-2 gap-3">
             <Button
@@ -188,7 +233,7 @@ export const PlayerView: React.FC = () => {
         {/* Answer Buttons */}
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
-            Answers {answersEnabled ? '(Select Now!)' : '(Wait for answer time)'}
+            Answers {answersEnabled ? '✅ Select Now!' : '🔒 Wait for answer time'}
           </h3>
           <div className="grid grid-cols-2 gap-3">
             {['A', 'B', 'C', 'D'].map((letter) => (
