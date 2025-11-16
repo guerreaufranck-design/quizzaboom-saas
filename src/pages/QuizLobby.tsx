@@ -3,7 +3,7 @@ import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { QRCodeDisplay } from '../components/ui/QRCodeDisplay';
-import { ArrowLeft, Users, Play, Copy, Check, Share2 } from 'lucide-react';
+import { ArrowLeft, Users, Play, Copy, Check, Share2, Clock } from 'lucide-react';
 
 export const QuizLobby: React.FC = () => {
   const {
@@ -16,11 +16,18 @@ export const QuizLobby: React.FC = () => {
     startSession,
     setupRealtimeSubscription,
     cleanupRealtime,
+    loadPlayers,
   } = useQuizStore();
 
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    // Load players immediately
+    if (currentSession?.id) {
+      loadPlayers(currentSession.id);
+    }
+
+    // Setup realtime subscription
     if (sessionCode) {
       setupRealtimeSubscription(sessionCode);
     }
@@ -28,7 +35,7 @@ export const QuizLobby: React.FC = () => {
     return () => {
       cleanupRealtime();
     };
-  }, [sessionCode, setupRealtimeSubscription, cleanupRealtime]);
+  }, [sessionCode, currentSession?.id]);
 
   const copySessionCode = () => {
     if (sessionCode) {
@@ -62,6 +69,95 @@ export const QuizLobby: React.FC = () => {
     );
   }
 
+  // PLAYER VIEW - Simplified lobby without controls
+  if (!isHost) {
+    return (
+      <div className="min-h-screen bg-qb-dark py-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto space-y-8">
+            {/* Quiz Info */}
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-white mb-2">{currentQuiz.title}</h1>
+              <p className="text-white/70 mb-4">{currentQuiz.description}</p>
+              <div className="inline-flex items-center gap-2 px-6 py-3 bg-qb-cyan/20 border border-qb-cyan rounded-full">
+                <span className="text-qb-cyan font-mono font-bold text-xl">{sessionCode}</span>
+              </div>
+            </div>
+
+            {/* Waiting Message */}
+            <Card className="p-12 text-center bg-gradient-to-br from-qb-purple/20 to-qb-cyan/20">
+              <div className="text-6xl mb-4">⏳</div>
+              <h2 className="text-3xl font-bold text-white mb-4">
+                Waiting for Host to Start...
+              </h2>
+              <p className="text-xl text-white/70 mb-6">
+                Get ready! The quiz will begin soon.
+              </p>
+              <div className="flex items-center justify-center gap-2 text-white/50">
+                <Clock className="w-5 h-5 animate-pulse" />
+                <span>Stay connected</span>
+              </div>
+            </Card>
+
+            {/* Players Grid */}
+            <Card gradient className="p-8">
+              <h3 className="text-2xl font-bold text-white mb-6 text-center">
+                Players in Lobby ({players.length})
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {players.map((player) => (
+                  <div
+                    key={player.id}
+                    className="p-4 bg-qb-darker rounded-xl text-center"
+                  >
+                    <div className="text-4xl mb-2">{player.avatar_emoji}</div>
+                    <div className="font-bold text-white text-sm truncate">
+                      {player.player_name}
+                    </div>
+                    <div
+                      className="w-2 h-2 rounded-full mx-auto mt-2"
+                      style={{
+                        backgroundColor: player.is_connected ? '#10B981' : '#EF4444',
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Quiz Details */}
+            <Card className="p-6">
+              <h3 className="text-lg font-bold text-white mb-4 text-center">Quiz Info</h3>
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <div className="text-3xl font-bold text-qb-cyan">{currentQuiz.estimated_duration}</div>
+                  <div className="text-sm text-white/70">Minutes</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-qb-magenta">{currentQuiz.total_stages}</div>
+                  <div className="text-sm text-white/70">Stages</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-qb-purple">
+                    ~{currentQuiz.total_stages * currentQuiz.questions_per_stage}
+                  </div>
+                  <div className="text-sm text-white/70">Questions</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-qb-yellow capitalize">
+                    {currentQuiz.difficulty}
+                  </div>
+                  <div className="text-sm text-white/70">Difficulty</div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // HOST VIEW - Full control lobby
   return (
     <div className="min-h-screen bg-qb-dark py-12">
       <div className="container mx-auto px-4">
@@ -69,32 +165,28 @@ export const QuizLobby: React.FC = () => {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              {isHost && (
-                <Button
-                  variant="ghost"
-                  onClick={() => setCurrentView('home')}
-                  icon={<ArrowLeft />}
-                >
-                  Cancel
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                onClick={() => setCurrentView('home')}
+                icon={<ArrowLeft />}
+              >
+                Cancel
+              </Button>
               <div>
                 <h1 className="text-4xl font-bold text-white">{currentQuiz.title}</h1>
                 <p className="text-white/70 mt-2">{currentQuiz.description}</p>
               </div>
             </div>
 
-            {isHost && (
-              <Button
-                size="xl"
-                gradient
-                onClick={handleStartQuiz}
-                icon={<Play />}
-                disabled={players.length === 0}
-              >
-                Start Quiz
-              </Button>
-            )}
+            <Button
+              size="xl"
+              gradient
+              onClick={handleStartQuiz}
+              icon={<Play />}
+              disabled={players.length === 0}
+            >
+              Start Quiz
+            </Button>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8">

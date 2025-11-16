@@ -10,32 +10,34 @@ import { HostDashboard } from './pages/HostDashboard';
 
 function App() {
   const { initialize } = useAuthStore();
-  const { currentView, setCurrentView, isHost } = useQuizStore();
+  const { currentView, setCurrentView, isHost, restoreSession } = useQuizStore();
 
   useEffect(() => {
-    initialize();
+    const init = async () => {
+      await initialize();
+      
+      // Try to restore session first
+      await restoreSession();
 
-    // Detect URL parameters on page load
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const view = urlParams.get('view');
-    const tvCode = urlParams.get('tv');
+      // Then check URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const view = urlParams.get('view');
+      const tvCode = urlParams.get('tv');
 
-    // Priority 1: TV Display
-    if (tvCode) {
-      // TODO: Set TV display mode
-      console.log('TV Display mode:', tvCode);
-      return;
-    }
+      if (tvCode) {
+        console.log('TV Display mode:', tvCode);
+        return;
+      }
 
-    // Priority 2: Join via QR code
-    if (code && view === 'join') {
-      setCurrentView('join');
-      return;
-    }
+      if (code && view === 'join') {
+        setCurrentView('join');
+        return;
+      }
+    };
 
-    // Default: stay on current view or home
-  }, [initialize, setCurrentView]);
+    init();
+  }, []);
 
   const renderView = () => {
     switch (currentView) {
@@ -48,7 +50,6 @@ function App() {
       case 'lobby':
         return <QuizLobby />;
       case 'playing':
-        // Host voit le dashboard, joueurs voient PlayerView
         return isHost ? <HostDashboard /> : <PlayerView />;
       default:
         return <HomePage />;
