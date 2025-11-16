@@ -51,7 +51,11 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   realtimeChannel: null,
   connectionStatus: 'disconnected',
 
-  setCurrentView: (view) => set({ currentView: view }),
+  setCurrentView: (view) => {
+    console.log('📍 View changed to:', view);
+    set({ currentView: view });
+    get().saveSessionState();
+  },
   
   setError: (error) => set({ error }),
 
@@ -65,17 +69,23 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       sessionId: state.currentSession?.id,
       playerId: state.currentPlayer?.id,
     };
+    console.log('💾 Saving session state:', sessionData);
     sessionStorage.setItem('quizzaboom_session', JSON.stringify(sessionData));
   },
 
   restoreSession: async () => {
     const saved = sessionStorage.getItem('quizzaboom_session');
-    if (!saved) return;
+    console.log('🔄 Attempting to restore session:', saved);
+    
+    if (!saved) {
+      console.log('❌ No saved session found');
+      return;
+    }
 
     try {
       const sessionData = JSON.parse(saved);
+      console.log('📦 Parsed session data:', sessionData);
       
-      // Restore quiz
       if (sessionData.quizId) {
         const { data: quiz } = await supabase
           .from('ai_generated_quizzes')
@@ -83,10 +93,12 @@ export const useQuizStore = create<QuizState>((set, get) => ({
           .eq('id', sessionData.quizId)
           .single();
         
-        if (quiz) set({ currentQuiz: quiz as Quiz });
+        if (quiz) {
+          console.log('✅ Quiz restored:', quiz.title);
+          set({ currentQuiz: quiz as Quiz });
+        }
       }
 
-      // Restore session
       if (sessionData.sessionId) {
         const { data: session } = await supabase
           .from('quiz_sessions')
@@ -95,22 +107,22 @@ export const useQuizStore = create<QuizState>((set, get) => ({
           .single();
         
         if (session) {
+          console.log('✅ Session restored:', session.session_code);
           set({ 
             currentSession: session as QuizSession,
             sessionCode: sessionData.sessionCode,
           });
           
-          // Load players
+          console.log('🔄 Loading players...');
           await get().loadPlayers(sessionData.sessionId);
           
-          // Setup realtime
           if (sessionData.sessionCode) {
+            console.log('🔄 Setting up realtime...');
             get().setupRealtimeSubscription(sessionData.sessionCode);
           }
         }
       }
 
-      // Restore player
       if (sessionData.playerId) {
         const { data: player } = await supabase
           .from('session_players')
@@ -118,17 +130,21 @@ export const useQuizStore = create<QuizState>((set, get) => ({
           .eq('id', sessionData.playerId)
           .single();
         
-        if (player) set({ currentPlayer: player as Player });
+        if (player) {
+          console.log('✅ Player restored:', player.player_name);
+          set({ currentPlayer: player as Player });
+        }
       }
 
-      // Restore state
       set({
         isHost: sessionData.isHost,
-        currentView: sessionData.currentView,
+        currentView: sessionData.currentView || 'lobby',
       });
 
+      console.log('✅ Session fully restored!');
+
     } catch (error) {
-      console.error('Failed to restore session:', error);
+      console.error('❌ Failed to restore session:', error);
       sessionStorage.removeItem('quizzaboom_session');
     }
   },
@@ -253,6 +269,8 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   joinSession: async (code, playerName, email) => {
     set({ isLoading: true, error: null });
     try {
+      console.log('🎮 Joining session:', code);
+      
       const { data: session, error: sessionError } = await supabase
         .from('quiz_sessions')
         .select('*')
@@ -262,6 +280,8 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       if (sessionError) throw new Error('Session not found');
       if (session.status !== 'waiting') throw new Error('Session already started');
 
+      console.log('✅ Session found:', session);
+
       const { data: quiz, error: quizError } = await supabase
         .from('ai_generated_quizzes')
         .select('*')
@@ -269,6 +289,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         .single();
 
       if (quizError) throw new Error('Quiz not found');
+      console.log('✅ Quiz found:', quiz.title);
 
       const player: Partial<Player> = {
         id: uuidv4(),
@@ -304,8 +325,16 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         .single();
 
       if (playerError) throw playerError;
+      console.log('✅ Player created:', playerData.player_name);
 
-      await get().loadPlayers(session.id);
+      // Load ALL players
+      const { data: allPlayers } = await supabase
+        .from('session_players')
+        .select('*')
+        .eq('session_id', session.id)
+        .order('joined_at', { ascending: true });
+
+      console.log('👥 All players loaded:', allPlayers?.length);
 
       set({
         currentSession: session as QuizSession,
@@ -313,11 +342,16 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         currentPlayer: playerData as Player,
         sessionCode: code,
         isHost: false,
+        players: (allPlayers as Player[]) || [],
+        totalPlayers: allPlayers?.length || 0,
         isLoading: false,
+        currentView: 'lobby',
       });
 
       get().saveSessionState();
-      console.log('✅ Player joined successfully');
+      get().setupRealtimeSubscription(code);
+
+      console.log('✅ Join complete!');
     } catch (error: any) {
       console.error('❌ Join error:', error);
       set({ error: error.message, isLoading: false });
@@ -326,6 +360,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   },
 
   loadPlayers: async (sessionId) => {
+    console.log('👥 Loading players for session:', sessionId);
     try {
       const { data, error } = await supabase
         .from('session_players')
@@ -335,12 +370,13 @@ export const useQuizStore = create<QuizState>((set, get) => ({
 
       if (error) throw error;
 
+      console.log('✅ Players loaded:', data?.length);
       set({
         players: (data as Player[]) || [],
         totalPlayers: data?.length || 0,
       });
     } catch (error) {
-      console.error('Failed to load players:', error);
+      console.error('❌ Failed to load players:', error);
     }
   },
 
@@ -360,25 +396,42 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   },
 
   setupRealtimeSubscription: (sessionCode) => {
-    const { currentSession } = get();
-    if (!currentSession) return;
+    const { currentSession, realtimeChannel } = get();
+    
+    // Cleanup existing channel
+    if (realtimeChannel) {
+      console.log('🧹 Cleaning up old channel');
+      supabase.removeChannel(realtimeChannel);
+    }
+
+    if (!currentSession) {
+      console.log('❌ No current session for realtime');
+      return;
+    }
+
+    console.log('🔌 Setting up realtime for session:', sessionCode);
 
     const channel = supabase.channel(`quiz_session_${sessionCode}`);
 
     channel
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'session_players',
-        filter: `session_id=eq.${currentSession.id}`,
-      }, (payload) => {
-        console.log('🔄 Player update:', payload);
-        get().loadPlayers(currentSession.id);
-      })
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'session_players',
+          filter: `session_id=eq.${currentSession.id}`,
+        },
+        (payload) => {
+          console.log('🔄 Realtime player event:', payload.eventType, payload);
+          get().loadPlayers(currentSession.id);
+        }
+      )
       .on('broadcast', { event: 'phase_change' }, (payload) => {
-        console.log('Phase change:', payload);
+        console.log('📢 Phase change broadcast:', payload);
       })
       .subscribe((status) => {
+        console.log('📡 Realtime status:', status);
         set({ connectionStatus: status === 'SUBSCRIBED' ? 'connected' : 'connecting' });
       });
 
@@ -388,6 +441,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   cleanupRealtime: () => {
     const { realtimeChannel } = get();
     if (realtimeChannel) {
+      console.log('🧹 Cleaning up realtime');
       supabase.removeChannel(realtimeChannel);
       set({ realtimeChannel: null, connectionStatus: 'disconnected' });
     }
