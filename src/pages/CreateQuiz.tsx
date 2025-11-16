@@ -2,36 +2,42 @@ import React, { useState } from 'react';
 import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { ArrowLeft, Sparkles, Clock, Target, Globe, Zap } from 'lucide-react';
 import { calculateQuizStructure } from '../services/gemini';
+import { THEMES, THEME_MODES, type ThemeCategory, type ThemeMode } from '../types/themes';
 import type { QuizGenRequest } from '../types/quiz';
 
 export const CreateQuiz: React.FC = () => {
   const { generateQuiz, createSession, setCurrentView, isLoading } = useQuizStore();
   
-  const [formData, setFormData] = useState<QuizGenRequest>({
-    theme: '',
+  const [selectedTheme, setSelectedTheme] = useState<ThemeCategory>('general');
+  const [selectedMode, setSelectedMode] = useState<ThemeMode>('standard');
+  const [formData, setFormData] = useState({
     duration: 30,
-    difficulty: 'medium',
-    language: 'en',
+    difficulty: 'medium' as 'easy' | 'medium' | 'hard',
+    language: 'en' as QuizGenRequest['language'],
     includeJokers: true,
   });
 
   const quizStructure = calculateQuizStructure(formData.duration);
+  const currentTheme = THEMES.find(t => t.category === selectedTheme);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.theme.trim()) {
-      alert('Please enter a quiz theme');
-      return;
-    }
 
     try {
       console.log('🎨 Generating quiz with AI...');
-      const quiz = await generateQuiz(formData);
+      
+      const request: QuizGenRequest = {
+        theme: `${currentTheme?.label} - ${THEME_MODES[selectedMode].label}`,
+        duration: formData.duration,
+        difficulty: formData.difficulty,
+        language: formData.language,
+        includeJokers: formData.includeJokers,
+      };
+      
+      const quiz = await generateQuiz(request);
       
       console.log('📝 Creating session...');
       await createSession(quiz.id);
@@ -47,7 +53,7 @@ export const CreateQuiz: React.FC = () => {
   return (
     <div className="min-h-screen bg-qb-dark py-12">
       <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
             <Button
@@ -64,23 +70,74 @@ export const CreateQuiz: React.FC = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Theme */}
+            {/* Theme Selection */}
             <Card gradient className="p-6">
-              <label className="block text-white font-bold mb-2 flex items-center gap-2">
+              <label className="block text-white font-bold mb-4 flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-qb-magenta" />
-                Quiz Theme *
+                Choose Quiz Theme *
               </label>
-              <Input
-                type="text"
-                value={formData.theme}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, theme: e.target.value })}
-                placeholder="e.g., 'World History', 'Pop Culture 2000s', 'Science & Nature'"
-                required
-                disabled={isLoading}
-              />
-              <p className="text-sm text-white/60 mt-2">
-                💡 Tip: Be specific! "80s Rock Music" works better than just "Music"
-              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {THEMES.map((theme) => (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => setSelectedTheme(theme.category)}
+                    disabled={isLoading}
+                    className={`p-6 rounded-xl border-2 transition-all ${
+                      selectedTheme === theme.category
+                        ? 'bg-qb-cyan border-qb-cyan scale-105 shadow-lg shadow-qb-cyan/50'
+                        : 'bg-qb-darker border-white/20 hover:border-qb-cyan hover:scale-105'
+                    }`}
+                  >
+                    <div className="text-5xl mb-3">{theme.emoji}</div>
+                    <div className="text-white font-bold text-lg mb-1">{theme.label}</div>
+                    <div className="text-xs text-white/60">{theme.description}</div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Sub-themes Preview */}
+              {currentTheme && currentTheme.subThemes && (
+                <div className="mt-4 p-4 bg-qb-darker rounded-lg">
+                  <div className="text-sm text-white/70 mb-2">This quiz will include:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {currentTheme.subThemes.map((subTheme) => (
+                      <span
+                        key={subTheme}
+                        className="px-3 py-1 bg-qb-purple/30 border border-qb-purple rounded-full text-xs text-white"
+                      >
+                        {subTheme}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card>
+
+            {/* Mode Selection */}
+            <Card gradient className="p-6">
+              <label className="block text-white font-bold mb-4">
+                🎭 Quiz Mode
+              </label>
+              <div className="grid grid-cols-3 gap-4">
+                {Object.values(THEME_MODES).map((mode) => (
+                  <button
+                    key={mode.id}
+                    type="button"
+                    onClick={() => setSelectedMode(mode.id as ThemeMode)}
+                    disabled={isLoading}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      selectedMode === mode.id
+                        ? 'bg-qb-magenta border-qb-magenta scale-105'
+                        : 'bg-qb-darker border-white/20 hover:border-qb-magenta'
+                    }`}
+                  >
+                    <div className="text-4xl mb-2">{mode.emoji}</div>
+                    <div className="text-white font-bold">{mode.label}</div>
+                    <div className="text-xs text-white/60 mt-1">{mode.description}</div>
+                  </button>
+                ))}
+              </div>
             </Card>
 
             {/* Duration */}
@@ -101,7 +158,6 @@ export const CreateQuiz: React.FC = () => {
                 <option value="90">90 minutes (~60 questions)</option>
               </Select>
               
-              {/* Quiz Structure Preview */}
               <div className="mt-4 p-4 bg-qb-darker rounded-lg">
                 <div className="text-sm text-white/70 mb-2">Generated Quiz Structure:</div>
                 <div className="grid grid-cols-3 gap-4 text-center">
@@ -117,9 +173,6 @@ export const CreateQuiz: React.FC = () => {
                     <div className="text-3xl font-bold text-qb-magenta">{quizStructure.questionsPerStage}</div>
                     <div className="text-xs text-white/60">Per Stage</div>
                   </div>
-                </div>
-                <div className="text-xs text-white/50 mt-3 text-center">
-                  ⏱️ Each question takes ~1.5 minutes (theme, question, answers, results, break)
                 </div>
               </div>
             </Card>
@@ -143,8 +196,8 @@ export const CreateQuiz: React.FC = () => {
                     disabled={isLoading}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       formData.difficulty === level.value
-                        ? 'bg-qb-cyan border-qb-cyan scale-105'
-                        : 'bg-qb-darker border-white/20 hover:border-qb-cyan'
+                        ? 'bg-qb-yellow border-qb-yellow scale-105'
+                        : 'bg-qb-darker border-white/20 hover:border-qb-yellow'
                     }`}
                   >
                     <div className="text-3xl mb-2">{level.emoji}</div>
@@ -198,31 +251,35 @@ export const CreateQuiz: React.FC = () => {
             </Card>
 
             {/* Submit */}
-            <div className="flex gap-4">
-              <Button
-                type="submit"
-                size="xl"
-                fullWidth
-                gradient
-                disabled={isLoading}
-                icon={<Sparkles />}
-              >
-                {isLoading ? 'Generating Quiz with AI...' : `Generate ${quizStructure.totalQuestions} Questions`}
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              size="xl"
+              fullWidth
+              gradient
+              disabled={isLoading}
+              icon={<Sparkles />}
+            >
+              {isLoading ? 'Generating Quiz with AI...' : `Generate ${quizStructure.totalQuestions} Questions`}
+            </Button>
           </form>
 
-          {/* Info Card */}
+          {/* Preview */}
           <Card className="mt-8 p-6 bg-gradient-to-br from-qb-purple/20 to-qb-cyan/20 border border-white/10">
-            <h3 className="text-lg font-bold text-white mb-3">🎯 How it works:</h3>
-            <ul className="space-y-2 text-sm text-white/80">
-              <li>✨ <strong>AI generates</strong> {quizStructure.totalQuestions} unique, high-quality questions</li>
-              <li>📊 <strong>Organized in</strong> {quizStructure.totalStages} themed stages ({quizStructure.questionsPerStage} questions each)</li>
-              <li>⏱️ <strong>5 phases per question:</strong> Theme (25s) → Question (15s) → Answers (20s) → Results (20s) → Break (6s)</li>
-              <li>🎮 <strong>Strategic gameplay</strong> with jokers for competitive fun</li>
-              <li>📱 <strong>Players join</strong> via QR code or session code</li>
-              <li>📺 <strong>TV display</strong> for big screen (Chromecast compatible)</li>
-            </ul>
+            <h3 className="text-lg font-bold text-white mb-3">🎯 Your Quiz:</h3>
+            <div className="space-y-2 text-sm text-white/80">
+              <div className="flex items-center gap-2">
+                <span className="text-3xl">{currentTheme?.emoji}</span>
+                <div>
+                  <div className="font-bold text-white">{currentTheme?.label}</div>
+                  <div className="text-white/60">{THEME_MODES[selectedMode].label}</div>
+                </div>
+              </div>
+              <div className="border-t border-white/10 my-3" />
+              <p>✨ <strong>AI generates</strong> {quizStructure.totalQuestions} unique questions</p>
+              <p>📊 <strong>Organized in</strong> {quizStructure.totalStages} themed stages</p>
+              <p>⏱️ <strong>5 phases per question:</strong> Theme (25s) → Question (15s) → Answers (20s) → Results (20s) → Break (6s)</p>
+              <p>🎮 <strong>Strategic gameplay</strong> {formData.includeJokers ? 'enabled' : 'disabled'}</p>
+            </div>
           </Card>
         </div>
       </div>
