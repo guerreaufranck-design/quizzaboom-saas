@@ -3,7 +3,7 @@ import { supabase } from '../services/supabase/client';
 import type { JokerType } from '../types/joker';
 import type { Question } from '../types/quiz';
 import type { GamePhase } from '../types/gamePhases';
-import { PHASE_DURATIONS, INITIAL_JOKER_INVENTORY } from '../types/gamePhases';
+import { INITIAL_JOKER_INVENTORY } from '../types/gamePhases';
 
 interface PhaseData {
   phase: GamePhase;
