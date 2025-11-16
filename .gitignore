@@ -1,0 +1,22 @@
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Dependencies
+node_modules
+
+# Build
+dist
+
+# MacOS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode
+.idea

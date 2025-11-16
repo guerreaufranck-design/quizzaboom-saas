@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-qb-dark text-white font-sans;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    @apply bg-gradient-to-r from-qb-magenta via-qb-purple to-qb-cyan;
+  }
+  
+  .gradient-secondary {
+    @apply bg-gradient-to-br from-qb-orange via-qb-magenta to-qb-purple;
+  }
+}
