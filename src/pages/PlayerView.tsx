@@ -5,6 +5,9 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Shield, Ban, Coins, Star, Clock } from 'lucide-react';
 
+// ✅ Importer Eruda pour console mobile
+import eruda from 'eruda';
+
 export const PlayerView: React.FC = () => {
   const { currentPlayer, sessionCode, currentQuiz } = useQuizStore();
   const {
@@ -21,6 +24,12 @@ export const PlayerView: React.FC = () => {
     loadQuestions,
     listenToPhaseChanges,
   } = useStrategicQuizStore();
+
+  // ✅ Activer Eruda (console mobile)
+  useEffect(() => {
+    eruda.init();
+    console.log('🔧 Eruda console activated');
+  }, []);
 
   useEffect(() => {
     console.log('📱 PlayerView mounted');
@@ -50,7 +59,6 @@ export const PlayerView: React.FC = () => {
     }
   }, [currentQuiz?.id, sessionCode]);
 
-  // Log phase changes
   useEffect(() => {
     console.log('🔄 Phase changed:', {
       phase: currentPhase,
@@ -104,7 +112,6 @@ export const PlayerView: React.FC = () => {
   const jokersEnabled = currentPhase === 'theme_announcement';
   const answersEnabled = currentPhase === 'answer_selection' && !isBlocked && !hasAnswered;
 
-  // Si pas de données de base, afficher un état de chargement
   if (!currentPlayer || !sessionCode) {
     return (
       <div className="min-h-screen bg-qb-dark flex items-center justify-center">
@@ -127,11 +134,6 @@ export const PlayerView: React.FC = () => {
       <PlayerHeader />
       
       <div className="max-w-2xl mx-auto p-4 space-y-4">
-        {/* Debug Info (à retirer en prod) */}
-        <div className="text-xs text-white/30 text-center">
-          Phase: {currentPhase} | Time: {phaseTimeRemaining}s | Theme: {currentThemeTitle || 'N/A'}
-        </div>
-
         {/* Timer + Phase Indicator */}
         <Card className="p-4 text-center bg-gradient-to-br from-qb-purple to-qb-cyan">
           <div className="text-xs text-white/70 mb-1 uppercase tracking-wider">
