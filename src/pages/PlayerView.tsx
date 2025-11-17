@@ -3,16 +3,15 @@ import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Shield, Ban, Coins, Star, Clock } from 'lucide-react';
+import { Shield, Ban, Coins, Star, Clock, X } from 'lucide-react';
 import eruda from 'eruda';
 
 export const PlayerView: React.FC = () => {
-  const { currentPlayer, sessionCode, currentQuiz } = useQuizStore();
+  const { currentPlayer, sessionCode, currentQuiz, players } = useQuizStore();
   const {
     currentPhase,
     phaseTimeRemaining,
     currentQuestion,
-    currentThemeTitle,
     playerInventory,
     activeEffects,
     selectedAnswer,
@@ -21,6 +20,9 @@ export const PlayerView: React.FC = () => {
     submitAnswer,
     loadQuestions,
     listenToPhaseChanges,
+    showTargetSelector,
+    pendingJokerType,
+    closeTargetSelector,
   } = useStrategicQuizStore();
 
   useEffect(() => {
@@ -30,40 +32,17 @@ export const PlayerView: React.FC = () => {
 
   useEffect(() => {
     console.log('📱 PlayerView mounted');
-    console.log('📊 Current state:', {
-      hasQuiz: !!currentQuiz,
-      quizId: currentQuiz?.id,
-      hasSession: !!sessionCode,
-      sessionCode,
-      hasPlayer: !!currentPlayer,
-      playerId: currentPlayer?.id,
-      currentPhase,
-      phaseTimeRemaining,
-    });
     
     if (currentQuiz?.id) {
       console.log('📚 Loading questions for quiz:', currentQuiz.id);
       loadQuestions(currentQuiz.id);
-    } else {
-      console.warn('⚠️ No quiz ID, cannot load questions');
     }
     
     if (sessionCode) {
       console.log('👂 Setting up phase listener for session:', sessionCode);
       listenToPhaseChanges(sessionCode);
-    } else {
-      console.warn('⚠️ No session code, cannot listen to phases');
     }
   }, [currentQuiz?.id, sessionCode]);
-
-  useEffect(() => {
-    console.log('🔄 Phase state update:', {
-      phase: currentPhase,
-      time: phaseTimeRemaining,
-      theme: currentThemeTitle,
-      questionIndex: currentQuestion?.global_order,
-    });
-  }, [currentPhase, phaseTimeRemaining, currentThemeTitle]);
 
   const handleJokerAction = async (jokerType: 'protection' | 'block' | 'steal' | 'double_points') => {
     try {
@@ -102,6 +81,52 @@ export const PlayerView: React.FC = () => {
     </div>
   );
 
+  // ✅ Modal de sélection d'adversaire
+  const TargetSelectorModal = () => {
+    if (!showTargetSelector || !pendingJokerType) return null;
+
+    const opponents = players.filter(p => p.id !== currentPlayer?.id);
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+        <Card className="max-w-lg w-full p-6 bg-qb-darker border-2 border-qb-cyan">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-2xl font-bold text-white">
+              {pendingJokerType === 'block' ? '🚫 Block Player' : '💰 Steal from Player'}
+            </h3>
+            <button onClick={closeTargetSelector} className="text-white/70 hover:text-white">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          
+          <p className="text-white/70 mb-4">
+            {pendingJokerType === 'block' 
+              ? 'Choose a player to prevent from answering' 
+              : 'Choose a player to steal points from'}
+          </p>
+
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {opponents.map((player) => (
+              <Button
+                key={player.id}
+                fullWidth
+                size="lg"
+                onClick={() => executeJokerAction(pendingJokerType!, player.id)}
+                className="flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{player.avatar_emoji}</span>
+                  <span className="font-bold">{player.player_name}</span>
+                </div>
+                <span className="text-yellow-400 font-bold">{player.total_score} pts</span>
+              </Button>
+            ))}
+          </div>
+        </Card>
+      </div>
+    );
+  };
+
   const isProtected = activeEffects.protections[currentPlayer?.id || ''];
   const hasDoublePoints = activeEffects.doublePoints[currentPlayer?.id || ''];
   const isBlocked = activeEffects.blocks[currentPlayer?.id || ''];
@@ -109,45 +134,31 @@ export const PlayerView: React.FC = () => {
   const jokersEnabled = currentPhase === 'theme_announcement';
   const answersEnabled = currentPhase === 'answer_selection' && !isBlocked && !hasAnswered;
 
-  // ✅ État de chargement uniquement si vraiment pas de données
   if (!currentPlayer || !sessionCode || !currentQuiz) {
     return (
       <div className="min-h-screen bg-qb-dark flex items-center justify-center">
         <div className="text-center">
           <div className="text-8xl mb-6 animate-pulse">⏳</div>
           <h2 className="text-3xl font-bold text-white mb-4">Loading Player Data...</h2>
-          <p className="text-white/70">Please wait...</p>
-          <div className="mt-6 text-sm text-white/50 space-y-1">
-            <p>Player: {currentPlayer ? '✅' : '❌'}</p>
-            <p>Session: {sessionCode ? '✅' : '❌'}</p>
-            <p>Quiz: {currentQuiz ? '✅' : '❌'}</p>
-          </div>
         </div>
       </div>
     );
   }
 
-  // ✅ Afficher l'interface du quiz DÈS QU'ON A LES DONNÉES DE BASE
-  // Peu importe la phase ou le currentView
   return (
     <div className="min-h-screen bg-qb-dark">
       <PlayerHeader />
+      <TargetSelectorModal />
       
       <div className="max-w-2xl mx-auto p-4 space-y-4">
-        {/* Timer + Phase Indicator */}
+        {/* Timer + Phase - THÈME RETIRÉ */}
         <Card className="p-4 text-center bg-gradient-to-br from-qb-purple to-qb-cyan">
           <div className="text-xs text-white/70 mb-1 uppercase tracking-wider">
-            {currentPhase === 'theme_announcement' && '🎯 Theme + Jokers'}
+            {currentPhase === 'theme_announcement' && '🃏 Use Your Jokers!'}
             {currentPhase === 'question_display' && '📖 Read Question'}
             {currentPhase === 'answer_selection' && '✍️ Answer Now!'}
             {currentPhase === 'results' && '📊 Results'}
-            {currentPhase === 'intermission' && '⏸️ Get Ready'}
           </div>
-          {currentPhase === 'theme_announcement' && currentThemeTitle && (
-            <div className="text-2xl font-bold text-yellow-300 mb-2">
-              {currentThemeTitle}
-            </div>
-          )}
           <div className="flex items-center justify-center gap-3">
             <Clock className="w-8 h-8 text-white animate-pulse" />
             <span className="text-6xl font-mono font-bold text-white">{phaseTimeRemaining}s</span>
@@ -183,7 +194,7 @@ export const PlayerView: React.FC = () => {
         {/* Joker Buttons */}
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
-            Jokers {jokersEnabled ? '✅ Choose Now!' : '🔒 Wait for theme'}
+            Jokers {jokersEnabled ? '✅ Choose Now!' : '🔒 Wait for joker phase'}
           </h3>
           <div className="grid grid-cols-2 gap-3">
             <Button

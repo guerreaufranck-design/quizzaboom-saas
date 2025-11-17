@@ -4,6 +4,7 @@ import type { JokerType } from '../types/joker';
 import type { Question } from '../types/quiz';
 import type { GamePhase } from '../types/gamePhases';
 import { INITIAL_JOKER_INVENTORY } from '../types/gamePhases';
+import { useQuizStore } from './useQuizStore';
 
 interface PhaseData {
   phase: GamePhase;
@@ -41,6 +42,10 @@ interface StrategicQuizState {
   hasAnswered: boolean;
   answerSubmittedAt: number | null;
   
+  // ✅ NOUVEAU: Pour sélection d'adversaire
+  showTargetSelector: boolean;
+  pendingJokerType: 'block' | 'steal' | null;
+  
   loadQuestions: (quizId: string) => Promise<void>;
   setPhaseData: (data: PhaseData) => void;
   executeJokerAction: (jokerType: JokerType, targetPlayerId?: string) => Promise<void>;
@@ -48,6 +53,10 @@ interface StrategicQuizState {
   resetForNextQuestion: () => void;
   listenToPhaseChanges: (sessionCode: string) => void;
   broadcastPhaseChange: (sessionCode: string, data: PhaseData) => Promise<void>;
+  
+  // ✅ NOUVEAU
+  openTargetSelector: (jokerType: 'block' | 'steal') => void;
+  closeTargetSelector: () => void;
 }
 
 export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
@@ -68,6 +77,8 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   selectedAnswer: null,
   hasAnswered: false,
   answerSubmittedAt: null,
+  showTargetSelector: false,
+  pendingJokerType: null,
 
   loadQuestions: async (quizId) => {
     try {
@@ -119,9 +130,18 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     }
   },
 
+  openTargetSelector: (jokerType) => {
+    set({ showTargetSelector: true, pendingJokerType: jokerType });
+  },
+
+  closeTargetSelector: () => {
+    set({ showTargetSelector: false, pendingJokerType: null });
+  },
+
   executeJokerAction: async (jokerType, targetPlayerId) => {
     const { playerInventory, activeEffects, currentPhase } = get();
-    const playerId = 'current-player-id';
+    const currentPlayer = useQuizStore.getState().currentPlayer;
+    const playerId = currentPlayer?.id || 'current-player-id';
     
     if (currentPhase !== 'theme_announcement') {
       throw new Error('Jokers can only be activated during theme announcement');
@@ -129,6 +149,12 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     
     if (playerInventory[jokerType] <= 0) {
       throw new Error('No uses remaining for this joker');
+    }
+
+    // ✅ Block et Steal nécessitent un adversaire
+    if ((jokerType === 'block' || jokerType === 'steal') && !targetPlayerId) {
+      get().openTargetSelector(jokerType);
+      return;
     }
 
     console.log('⚡ Executing joker:', jokerType, targetPlayerId);
@@ -167,6 +193,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
               blocks: { ...activeEffects.blocks, [targetPlayerId]: true },
             },
           });
+          get().closeTargetSelector();
         }
         break;
       
@@ -178,6 +205,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
               steals: { ...activeEffects.steals, [targetPlayerId]: playerId },
             },
           });
+          get().closeTargetSelector();
         }
         break;
     }
@@ -185,15 +213,68 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
   submitAnswer: async (answer) => {
     const { hasAnswered, activeEffects, currentQuestion } = get();
-    const playerId = 'current-player-id';
+    const currentPlayer = useQuizStore.getState().currentPlayer;
+    const playerId = currentPlayer?.id;
+    
+    if (!playerId) {
+      console.error('❌ No player ID');
+      return;
+    }
     
     if (hasAnswered) return;
     if (activeEffects.blocks[playerId]) return;
 
     const isCorrect = answer === currentQuestion?.correct_answer;
     const timestamp = Date.now();
+    
+    // ✅ Calculer les points
+    let pointsEarned = 0;
+    if (isCorrect) {
+      const basePoints = currentQuestion?.points || 100;
+      const hasDoublePoints = activeEffects.doublePoints[playerId];
+      pointsEarned = hasDoublePoints ? basePoints * 2 : basePoints;
+    }
 
-    console.log('✅ Answer submitted:', answer, 'Correct:', isCorrect);
+    console.log('✅ Answer submitted:', answer, 'Correct:', isCorrect, 'Points:', pointsEarned);
+
+    // ✅ CRITIQUE: Mettre à jour les points dans la base de données
+    if (isCorrect && pointsEarned > 0) {
+      const { data: currentPlayerData } = await supabase
+        .from('session_players')
+        .select('total_score')
+        .eq('id', playerId)
+        .single();
+
+      const newTotalScore = (currentPlayerData?.total_score || 0) + pointsEarned;
+
+      const { error } = await supabase
+        .from('session_players')
+        .update({ 
+          total_score: newTotalScore,
+          correct_answers: supabase.sql`correct_answers + 1`,
+          questions_answered: supabase.sql`questions_answered + 1`,
+        })
+        .eq('id', playerId);
+
+      if (error) {
+        console.error('❌ Failed to update score:', error);
+      } else {
+        console.log('💾 Score updated in DB:', newTotalScore);
+        
+        // ✅ Mettre à jour le store local aussi
+        useQuizStore.setState((state) => {
+          if (state.currentPlayer) {
+            return {
+              currentPlayer: {
+                ...state.currentPlayer,
+                total_score: newTotalScore,
+              }
+            };
+          }
+          return state;
+        });
+      }
+    }
 
     set({
       selectedAnswer: answer,
@@ -213,7 +294,6 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   listenToPhaseChanges: (sessionCode) => {
     console.log('👂 Listening to phase changes for session:', sessionCode);
     
-    // Utiliser le MÊME nom de channel que le broadcaster
     const channelName = `quiz_session_${sessionCode}`;
     const channel = supabase.channel(channelName);
 
@@ -231,7 +311,6 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     try {
       console.log('📤 Broadcasting phase change to session:', sessionCode, data.phase);
       
-      // Utiliser le MÊME nom de channel que le listener
       const channelName = `quiz_session_${sessionCode}`;
       const channel = supabase.channel(channelName);
       

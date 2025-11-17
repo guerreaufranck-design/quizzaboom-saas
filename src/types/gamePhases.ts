@@ -6,11 +6,11 @@ export type GamePhase =
   | 'intermission';
 
 export const PHASE_DURATIONS: Record<GamePhase, number> = {
-  theme_announcement: 15, // 25s → 15s
-  question_display: 10,   // 15s → 10s
-  answer_selection: 10,   // 20s → 10s
-  results: 10,            // 20s → 10s
-  intermission: 6,        // Reste 6s (Get Ready)
+  theme_announcement: 25,
+  question_display: 10,
+  answer_selection: 20,
+  results: 8,
+  intermission: 3,
 };
 
 export const PHASE_ORDER: GamePhase[] = [
@@ -18,9 +18,9 @@ export const PHASE_ORDER: GamePhase[] = [
   'question_display',
   'answer_selection',
   'results',
-  'intermission',
 ];
 
+// ✅ CHANGÉ: 1 seul joker de chaque type (pas 2/10/10/5)
 export const INITIAL_JOKER_INVENTORY = {
   protection: 1,
   block: 1,
