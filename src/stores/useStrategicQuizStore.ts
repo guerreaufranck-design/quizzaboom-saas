@@ -42,7 +42,6 @@ interface StrategicQuizState {
   hasAnswered: boolean;
   answerSubmittedAt: number | null;
   
-  // ✅ NOUVEAU: Pour sélection d'adversaire
   showTargetSelector: boolean;
   pendingJokerType: 'block' | 'steal' | null;
   
@@ -54,7 +53,6 @@ interface StrategicQuizState {
   listenToPhaseChanges: (sessionCode: string) => void;
   broadcastPhaseChange: (sessionCode: string, data: PhaseData) => Promise<void>;
   
-  // ✅ NOUVEAU
   openTargetSelector: (jokerType: 'block' | 'steal') => void;
   closeTargetSelector: () => void;
 }
@@ -151,7 +149,6 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       throw new Error('No uses remaining for this joker');
     }
 
-    // ✅ Block et Steal nécessitent un adversaire
     if ((jokerType === 'block' || jokerType === 'steal') && !targetPlayerId) {
       get().openTargetSelector(jokerType);
       return;
@@ -227,7 +224,6 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     const isCorrect = answer === currentQuestion?.correct_answer;
     const timestamp = Date.now();
     
-    // ✅ Calculer les points
     let pointsEarned = 0;
     if (isCorrect) {
       const basePoints = currentQuestion?.points || 100;
@@ -237,22 +233,24 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
     console.log('✅ Answer submitted:', answer, 'Correct:', isCorrect, 'Points:', pointsEarned);
 
-    // ✅ CRITIQUE: Mettre à jour les points dans la base de données
+    // ✅ CORRECTION: Récupérer les valeurs actuelles puis faire l'update
     if (isCorrect && pointsEarned > 0) {
       const { data: currentPlayerData } = await supabase
         .from('session_players')
-        .select('total_score')
+        .select('total_score, correct_answers, questions_answered')
         .eq('id', playerId)
         .single();
 
       const newTotalScore = (currentPlayerData?.total_score || 0) + pointsEarned;
+      const newCorrectAnswers = (currentPlayerData?.correct_answers || 0) + 1;
+      const newQuestionsAnswered = (currentPlayerData?.questions_answered || 0) + 1;
 
       const { error } = await supabase
         .from('session_players')
         .update({ 
           total_score: newTotalScore,
-          correct_answers: supabase.sql`correct_answers + 1`,
-          questions_answered: supabase.sql`questions_answered + 1`,
+          correct_answers: newCorrectAnswers,
+          questions_answered: newQuestionsAnswered,
         })
         .eq('id', playerId);
 
@@ -261,19 +259,36 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       } else {
         console.log('💾 Score updated in DB:', newTotalScore);
         
-        // ✅ Mettre à jour le store local aussi
         useQuizStore.setState((state) => {
           if (state.currentPlayer) {
             return {
               currentPlayer: {
                 ...state.currentPlayer,
                 total_score: newTotalScore,
+                correct_answers: newCorrectAnswers,
+                questions_answered: newQuestionsAnswered,
               }
             };
           }
           return state;
         });
       }
+    } else if (!isCorrect) {
+      // Incrémenter juste questions_answered si mauvaise réponse
+      const { data: currentPlayerData } = await supabase
+        .from('session_players')
+        .select('questions_answered')
+        .eq('id', playerId)
+        .single();
+
+      const newQuestionsAnswered = (currentPlayerData?.questions_answered || 0) + 1;
+
+      await supabase
+        .from('session_players')
+        .update({ 
+          questions_answered: newQuestionsAnswered,
+        })
+        .eq('id', playerId);
     }
 
     set({
