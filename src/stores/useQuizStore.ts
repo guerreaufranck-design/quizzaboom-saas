@@ -178,12 +178,11 @@ export const useQuizStore = create<QuizState>((set, get) => ({
 
       console.log('✅ Quiz inserted, ID:', quizData.id);
 
-      // Insert questions - UTILISER micro_theme comme stage_id
       const allQuestions = aiResponse.stages.flatMap((stage, stageIndex) =>
         stage.questions.map((q, qIndex) => ({
           id: uuidv4(),
           quiz_id: quizData.id,
-          stage_id: q.micro_theme || `Stage ${stageIndex + 1}`, // ✅ Utiliser micro_theme
+          stage_id: q.micro_theme || `Stage ${stageIndex + 1}`,
           stage_order: qIndex,
           global_order: stageIndex * stage.questions.length + qIndex,
           question_text: q.question_text,
@@ -352,6 +351,10 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         .eq('session_id', session.id)
         .order('joined_at', { ascending: true });
 
+      // ✅ Déterminer la vue initiale selon le statut de la session
+      const initialView = session.status === 'playing' ? 'playing' : 'lobby';
+      console.log(`✅ Join complete! Session status: ${session.status}, redirecting to: ${initialView}`);
+
       set({
         currentSession: session as QuizSession,
         currentQuiz: quiz as Quiz,
@@ -361,13 +364,12 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         players: (allPlayers as Player[]) || [],
         totalPlayers: allPlayers?.length || 0,
         isLoading: false,
-        currentView: 'playing', // ✅ Aller directement en mode "playing"
+        currentView: initialView, // ✅ Lobby si waiting, playing si déjà lancé
       });
 
       get().saveSessionState();
       get().setupRealtimeSubscription(code);
 
-      console.log('✅ Join complete! Redirecting to player view...');
     } catch (error: any) {
       console.error('❌ Join error:', error);
       set({ error: error.message, isLoading: false });
@@ -395,8 +397,10 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   },
 
   startSession: async () => {
-    const { currentSession } = get();
-    if (!currentSession) return;
+    const { currentSession, sessionCode } = get();
+    if (!currentSession || !sessionCode) return;
+
+    console.log('🚀 Starting session:', sessionCode);
 
     const { error } = await supabase
       .from('quiz_sessions')
@@ -405,12 +409,22 @@ export const useQuizStore = create<QuizState>((set, get) => ({
 
     if (error) throw error;
 
+    // ✅ Broadcast aux joueurs que le quiz démarre
+    const channel = supabase.channel(`quiz_session_${sessionCode}`);
+    await channel.send({
+      type: 'broadcast',
+      event: 'quiz_started',
+      payload: { sessionId: currentSession.id }
+    });
+
+    console.log('✅ Session started, broadcasted to players');
+
     set({ currentView: 'playing' });
     get().saveSessionState();
   },
 
   setupRealtimeSubscription: (sessionCode) => {
-    const { currentSession, realtimeChannel } = get();
+    const { currentSession, realtimeChannel, isHost } = get();
     
     if (realtimeChannel) {
       supabase.removeChannel(realtimeChannel);
@@ -418,29 +432,75 @@ export const useQuizStore = create<QuizState>((set, get) => ({
 
     if (!currentSession) return;
 
+    console.log('🔌 Setting up realtime for session:', sessionCode);
+
     const channel = supabase.channel(`quiz_session_${sessionCode}`);
 
-    channel
-      .on(
+    // ✅ Écouter les changements de players
+    channel.on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'session_players',
+        filter: `session_id=eq.${currentSession.id}`,
+      },
+      (payload) => {
+        console.log('🔄 Player event:', payload.eventType);
+        get().loadPlayers(currentSession.id);
+      }
+    );
+
+    // ✅ NOUVEAU : Écouter les changements de la session (status)
+    if (!isHost) {
+      channel.on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
           schema: 'public',
-          table: 'session_players',
-          filter: `session_id=eq.${currentSession.id}`,
+          table: 'quiz_sessions',
+          filter: `id=eq.${currentSession.id}`,
         },
-        (payload) => {
-          console.log('🔄 Player event:', payload.eventType);
-          get().loadPlayers(currentSession.id);
+        (payload: any) => {
+          console.log('🔄 Session status changed:', payload.new.status);
+          if (payload.new.status === 'playing') {
+            console.log('🎯 Quiz started! Redirecting to playing view...');
+            set({ 
+              currentView: 'playing',
+              currentSession: payload.new as QuizSession 
+            });
+            get().saveSessionState();
+          }
         }
-      )
-      .on('broadcast', { event: 'phase_change' }, (payload) => {
-        console.log('📢 Phase change:', payload);
-      })
-      .subscribe((status) => {
-        console.log('📡 Realtime status:', status);
-        set({ connectionStatus: status === 'SUBSCRIBED' ? 'connected' : 'connecting' });
+      );
+    }
+
+    // ✅ Écouter le broadcast de démarrage du quiz
+    if (!isHost) {
+      channel.on('broadcast', { event: 'quiz_started' }, (payload) => {
+        console.log('📢 Received quiz_started broadcast:', payload);
+        set({ currentView: 'playing' });
+        get().saveSessionState();
       });
+    }
+
+    // ✅ Écouter les changements de phase
+    channel.on('broadcast', { event: 'phase_change' }, (payload) => {
+      console.log('📢 Phase change:', payload);
+    });
+
+    channel.subscribe((status) => {
+      console.log('📡 Realtime status:', status);
+      if (status === 'SUBSCRIBED') {
+        console.log('✅ Successfully subscribed to realtime channel');
+        set({ connectionStatus: 'connected' });
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('❌ Realtime channel error');
+        set({ connectionStatus: 'disconnected' });
+      } else {
+        set({ connectionStatus: 'connecting' });
+      }
+    });
 
     set({ realtimeChannel: channel });
   },
