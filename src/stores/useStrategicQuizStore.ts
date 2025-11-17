@@ -156,7 +156,6 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
     console.log('⚡ Executing joker:', jokerType, 'Target:', targetPlayerId);
 
-    // ✅ Sauvegarder l'action dans la DB pour persistence
     const sessionId = useQuizStore.getState().currentSession?.id;
     if (sessionId) {
       await supabase.from('joker_actions').insert({
@@ -167,7 +166,6 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         question_index: get().currentQuestionIndex,
         executed_at: new Date().toISOString(),
       });
-      console.log('💾 Joker action saved to DB');
     }
 
     set({
@@ -185,7 +183,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
             protections: { ...activeEffects.protections, [playerId]: true },
           },
         });
-        console.log('🛡️ Protection activated for:', playerId);
+        console.log('🛡️ Protection activated');
         break;
       
       case 'double_points':
@@ -195,7 +193,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
             doublePoints: { ...activeEffects.doublePoints, [playerId]: true },
           },
         });
-        console.log('⭐ Double points activated for:', playerId);
+        console.log('⭐ Double points activated');
         break;
       
       case 'block':
@@ -206,7 +204,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
               blocks: { ...activeEffects.blocks, [targetPlayerId]: true },
             },
           });
-          console.log('🚫 Block activated on:', targetPlayerId);
+          console.log('🚫 Block activated');
           get().closeTargetSelector();
         }
         break;
@@ -219,7 +217,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
               steals: { ...activeEffects.steals, [targetPlayerId]: playerId },
             },
           });
-          console.log('💰 Steal activated from:', targetPlayerId, 'to:', playerId);
+          console.log('💰 Steal activated');
           get().closeTargetSelector();
         }
         break;
@@ -229,6 +227,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   submitAnswer: async (answer) => {
     const { hasAnswered, activeEffects, currentQuestion } = get();
     const currentPlayer = useQuizStore.getState().currentPlayer;
+    const sessionCode = useQuizStore.getState().sessionCode;
     const playerId = currentPlayer?.id;
     
     if (!playerId) {
@@ -236,37 +235,56 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       return;
     }
     
-    if (hasAnswered) return;
+    if (hasAnswered) {
+      console.log('⚠️ Already answered');
+      return;
+    }
+    
     if (activeEffects.blocks[playerId]) {
-      console.log('🚫 Player is blocked, cannot answer');
+      console.log('🚫 Player is blocked');
       return;
     }
 
     const isCorrect = answer === currentQuestion?.correct_answer;
     const timestamp = Date.now();
     
-    // ✅ 5 POINTS par bonne réponse (10 si double)
     let pointsEarned = 0;
     if (isCorrect) {
-      const basePoints = 5; // ✅ CHANGÉ de 100 à 5
+      const basePoints = 5;
       const hasDoublePoints = activeEffects.doublePoints[playerId];
       pointsEarned = hasDoublePoints ? basePoints * 2 : basePoints;
     }
 
+    console.log('📤 Submitting answer:', answer);
     console.log('✅ Answer submitted:', answer, 'Correct:', isCorrect, 'Points:', pointsEarned);
 
-    if (isCorrect && pointsEarned > 0) {
-      const { data: currentPlayerData } = await supabase
+    // ✅ CRITIQUE: Utiliser .single() AVEC .maybeSingle() pour éviter les erreurs
+    try {
+      // 1. Récupérer le score actuel
+      const { data: currentPlayerData, error: fetchError } = await supabase
         .from('session_players')
         .select('total_score, correct_answers, questions_answered')
         .eq('id', playerId)
         .single();
 
-      const newTotalScore = (currentPlayerData?.total_score || 0) + pointsEarned;
-      const newCorrectAnswers = (currentPlayerData?.correct_answers || 0) + 1;
-      const newQuestionsAnswered = (currentPlayerData?.questions_answered || 0) + 1;
+      if (fetchError) {
+        console.error('❌ Failed to fetch current score:', fetchError);
+        return;
+      }
 
-      const { error } = await supabase
+      console.log('📊 Current player data:', currentPlayerData);
+
+      // 2. Calculer les nouvelles valeurs
+      const newTotalScore = (currentPlayerData.total_score || 0) + pointsEarned;
+      const newCorrectAnswers = isCorrect 
+        ? (currentPlayerData.correct_answers || 0) + 1 
+        : (currentPlayerData.correct_answers || 0);
+      const newQuestionsAnswered = (currentPlayerData.questions_answered || 0) + 1;
+
+      console.log('🔢 Old score:', currentPlayerData.total_score, '+ Points:', pointsEarned, '= New score:', newTotalScore);
+
+      // 3. Mettre à jour dans la DB
+      const { error: updateError } = await supabase
         .from('session_players')
         .update({ 
           total_score: newTotalScore,
@@ -276,41 +294,45 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         })
         .eq('id', playerId);
 
-      if (error) {
-        console.error('❌ Failed to update score:', error);
-      } else {
-        console.log('💾 Score updated in DB:', newTotalScore);
-        
-        useQuizStore.setState((state) => {
-          if (state.currentPlayer) {
-            return {
-              currentPlayer: {
-                ...state.currentPlayer,
-                total_score: newTotalScore,
-                correct_answers: newCorrectAnswers,
-                questions_answered: newQuestionsAnswered,
-              }
-            };
-          }
-          return state;
-        });
+      if (updateError) {
+        console.error('❌ Failed to update score:', updateError);
+        return;
       }
-    } else if (!isCorrect) {
-      const { data: currentPlayerData } = await supabase
-        .from('session_players')
-        .select('questions_answered')
-        .eq('id', playerId)
-        .single();
 
-      const newQuestionsAnswered = (currentPlayerData?.questions_answered || 0) + 1;
+      console.log('💾 Score updated in DB:', newTotalScore);
 
-      await supabase
-        .from('session_players')
-        .update({ 
-          questions_answered: newQuestionsAnswered,
-          last_activity: new Date().toISOString(),
-        })
-        .eq('id', playerId);
+      // 4. ✅ NOUVEAU: Broadcaster le changement pour forcer refresh du Dashboard
+      if (sessionCode) {
+        const channel = supabase.channel(`quiz_session_${sessionCode}`);
+        await channel.send({
+          type: 'broadcast',
+          event: 'score_updated',
+          payload: { 
+            playerId, 
+            newScore: newTotalScore,
+            questionIndex: get().currentQuestionIndex,
+          }
+        });
+        console.log('📡 Score update broadcasted');
+      }
+      
+      // 5. Mettre à jour le store local
+      useQuizStore.setState((state) => {
+        if (state.currentPlayer) {
+          return {
+            currentPlayer: {
+              ...state.currentPlayer,
+              total_score: newTotalScore,
+              correct_answers: newCorrectAnswers,
+              questions_answered: newQuestionsAnswered,
+            }
+          };
+        }
+        return state;
+      });
+
+    } catch (error) {
+      console.error('❌ Submit answer error:', error);
     }
 
     set({
@@ -338,6 +360,15 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       .on('broadcast', { event: 'phase_change' }, (payload) => {
         console.log('📢 Phase change broadcast received:', payload);
         get().setPhaseData(payload.payload as PhaseData);
+      })
+      // ✅ NOUVEAU: Écouter les mises à jour de score
+      .on('broadcast', { event: 'score_updated' }, (payload) => {
+        console.log('📊 Score update received:', payload);
+        // Forcer le refresh des players
+        const sessionId = useQuizStore.getState().currentSession?.id;
+        if (sessionId) {
+          useQuizStore.getState().loadPlayers(sessionId);
+        }
       })
       .subscribe((status) => {
         console.log('📡 Phase listener status:', status, 'on channel:', channelName);
