@@ -40,7 +40,7 @@ export const HostDashboard: React.FC = () => {
     if (currentSession?.id) {
       const interval = setInterval(() => {
         loadPlayers(currentSession.id);
-      }, 5000);
+      }, 2000);
       return () => clearInterval(interval);
     }
   }, [currentSession?.id]);

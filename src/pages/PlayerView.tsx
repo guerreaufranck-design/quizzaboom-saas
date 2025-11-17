@@ -26,45 +26,69 @@ export const PlayerView: React.FC = () => {
   } = useStrategicQuizStore();
 
   const wakeLockRef = useRef<any>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     eruda.init();
     console.log('🔧 Eruda console activated');
   }, []);
 
-  // ✅ Wake Lock - Garde l'écran actif
+  // ✅ Wake Lock + Video invisible pour garder l'écran actif
   useEffect(() => {
-    const requestWakeLock = async () => {
+    const keepScreenAwake = async () => {
+      // Méthode 1: Wake Lock API
       try {
         if ('wakeLock' in navigator) {
           wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
-          console.log('🔋 Wake Lock activated - screen will stay on');
+          console.log('🔋 Wake Lock activated');
+          
+          wakeLockRef.current.addEventListener('release', () => {
+            console.log('🔋 Wake Lock released, requesting again...');
+            keepScreenAwake();
+          });
         }
       } catch (err) {
-        console.error('Wake Lock error:', err);
+        console.log('Wake Lock not supported, using video fallback');
+      }
+
+      // Méthode 2: Video invisible (fallback)
+      if (videoRef.current) {
+        videoRef.current.play().catch(() => {});
+      }
+
+      // Méthode 3: Ping toutes les 10 secondes
+      const pingInterval = setInterval(() => {
+        console.log('🔔 Keep-alive ping');
+      }, 10000);
+
+      return () => clearInterval(pingInterval);
+    };
+
+    keepScreenAwake();
+
+    // Ré-activer au retour de l'écran
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        keepScreenAwake();
       }
     };
 
-    requestWakeLock();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       if (wakeLockRef.current) {
         wakeLockRef.current.release();
-        console.log('🔋 Wake Lock released');
       }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
   useEffect(() => {
-    console.log('📱 PlayerView mounted');
-    
     if (currentQuiz?.id) {
-      console.log('📚 Loading questions for quiz:', currentQuiz.id);
       loadQuestions(currentQuiz.id);
     }
     
     if (sessionCode) {
-      console.log('👂 Setting up phase listener for session:', sessionCode);
       listenToPhaseChanges(sessionCode);
     }
   }, [currentQuiz?.id, sessionCode]);
@@ -73,6 +97,7 @@ export const PlayerView: React.FC = () => {
     try {
       console.log('🃏 Activating joker:', jokerType);
       await executeJokerAction(jokerType);
+      alert(`✅ ${jokerType.toUpperCase()} activated!`);
     } catch (error: any) {
       console.error('❌ Joker error:', error);
       alert(error.message);
@@ -98,10 +123,7 @@ export const PlayerView: React.FC = () => {
             <div className="text-qb-cyan text-xs">Session: {sessionCode}</div>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-4xl font-bold text-yellow-400">{currentPlayer?.total_score || 0}</div>
-          <div className="text-xs text-white/60">points</div>
-        </div>
+        {/* ✅ RETIRÉ: Plus d'affichage de points */}
       </div>
     </div>
   );
@@ -142,7 +164,6 @@ export const PlayerView: React.FC = () => {
                   <span className="text-3xl">{player.avatar_emoji}</span>
                   <span className="font-bold">{player.player_name}</span>
                 </div>
-                <span className="text-yellow-400 font-bold">{player.total_score} pts</span>
               </Button>
             ))}
           </div>
@@ -163,7 +184,7 @@ export const PlayerView: React.FC = () => {
       <div className="min-h-screen bg-qb-dark flex items-center justify-center">
         <div className="text-center">
           <div className="text-8xl mb-6 animate-pulse">⏳</div>
-          <h2 className="text-3xl font-bold text-white mb-4">Loading Player Data...</h2>
+          <h2 className="text-3xl font-bold text-white mb-4">Loading...</h2>
         </div>
       </div>
     );
@@ -171,6 +192,16 @@ export const PlayerView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-qb-dark">
+      {/* Video invisible pour garder l'écran actif */}
+      <video
+        ref={videoRef}
+        loop
+        muted
+        playsInline
+        className="hidden"
+        src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMQAAAAhmcmVlAAAA7G1kYXQAAAKuBgX//4ncRem95tlIt5Ys2CDZI+7veDI2NCAtIGNvcmUgMTQ4IHIyNzQ4IDk3ZWFlZjIgLSBILjI2NC9NUEVHLTQgQVZDIGNvZGVjIC0gQ29weWxlZnQgMjAwMy0yMDE2IC0gaHR0cDovL3d3dy52aWRlb2xhbi5vcmcveDI2NC5odG1sIC0gb3B0aW9uczogY2FiYWM9MSByZWY9MyBkZWJsb2NrPTE6MDowIGFuYWx5c2U9MHgzOjB4MTEzIG1lPWhleCBzdWJtZT03IHBzeT0xIHBzeV9yZD0xLjAwOjAuMDAgbWl4ZWRfcmVmPTEgbWVfcmFuZ2U9MTYgY2hyb21hX21lPTEgdHJlbGxpcz0xIDh4OGRjdD0xIGNxbT0wIGRlYWR6b25lPTIxLDExIGZhc3RfcHNraXA9MSBjaHJvbWFfcXBfb2Zmc2V0PS0yIHRocmVhZHM9MSBsb29rYWhlYWRfdGhyZWFkcz0xIHNsaWNlZF90aHJlYWRzPTAgbnI9MCBkZWNpbWF0ZT0xIGludGVybGFjZWQ9MCBibHVyYXlfY29tcGF0PTAgY29uc3RyYWluZWRfaW50cmE9MCBiZnJhbWVzPTMgYl9weXJhbWlkPTIgYl9hZGFwdD0xIGJfYmlhcz0wIGRpcmVjdD0xIHdlaWdodGI9MSBvcGVuX2dvcD0wIHdlaWdodHA9MiBrZXlpbnQ9MjUwIGtleWludF9taW49MjUgc2NlbmVjdXQ9NDAgaW50cmFfcmVmcmVzaD0wIHJjX2xvb2thaGVhZD00MCByYz1jcmYgbWJ0cmVlPTEgY3JmPTI4LjAgcWNvbXA9MC42MCBxcG1pbj0wIHFwbWF4PTY5IHFwc3RlcD00IGlwX3JhdGlvPTEuNDAgYXE9MToxLjAwAIAAAAAwZYiEACD/2lu4PtiAGCZiIJmO35BneLS4/AKawbwF3gS81VgCN/Hrr5TJkFa4AAAADGZ0eXBpc29tAAAACGlzb21pc28y"
+      />
+      
       <PlayerHeader />
       <TargetSelectorModal />
       
@@ -286,39 +317,17 @@ export const PlayerView: React.FC = () => {
             ))}
           </div>
 
-          {hasAnswered && currentPhase !== 'results' && (
-            <div className="mt-4 p-3 bg-green-500/20 border-2 border-green-500 rounded-lg text-center">
+          {/* ✅ JUSTE "Answer Submitted" - AUCUN résultat affiché */}
+          {hasAnswered && (
+            <div className="mt-4 p-3 bg-blue-500/20 border-2 border-blue-500 rounded-lg text-center">
               <div className="text-4xl mb-2">✅</div>
-              <p className="text-lg font-bold text-green-400">Answer Submitted!</p>
+              <p className="text-lg font-bold text-blue-400">Answer Submitted!</p>
+              <p className="text-sm text-white/60">Wait for results...</p>
             </div>
           )}
         </Card>
 
-        {/* ✅ CORRECTION: Afficher UNIQUEMENT pendant phase "results" */}
-        {currentPhase === 'results' && hasAnswered && (
-          <Card className={`p-8 text-center ${
-            selectedAnswer === currentQuestion?.correct_answer
-              ? 'bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-500'
-              : 'bg-gradient-to-br from-red-500/20 to-pink-500/20 border-2 border-red-500'
-          }`}>
-            <div className="text-8xl mb-4 animate-bounce">
-              {selectedAnswer === currentQuestion?.correct_answer ? '✅' : '❌'}
-            </div>
-            <h2 className="text-4xl font-bold text-white mb-4">
-              {selectedAnswer === currentQuestion?.correct_answer ? 'CORRECT!' : 'WRONG!'}
-            </h2>
-            <div className="text-6xl font-bold text-yellow-300">
-              +{selectedAnswer === currentQuestion?.correct_answer 
-                ? (hasDoublePoints ? 10 : 5) 
-                : 0}
-            </div>
-            {hasDoublePoints && selectedAnswer === currentQuestion?.correct_answer && (
-              <p className="text-2xl text-yellow-300 mt-3 font-bold animate-pulse">
-                ⭐ DOUBLED!
-              </p>
-            )}
-          </Card>
-        )}
+        {/* ✅ COMPLÈTEMENT RETIRÉ - Aucun affichage de résultats */}
       </div>
     </div>
   );
