@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
@@ -25,9 +25,34 @@ export const PlayerView: React.FC = () => {
     closeTargetSelector,
   } = useStrategicQuizStore();
 
+  const wakeLockRef = useRef<any>(null);
+
   useEffect(() => {
     eruda.init();
     console.log('🔧 Eruda console activated');
+  }, []);
+
+  // ✅ Wake Lock - Garde l'écran actif
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+          console.log('🔋 Wake Lock activated - screen will stay on');
+        }
+      } catch (err) {
+        console.error('Wake Lock error:', err);
+      }
+    };
+
+    requestWakeLock();
+
+    return () => {
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release();
+        console.log('🔋 Wake Lock released');
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -81,7 +106,6 @@ export const PlayerView: React.FC = () => {
     </div>
   );
 
-  // ✅ Modal de sélection d'adversaire
   const TargetSelectorModal = () => {
     if (!showTargetSelector || !pendingJokerType) return null;
 
@@ -151,7 +175,6 @@ export const PlayerView: React.FC = () => {
       <TargetSelectorModal />
       
       <div className="max-w-2xl mx-auto p-4 space-y-4">
-        {/* Timer + Phase - THÈME RETIRÉ */}
         <Card className="p-4 text-center bg-gradient-to-br from-qb-purple to-qb-cyan">
           <div className="text-xs text-white/70 mb-1 uppercase tracking-wider">
             {currentPhase === 'theme_announcement' && '🃏 Use Your Jokers!'}
@@ -165,7 +188,6 @@ export const PlayerView: React.FC = () => {
           </div>
         </Card>
 
-        {/* Active Effects */}
         {(isProtected || hasDoublePoints || isBlocked) && (
           <Card className="p-3 bg-white/10">
             <div className="flex gap-2 justify-center flex-wrap">
@@ -191,7 +213,6 @@ export const PlayerView: React.FC = () => {
           </Card>
         )}
 
-        {/* Joker Buttons */}
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
             Jokers {jokersEnabled ? '✅ Choose Now!' : '🔒 Wait for joker phase'}
@@ -243,7 +264,6 @@ export const PlayerView: React.FC = () => {
           </div>
         </Card>
 
-        {/* Answer Buttons */}
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
             Answers {answersEnabled ? '✅ Select Now!' : '🔒 Wait for answer time'}
@@ -266,7 +286,7 @@ export const PlayerView: React.FC = () => {
             ))}
           </div>
 
-          {hasAnswered && (
+          {hasAnswered && currentPhase !== 'results' && (
             <div className="mt-4 p-3 bg-green-500/20 border-2 border-green-500 rounded-lg text-center">
               <div className="text-4xl mb-2">✅</div>
               <p className="text-lg font-bold text-green-400">Answer Submitted!</p>
@@ -274,8 +294,8 @@ export const PlayerView: React.FC = () => {
           )}
         </Card>
 
-        {/* Results Display */}
-        {currentPhase === 'results' && (
+        {/* ✅ CORRECTION: Afficher UNIQUEMENT pendant phase "results" */}
+        {currentPhase === 'results' && hasAnswered && (
           <Card className={`p-8 text-center ${
             selectedAnswer === currentQuestion?.correct_answer
               ? 'bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-500'
@@ -289,7 +309,7 @@ export const PlayerView: React.FC = () => {
             </h2>
             <div className="text-6xl font-bold text-yellow-300">
               +{selectedAnswer === currentQuestion?.correct_answer 
-                ? (hasDoublePoints ? 200 : 100) 
+                ? (hasDoublePoints ? 10 : 5) 
                 : 0}
             </div>
             {hasDoublePoints && selectedAnswer === currentQuestion?.correct_answer && (

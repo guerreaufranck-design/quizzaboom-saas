@@ -154,7 +154,21 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       return;
     }
 
-    console.log('⚡ Executing joker:', jokerType, targetPlayerId);
+    console.log('⚡ Executing joker:', jokerType, 'Target:', targetPlayerId);
+
+    // ✅ Sauvegarder l'action dans la DB pour persistence
+    const sessionId = useQuizStore.getState().currentSession?.id;
+    if (sessionId) {
+      await supabase.from('joker_actions').insert({
+        session_id: sessionId,
+        player_id: playerId,
+        target_player_id: targetPlayerId || null,
+        joker_type: jokerType,
+        question_index: get().currentQuestionIndex,
+        executed_at: new Date().toISOString(),
+      });
+      console.log('💾 Joker action saved to DB');
+    }
 
     set({
       playerInventory: {
@@ -171,6 +185,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
             protections: { ...activeEffects.protections, [playerId]: true },
           },
         });
+        console.log('🛡️ Protection activated for:', playerId);
         break;
       
       case 'double_points':
@@ -180,6 +195,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
             doublePoints: { ...activeEffects.doublePoints, [playerId]: true },
           },
         });
+        console.log('⭐ Double points activated for:', playerId);
         break;
       
       case 'block':
@@ -190,6 +206,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
               blocks: { ...activeEffects.blocks, [targetPlayerId]: true },
             },
           });
+          console.log('🚫 Block activated on:', targetPlayerId);
           get().closeTargetSelector();
         }
         break;
@@ -202,6 +219,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
               steals: { ...activeEffects.steals, [targetPlayerId]: playerId },
             },
           });
+          console.log('💰 Steal activated from:', targetPlayerId, 'to:', playerId);
           get().closeTargetSelector();
         }
         break;
@@ -219,21 +237,24 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     }
     
     if (hasAnswered) return;
-    if (activeEffects.blocks[playerId]) return;
+    if (activeEffects.blocks[playerId]) {
+      console.log('🚫 Player is blocked, cannot answer');
+      return;
+    }
 
     const isCorrect = answer === currentQuestion?.correct_answer;
     const timestamp = Date.now();
     
+    // ✅ 5 POINTS par bonne réponse (10 si double)
     let pointsEarned = 0;
     if (isCorrect) {
-      const basePoints = currentQuestion?.points || 100;
+      const basePoints = 5; // ✅ CHANGÉ de 100 à 5
       const hasDoublePoints = activeEffects.doublePoints[playerId];
       pointsEarned = hasDoublePoints ? basePoints * 2 : basePoints;
     }
 
     console.log('✅ Answer submitted:', answer, 'Correct:', isCorrect, 'Points:', pointsEarned);
 
-    // ✅ CORRECTION: Récupérer les valeurs actuelles puis faire l'update
     if (isCorrect && pointsEarned > 0) {
       const { data: currentPlayerData } = await supabase
         .from('session_players')
@@ -251,6 +272,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
           total_score: newTotalScore,
           correct_answers: newCorrectAnswers,
           questions_answered: newQuestionsAnswered,
+          last_activity: new Date().toISOString(),
         })
         .eq('id', playerId);
 
@@ -274,7 +296,6 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         });
       }
     } else if (!isCorrect) {
-      // Incrémenter juste questions_answered si mauvaise réponse
       const { data: currentPlayerData } = await supabase
         .from('session_players')
         .select('questions_answered')
@@ -287,6 +308,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         .from('session_players')
         .update({ 
           questions_answered: newQuestionsAnswered,
+          last_activity: new Date().toISOString(),
         })
         .eq('id', playerId);
     }
