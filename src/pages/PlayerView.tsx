@@ -1,13 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Shield, Ban, Coins, Star, Clock, X } from 'lucide-react';
+import { Shield, Ban, Coins, Star, Clock, X, Trophy } from 'lucide-react';
 import eruda from 'eruda';
 
 export const PlayerView: React.FC = () => {
-  const { currentPlayer, sessionCode, currentQuiz, players } = useQuizStore();
+  const { currentPlayer, sessionCode, currentQuiz, players, loadPlayers, currentSession } = useQuizStore();
   const {
     currentPhase,
     phaseTimeRemaining,
@@ -26,80 +26,61 @@ export const PlayerView: React.FC = () => {
   } = useStrategicQuizStore();
 
   const wakeLockRef = useRef<any>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playerRank, setPlayerRank] = useState(0);
 
   useEffect(() => {
     eruda.init();
-    console.log('🔧 Eruda console activated');
   }, []);
 
-  // ✅ Wake Lock + Video invisible pour garder l'écran actif
+  // Wake Lock
   useEffect(() => {
-    const keepScreenAwake = async () => {
-      // Méthode 1: Wake Lock API
+    const keepAwake = async () => {
       try {
         if ('wakeLock' in navigator) {
           wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
-          console.log('🔋 Wake Lock activated');
-          
-          wakeLockRef.current.addEventListener('release', () => {
-            console.log('🔋 Wake Lock released, requesting again...');
-            keepScreenAwake();
-          });
+          console.log('🔋 Screen awake');
         }
-      } catch (err) {
-        console.log('Wake Lock not supported, using video fallback');
-      }
-
-      // Méthode 2: Video invisible (fallback)
-      if (videoRef.current) {
-        videoRef.current.play().catch(() => {});
-      }
-
-      // Méthode 3: Ping toutes les 10 secondes
-      const pingInterval = setInterval(() => {
-        console.log('🔔 Keep-alive ping');
-      }, 10000);
-
-      return () => clearInterval(pingInterval);
+      } catch (err) {}
     };
-
-    keepScreenAwake();
-
-    // Ré-activer au retour de l'écran
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        keepScreenAwake();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
+    keepAwake();
+    const interval = setInterval(() => console.log('ping'), 10000);
     return () => {
-      if (wakeLockRef.current) {
-        wakeLockRef.current.release();
-      }
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(interval);
+      if (wakeLockRef.current) wakeLockRef.current.release();
     };
   }, []);
 
+  // Charger questions et phases
   useEffect(() => {
-    if (currentQuiz?.id) {
-      loadQuestions(currentQuiz.id);
-    }
-    
-    if (sessionCode) {
-      listenToPhaseChanges(sessionCode);
-    }
+    if (currentQuiz?.id) loadQuestions(currentQuiz.id);
+    if (sessionCode) listenToPhaseChanges(sessionCode);
   }, [currentQuiz?.id, sessionCode]);
+
+  // ✅ NOUVEAU: Refresh des players toutes les 2 secondes pour avoir le classement
+  useEffect(() => {
+    if (currentSession?.id) {
+      loadPlayers(currentSession.id);
+      const interval = setInterval(() => {
+        loadPlayers(currentSession.id);
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [currentSession?.id]);
+
+  // ✅ Calculer le rang du joueur
+  useEffect(() => {
+    if (currentPlayer && players.length > 0) {
+      const sorted = [...players].sort((a, b) => b.total_score - a.total_score);
+      const rank = sorted.findIndex(p => p.id === currentPlayer.id) + 1;
+      setPlayerRank(rank);
+    }
+  }, [players, currentPlayer]);
 
   const handleJokerAction = async (jokerType: 'protection' | 'block' | 'steal' | 'double_points') => {
     try {
-      console.log('🃏 Activating joker:', jokerType);
       await executeJokerAction(jokerType);
       alert(`✅ ${jokerType.toUpperCase()} activated!`);
     } catch (error: any) {
-      console.error('❌ Joker error:', error);
       alert(error.message);
     }
   };
@@ -108,29 +89,12 @@ export const PlayerView: React.FC = () => {
     const optionIndex = ['A', 'B', 'C', 'D'].indexOf(letter);
     const answer = currentQuestion?.options?.[optionIndex];
     if (answer) {
-      console.log('✅ Submitting answer:', letter, answer);
       await submitAnswer(answer);
     }
   };
 
-  const PlayerHeader = () => (
-    <div className="sticky top-0 z-50 bg-qb-darker/95 backdrop-blur-lg border-b border-white/10 p-3">
-      <div className="flex items-center justify-between max-w-2xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="text-3xl">{currentPlayer?.avatar_emoji}</div>
-          <div>
-            <div className="text-white font-bold text-lg">{currentPlayer?.player_name}</div>
-            <div className="text-qb-cyan text-xs">Session: {sessionCode}</div>
-          </div>
-        </div>
-        {/* ✅ RETIRÉ: Plus d'affichage de points */}
-      </div>
-    </div>
-  );
-
   const TargetSelectorModal = () => {
     if (!showTargetSelector || !pendingJokerType) return null;
-
     const opponents = players.filter(p => p.id !== currentPlayer?.id);
 
     return (
@@ -144,13 +108,6 @@ export const PlayerView: React.FC = () => {
               <X className="w-6 h-6" />
             </button>
           </div>
-          
-          <p className="text-white/70 mb-4">
-            {pendingJokerType === 'block' 
-              ? 'Choose a player to prevent from answering' 
-              : 'Choose a player to steal points from'}
-          </p>
-
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {opponents.map((player) => (
               <Button
@@ -192,33 +149,46 @@ export const PlayerView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-qb-dark">
-      {/* Video invisible pour garder l'écran actif */}
-      <video
-        ref={videoRef}
-        loop
-        muted
-        playsInline
-        className="hidden"
-        src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMQAAAAhmcmVlAAAA7G1kYXQAAAKuBgX//4ncRem95tlIt5Ys2CDZI+7veDI2NCAtIGNvcmUgMTQ4IHIyNzQ4IDk3ZWFlZjIgLSBILjI2NC9NUEVHLTQgQVZDIGNvZGVjIC0gQ29weWxlZnQgMjAwMy0yMDE2IC0gaHR0cDovL3d3dy52aWRlb2xhbi5vcmcveDI2NC5odG1sIC0gb3B0aW9uczogY2FiYWM9MSByZWY9MyBkZWJsb2NrPTE6MDowIGFuYWx5c2U9MHgzOjB4MTEzIG1lPWhleCBzdWJtZT03IHBzeT0xIHBzeV9yZD0xLjAwOjAuMDAgbWl4ZWRfcmVmPTEgbWVfcmFuZ2U9MTYgY2hyb21hX21lPTEgdHJlbGxpcz0xIDh4OGRjdD0xIGNxbT0wIGRlYWR6b25lPTIxLDExIGZhc3RfcHNraXA9MSBjaHJvbWFfcXBfb2Zmc2V0PS0yIHRocmVhZHM9MSBsb29rYWhlYWRfdGhyZWFkcz0xIHNsaWNlZF90aHJlYWRzPTAgbnI9MCBkZWNpbWF0ZT0xIGludGVybGFjZWQ9MCBibHVyYXlfY29tcGF0PTAgY29uc3RyYWluZWRfaW50cmE9MCBiZnJhbWVzPTMgYl9weXJhbWlkPTIgYl9hZGFwdD0xIGJfYmlhcz0wIGRpcmVjdD0xIHdlaWdodGI9MSBvcGVuX2dvcD0wIHdlaWdodHA9MiBrZXlpbnQ9MjUwIGtleWludF9taW49MjUgc2NlbmVjdXQ9NDAgaW50cmFfcmVmcmVzaD0wIHJjX2xvb2thaGVhZD00MCByYz1jcmYgbWJ0cmVlPTEgY3JmPTI4LjAgcWNvbXA9MC42MCBxcG1pbj0wIHFwbWF4PTY5IHFwc3RlcD00IGlwX3JhdGlvPTEuNDAgYXE9MToxLjAwAIAAAAAwZYiEACD/2lu4PtiAGCZiIJmO35BneLS4/AKawbwF3gS81VgCN/Hrr5TJkFa4AAAADGZ0eXBpc29tAAAACGlzb21pc28y"
-      />
-      
-      <PlayerHeader />
       <TargetSelectorModal />
       
       <div className="max-w-2xl mx-auto p-4 space-y-4">
-        <Card className="p-4 text-center bg-gradient-to-br from-qb-purple to-qb-cyan">
+        {/* ✅ EN HAUT: Score + Classement (remplace le thème) */}
+        <Card className="p-4 bg-gradient-to-br from-qb-purple via-qb-magenta to-qb-cyan">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-4xl">{currentPlayer.avatar_emoji}</div>
+              <div>
+                <div className="text-white font-bold text-xl">{currentPlayer.player_name}</div>
+                <div className="text-qb-cyan text-xs">Session: {sessionCode}</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="flex items-center gap-2 justify-end mb-1">
+                <Trophy className="w-6 h-6 text-yellow-400" />
+                <span className="text-3xl font-bold text-yellow-400">#{playerRank}</span>
+              </div>
+              <div className="text-4xl font-bold text-white">{currentPlayer.total_score}</div>
+              <div className="text-xs text-white/60">points</div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Timer + Phase */}
+        <Card className="p-3 text-center bg-gradient-to-br from-qb-dark to-qb-darker border border-white/20">
           <div className="text-xs text-white/70 mb-1 uppercase tracking-wider">
             {currentPhase === 'theme_announcement' && '🃏 Use Your Jokers!'}
             {currentPhase === 'question_display' && '📖 Read Question'}
             {currentPhase === 'answer_selection' && '✍️ Answer Now!'}
             {currentPhase === 'results' && '📊 Results'}
+            {currentPhase === 'intermission' && '⏸️ Get Ready'}
           </div>
-          <div className="flex items-center justify-center gap-3">
-            <Clock className="w-8 h-8 text-white animate-pulse" />
-            <span className="text-6xl font-mono font-bold text-white">{phaseTimeRemaining}s</span>
+          <div className="flex items-center justify-center gap-2">
+            <Clock className="w-6 h-6 text-white animate-pulse" />
+            <span className="text-5xl font-mono font-bold text-white">{phaseTimeRemaining}s</span>
           </div>
         </Card>
 
+        {/* Active Effects */}
         {(isProtected || hasDoublePoints || isBlocked) && (
           <Card className="p-3 bg-white/10">
             <div className="flex gap-2 justify-center flex-wrap">
@@ -244,6 +214,7 @@ export const PlayerView: React.FC = () => {
           </Card>
         )}
 
+        {/* Jokers */}
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
             Jokers {jokersEnabled ? '✅ Choose Now!' : '🔒 Wait for joker phase'}
@@ -295,6 +266,7 @@ export const PlayerView: React.FC = () => {
           </div>
         </Card>
 
+        {/* Answer Buttons */}
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
             Answers {answersEnabled ? '✅ Select Now!' : '🔒 Wait for answer time'}
@@ -317,17 +289,13 @@ export const PlayerView: React.FC = () => {
             ))}
           </div>
 
-          {/* ✅ JUSTE "Answer Submitted" - AUCUN résultat affiché */}
           {hasAnswered && (
             <div className="mt-4 p-3 bg-blue-500/20 border-2 border-blue-500 rounded-lg text-center">
               <div className="text-4xl mb-2">✅</div>
               <p className="text-lg font-bold text-blue-400">Answer Submitted!</p>
-              <p className="text-sm text-white/60">Wait for results...</p>
             </div>
           )}
         </Card>
-
-        {/* ✅ COMPLÈTEMENT RETIRÉ - Aucun affichage de résultats */}
       </div>
     </div>
   );
