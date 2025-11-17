@@ -12,6 +12,7 @@ export const PlayerView: React.FC = () => {
     currentPhase,
     phaseTimeRemaining,
     currentQuestion,
+    currentQuestionIndex,
     playerInventory,
     activeEffects,
     selectedAnswer,
@@ -27,36 +28,67 @@ export const PlayerView: React.FC = () => {
 
   const wakeLockRef = useRef<any>(null);
   const [playerRank, setPlayerRank] = useState(0);
+  
+  // ✅ NOUVEAU: Score affiché avec retard (mis à jour après phase results)
+  const [displayedScore, setDisplayedScore] = useState(0);
+  const lastQuestionIndexRef = useRef(-1);
 
   useEffect(() => {
     eruda.init();
   }, []);
 
-  // Wake Lock
+  // ✅ Wake Lock - Activé dès le début
   useEffect(() => {
     const keepAwake = async () => {
       try {
         if ('wakeLock' in navigator) {
           wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
-          console.log('🔋 Screen awake');
+          console.log('🔋 Wake Lock activated');
+          
+          // Ré-activer si le lock est relâché
+          if (wakeLockRef.current) {
+            wakeLockRef.current.addEventListener('release', () => {
+              console.log('🔋 Wake Lock released, re-requesting...');
+              setTimeout(() => keepAwake(), 100);
+            });
+          }
         }
-      } catch (err) {}
+      } catch (err) {
+        console.log('Wake Lock error:', err);
+      }
     };
+    
     keepAwake();
-    const interval = setInterval(() => console.log('ping'), 10000);
+    
+    // Ré-activer au retour de visibilité
+    const handleVisibility = () => {
+      if (!document.hidden && !wakeLockRef.current) {
+        keepAwake();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibility);
+    
+    // Ping pour garder actif
+    const interval = setInterval(() => {
+      console.log('🔔 Keep-alive');
+    }, 15000);
+
     return () => {
       clearInterval(interval);
-      if (wakeLockRef.current) wakeLockRef.current.release();
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release();
+      }
     };
   }, []);
 
-  // Charger questions et phases
   useEffect(() => {
     if (currentQuiz?.id) loadQuestions(currentQuiz.id);
     if (sessionCode) listenToPhaseChanges(sessionCode);
   }, [currentQuiz?.id, sessionCode]);
 
-  // ✅ NOUVEAU: Refresh des players toutes les 2 secondes pour avoir le classement
+  // Refresh players toutes les 2s
   useEffect(() => {
     if (currentSession?.id) {
       loadPlayers(currentSession.id);
@@ -67,7 +99,7 @@ export const PlayerView: React.FC = () => {
     }
   }, [currentSession?.id]);
 
-  // ✅ Calculer le rang du joueur
+  // Calculer le rang
   useEffect(() => {
     if (currentPlayer && players.length > 0) {
       const sorted = [...players].sort((a, b) => b.total_score - a.total_score);
@@ -75,6 +107,22 @@ export const PlayerView: React.FC = () => {
       setPlayerRank(rank);
     }
   }, [players, currentPlayer]);
+
+  // ✅ CRITIQUE: Mettre à jour le score affiché APRÈS les résultats (phase intermission)
+  useEffect(() => {
+    if (currentPhase === 'intermission' && currentQuestionIndex > lastQuestionIndexRef.current) {
+      console.log('📊 Updating displayed score after results');
+      setDisplayedScore(currentPlayer?.total_score || 0);
+      lastQuestionIndexRef.current = currentQuestionIndex;
+    }
+  }, [currentPhase, currentQuestionIndex, currentPlayer?.total_score]);
+
+  // Initialiser le score au début
+  useEffect(() => {
+    if (currentPlayer && displayedScore === 0 && currentQuestionIndex === 0) {
+      setDisplayedScore(currentPlayer.total_score);
+    }
+  }, [currentPlayer?.total_score, currentQuestionIndex, displayedScore]);
 
   const handleJokerAction = async (jokerType: 'protection' | 'block' | 'steal' | 'double_points') => {
     try {
@@ -89,6 +137,7 @@ export const PlayerView: React.FC = () => {
     const optionIndex = ['A', 'B', 'C', 'D'].indexOf(letter);
     const answer = currentQuestion?.options?.[optionIndex];
     if (answer) {
+      console.log('📤 Submitting answer:', answer);
       await submitAnswer(answer);
     }
   };
@@ -152,7 +201,7 @@ export const PlayerView: React.FC = () => {
       <TargetSelectorModal />
       
       <div className="max-w-2xl mx-auto p-4 space-y-4">
-        {/* ✅ EN HAUT: Score + Classement (remplace le thème) */}
+        {/* Score + Classement - Affiché avec retard */}
         <Card className="p-4 bg-gradient-to-br from-qb-purple via-qb-magenta to-qb-cyan">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -165,9 +214,10 @@ export const PlayerView: React.FC = () => {
             <div className="text-right">
               <div className="flex items-center gap-2 justify-end mb-1">
                 <Trophy className="w-6 h-6 text-yellow-400" />
-                <span className="text-3xl font-bold text-yellow-400">#{playerRank}</span>
+                <span className="text-3xl font-bold text-yellow-400">#{playerRank || '-'}</span>
               </div>
-              <div className="text-4xl font-bold text-white">{currentPlayer.total_score}</div>
+              {/* ✅ Afficher le score avec retard */}
+              <div className="text-4xl font-bold text-white">{displayedScore}</div>
               <div className="text-xs text-white/60">points</div>
             </div>
           </div>
@@ -188,7 +238,6 @@ export const PlayerView: React.FC = () => {
           </div>
         </Card>
 
-        {/* Active Effects */}
         {(isProtected || hasDoublePoints || isBlocked) && (
           <Card className="p-3 bg-white/10">
             <div className="flex gap-2 justify-center flex-wrap">
@@ -214,7 +263,6 @@ export const PlayerView: React.FC = () => {
           </Card>
         )}
 
-        {/* Jokers */}
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
             Jokers {jokersEnabled ? '✅ Choose Now!' : '🔒 Wait for joker phase'}
@@ -266,7 +314,6 @@ export const PlayerView: React.FC = () => {
           </div>
         </Card>
 
-        {/* Answer Buttons */}
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
             Answers {answersEnabled ? '✅ Select Now!' : '🔒 Wait for answer time'}
