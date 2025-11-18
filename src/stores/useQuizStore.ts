@@ -289,7 +289,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
     }
   },
 
-  joinSession: async (code, playerName, email) => {
+  joinSession: async (code, playerName, email, avatarEmoji) => {
     set({ isLoading: true, error: null });
     try {
       console.log('🎮 Joining session:', code);
