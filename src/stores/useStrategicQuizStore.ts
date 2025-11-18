@@ -57,7 +57,6 @@ interface StrategicQuizState {
   closeTargetSelector: () => void;
 }
 
-// ✅ Variable globale pour stocker le channel (éviter les multiples channels)
 let globalRealtimeChannel: any = null;
 
 export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
@@ -261,39 +260,55 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     console.log('📤 Submitting answer:', answer, 'Correct:', isCorrect, 'Points to add:', pointsToAdd);
 
     try {
-      // ✅ SOLUTION: UPDATE incrémental direct avec SQL
-      const { data, error } = await supabase.rpc('increment_player_score', {
+      // ✅ Essayer d'abord la fonction RPC
+      const { error: rpcError } = await supabase.rpc('increment_player_score', {
         p_player_id: playerId,
         p_points: pointsToAdd,
         p_is_correct: isCorrect
       });
 
-      if (error) {
-        console.error('❌ RPC error:', error);
+      if (rpcError) {
+        console.log('⚠️ RPC not available, using manual update:', rpcError.message);
         
-        // ✅ Fallback: UPDATE manuel
-        const updates: any = {
-          total_score: supabase.raw(`total_score + ${pointsToAdd}`),
-          questions_answered: supabase.raw('questions_answered + 1'),
-          last_activity: new Date().toISOString(),
-        };
-        
-        if (isCorrect) {
-          updates.correct_answers = supabase.raw('correct_answers + 1');
+        // ✅ Fallback: Récupérer le score actuel puis mettre à jour
+        const { data: currentData, error: fetchError } = await supabase
+          .from('session_players')
+          .select('total_score, correct_answers, questions_answered')
+          .eq('id', playerId)
+          .single();
+
+        if (fetchError || !currentData) {
+          console.error('❌ Fetch error:', fetchError);
+          return;
         }
-        
+
+        console.log('📊 Current data:', currentData);
+
+        const newTotalScore = currentData.total_score + pointsToAdd;
+        const newCorrectAnswers = isCorrect ? currentData.correct_answers + 1 : currentData.correct_answers;
+        const newQuestionsAnswered = currentData.questions_answered + 1;
+
+        console.log('🔢 Updating:', currentData.total_score, '+', pointsToAdd, '=', newTotalScore);
+
         const { error: updateError } = await supabase
           .from('session_players')
-          .update(updates)
+          .update({
+            total_score: newTotalScore,
+            correct_answers: newCorrectAnswers,
+            questions_answered: newQuestionsAnswered,
+            last_activity: new Date().toISOString(),
+          })
           .eq('id', playerId);
-          
+
         if (updateError) {
           console.error('❌ Update error:', updateError);
           return;
         }
-      }
 
-      console.log('💾 Score incremented by:', pointsToAdd);
+        console.log('💾 Score updated to:', newTotalScore);
+      } else {
+        console.log('✅ RPC success');
+      }
 
       // ✅ Récupérer le nouveau score
       const { data: updatedPlayer } = await supabase
@@ -305,7 +320,6 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       if (updatedPlayer) {
         console.log('✅ New total score:', updatedPlayer.total_score);
         
-        // Mettre à jour le store local
         useQuizStore.setState((state) => {
           if (state.currentPlayer) {
             return {
@@ -350,7 +364,6 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   },
 
   listenToPhaseChanges: (sessionCode) => {
-    // ✅ Fermer l'ancien channel s'il existe
     if (globalRealtimeChannel) {
       console.log('🔌 Closing previous channel');
       supabase.removeChannel(globalRealtimeChannel);
@@ -373,7 +386,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
           useQuizStore.getState().loadPlayers(sessionId);
         }
       })
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         console.log('📡 Realtime status:', status);
       });
   },
