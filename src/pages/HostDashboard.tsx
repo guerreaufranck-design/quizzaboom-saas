@@ -17,6 +17,7 @@ import {
 import type { GamePhase } from '../types/gamePhases';
 import { PHASE_DURATIONS, PHASE_ORDER } from '../types/gamePhases';
 import type { Question } from '../types/quiz';
+import { supabase } from '../services/supabase/client';
 
 export const HostDashboard: React.FC = () => {
   const { currentQuiz, currentSession, players, sessionCode, loadPlayers } = useQuizStore();
@@ -25,7 +26,7 @@ export const HostDashboard: React.FC = () => {
   const [currentPhaseState, setCurrentPhaseState] = useState<GamePhase>('theme_announcement');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [phaseTimeRemaining, setPhaseTimeRemaining] = useState(25);
+  const [phaseTimeRemaining, setPhaseTimeRemaining] = useState(8);
 
   const currentQuestion: Question | null = allQuestions[currentQuestionIndex] || null;
 
@@ -40,7 +41,7 @@ export const HostDashboard: React.FC = () => {
     if (currentSession?.id) {
       const interval = setInterval(() => {
         loadPlayers(currentSession.id);
-      }, 2000);
+      }, 1000);
       return () => clearInterval(interval);
     }
   }, [currentSession?.id]);
@@ -55,25 +56,35 @@ export const HostDashboard: React.FC = () => {
             handlePhaseComplete();
             return 0;
           }
-          return prev - 1;
+          const newTime = prev - 1;
+          
+          if (sessionCode) {
+            supabase.channel(`quiz_session_${sessionCode}`).send({
+              type: 'broadcast',
+              event: 'timer_update',
+              payload: { timeRemaining: newTime }
+            });
+          }
+          
+          return newTime;
         });
       }, 1000);
     }
 
     return () => clearInterval(interval);
-  }, [isPlaying, phaseTimeRemaining, currentPhaseState, currentQuestionIndex]);
+  }, [isPlaying, phaseTimeRemaining, currentPhaseState, currentQuestionIndex, sessionCode]);
 
   const handlePhaseComplete = () => {
     const currentIndex = PHASE_ORDER.indexOf(currentPhaseState);
     
     if (currentIndex < PHASE_ORDER.length - 1) {
       const nextPhase = PHASE_ORDER[currentIndex + 1];
-      changePhase(nextPhase, currentQuestionIndex); // ✅ Passer l'index actuel
+      changePhase(nextPhase, currentQuestionIndex);
     } else {
       if (currentQuestionIndex < allQuestions.length - 1) {
         const nextIndex = currentQuestionIndex + 1;
         setCurrentQuestionIndex(nextIndex);
-        changePhase('theme_announcement', nextIndex); // ✅ Passer le NOUVEL index
+        changePhase('theme_announcement', nextIndex);
       } else {
         setIsPlaying(false);
         alert('🎉 Quiz completed!');
@@ -83,7 +94,7 @@ export const HostDashboard: React.FC = () => {
 
   const changePhase = (newPhase: GamePhase, questionIndex: number) => {
     const stageNumber = Math.floor(questionIndex / 5);
-    const question = allQuestions[questionIndex]; // ✅ Utiliser directement l'index passé en paramètre
+    const question = allQuestions[questionIndex];
     
     setCurrentPhaseState(newPhase);
     setPhaseTimeRemaining(PHASE_DURATIONS[newPhase]);
@@ -94,7 +105,7 @@ export const HostDashboard: React.FC = () => {
       stageNumber,
       timeRemaining: PHASE_DURATIONS[newPhase],
       currentQuestion: question || null,
-      themeTitle: question?.stage_id || 'General Knowledge', // ✅ Utiliser la question depuis l'array directement
+      themeTitle: question?.stage_id || 'General Knowledge',
     };
 
     console.log('📤 Broadcasting phase change:', {
