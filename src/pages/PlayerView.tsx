@@ -12,7 +12,6 @@ export const PlayerView: React.FC = () => {
     currentPhase,
     phaseTimeRemaining,
     currentQuestion,
-    currentQuestionIndex,
     playerInventory,
     activeEffects,
     selectedAnswer,
@@ -28,8 +27,6 @@ export const PlayerView: React.FC = () => {
 
   const wakeLockRef = useRef<any>(null);
   const [playerRank, setPlayerRank] = useState(0);
-  
-  // ✅ Score "gelé" pendant answer_selection pour pas voir le changement en temps réel
   const [frozenScore, setFrozenScore] = useState(0);
   const lastPhaseRef = useRef<string>('');
 
@@ -95,15 +92,12 @@ export const PlayerView: React.FC = () => {
     }
   }, [players, currentPlayer]);
 
-  // ✅ NOUVEAU: Geler le score au début de answer_selection, le mettre à jour au début de theme_announcement
   useEffect(() => {
-    // Quand on passe à answer_selection, on gèle le score actuel
     if (currentPhase === 'answer_selection' && lastPhaseRef.current !== 'answer_selection') {
       console.log('🔒 Freezing score at:', currentPlayer?.total_score);
       setFrozenScore(currentPlayer?.total_score || 0);
     }
     
-    // Quand on revient à theme_announcement (nouvelle question), on met à jour le score
     if (currentPhase === 'theme_announcement' && lastPhaseRef.current !== 'theme_announcement') {
       console.log('🔓 Updating score to:', currentPlayer?.total_score);
       setFrozenScore(currentPlayer?.total_score || 0);
@@ -112,7 +106,6 @@ export const PlayerView: React.FC = () => {
     lastPhaseRef.current = currentPhase;
   }, [currentPhase, currentPlayer?.total_score]);
 
-  // Initialiser au début
   useEffect(() => {
     if (currentPlayer && frozenScore === 0) {
       setFrozenScore(currentPlayer.total_score || 0);
@@ -196,7 +189,6 @@ export const PlayerView: React.FC = () => {
       <TargetSelectorModal />
       
       <div className="max-w-2xl mx-auto p-4 space-y-4">
-        {/* Score + Classement - Gelé pendant answer_selection */}
         <Card className="p-4 bg-gradient-to-br from-qb-purple via-qb-magenta to-qb-cyan">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -211,7 +203,6 @@ export const PlayerView: React.FC = () => {
                 <Trophy className="w-6 h-6 text-yellow-400" />
                 <span className="text-3xl font-bold text-yellow-400">#{playerRank || '-'}</span>
               </div>
-              {/* ✅ Afficher le score gelé */}
               <div className="text-4xl font-bold text-white">{frozenScore}</div>
               <div className="text-xs text-white/60">points</div>
             </div>
