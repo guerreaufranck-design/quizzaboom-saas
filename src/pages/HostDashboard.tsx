@@ -18,6 +18,7 @@ import type { GamePhase } from '../types/gamePhases';
 import { PHASE_DURATIONS, PHASE_ORDER } from '../types/gamePhases';
 import type { Question } from '../types/quiz';
 import { supabase } from '../services/supabase/client';
+import { supabase } from '../services/supabase/client';
 
 export const HostDashboard: React.FC = () => {
   const { currentQuiz, currentSession, players, sessionCode, loadPlayers } = useQuizStore();
