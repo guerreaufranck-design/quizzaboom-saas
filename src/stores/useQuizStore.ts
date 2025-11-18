@@ -25,7 +25,7 @@ interface QuizState {
   setError: (error: string | null) => void;
   generateQuiz: (request: QuizGenRequest) => Promise<Quiz>;
   createSession: (quizId: string) => Promise<string>;
-  joinSession: (code: string, playerName: string, email?: string) => Promise<void>;
+  joinSession: (code: string, playerName: string, email?: string, avatarEmoji?: string) => Promise<void>;
   loadPlayers: (sessionId: string) => Promise<void>;
   startSession: () => Promise<void>;
   setupRealtimeSubscription: (sessionCode: string) => void;
@@ -316,7 +316,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         player_name: playerName,
         player_id: uuidv4(),
         email,
-        avatar_emoji: getRandomEmoji(),
+        avatar_emoji: avatarEmoji || getRandomEmoji(),
         player_color: getRandomColor(),
         total_score: 0,
         current_stage: 0,

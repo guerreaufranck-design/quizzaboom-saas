@@ -17,15 +17,12 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
 
   useEffect(() => {
     if (canvasRef.current) {
-      // Use APP_URL from env instead of window.location.origin
-      const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-      
-      // Generate full URL if just a code
+      const baseUrl = window.location.origin;
       const url = value.startsWith('http')
         ? value
         : `${baseUrl}?code=${value}&view=join`;
 
-      console.log('QR Code URL:', url); // Debug
+      console.log('QR Code URL:', url);
 
       QRCode.toCanvas(canvasRef.current, url, {
         width: size,
