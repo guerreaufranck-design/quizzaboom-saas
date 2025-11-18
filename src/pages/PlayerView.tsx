@@ -4,7 +4,6 @@ import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Shield, Ban, Coins, Star, Clock, X, Trophy } from 'lucide-react';
-import eruda from 'eruda';
 
 export const PlayerView: React.FC = () => {
   const { currentPlayer, sessionCode, currentQuiz, players, loadPlayers, currentSession } = useQuizStore();
