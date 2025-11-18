@@ -380,6 +380,9 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         console.log('📢 Phase change received:', payload.payload.phase);
         get().setPhaseData(payload.payload as PhaseData);
       })
+      .on('broadcast', { event: 'timer_update' }, (payload: any) => {
+        set({ phaseTimeRemaining: payload.payload.timeRemaining });
+      })
       .on('broadcast', { event: 'score_updated' }, () => {
         const sessionId = useQuizStore.getState().currentSession?.id;
         if (sessionId) {
