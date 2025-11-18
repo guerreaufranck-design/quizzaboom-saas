@@ -29,15 +29,14 @@ export const PlayerView: React.FC = () => {
   const wakeLockRef = useRef<any>(null);
   const [playerRank, setPlayerRank] = useState(0);
   
-  // ✅ NOUVEAU: Score affiché avec retard (mis à jour après phase results)
-  const [displayedScore, setDisplayedScore] = useState(0);
-  const lastQuestionIndexRef = useRef(-1);
+  // ✅ Score "gelé" pendant answer_selection pour pas voir le changement en temps réel
+  const [frozenScore, setFrozenScore] = useState(0);
+  const lastPhaseRef = useRef<string>('');
 
   useEffect(() => {
     eruda.init();
   }, []);
 
-  // ✅ Wake Lock - Activé dès le début
   useEffect(() => {
     const keepAwake = async () => {
       try {
@@ -45,22 +44,18 @@ export const PlayerView: React.FC = () => {
           wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
           console.log('🔋 Wake Lock activated');
           
-          // Ré-activer si le lock est relâché
           if (wakeLockRef.current) {
             wakeLockRef.current.addEventListener('release', () => {
-              console.log('🔋 Wake Lock released, re-requesting...');
+              console.log('🔋 Re-requesting wake lock');
               setTimeout(() => keepAwake(), 100);
             });
           }
         }
-      } catch (err) {
-        console.log('Wake Lock error:', err);
-      }
+      } catch (err) {}
     };
     
     keepAwake();
     
-    // Ré-activer au retour de visibilité
     const handleVisibility = () => {
       if (!document.hidden && !wakeLockRef.current) {
         keepAwake();
@@ -68,18 +63,12 @@ export const PlayerView: React.FC = () => {
     };
     
     document.addEventListener('visibilitychange', handleVisibility);
-    
-    // Ping pour garder actif
-    const interval = setInterval(() => {
-      console.log('🔔 Keep-alive');
-    }, 15000);
+    const interval = setInterval(() => console.log('🔔 Keep-alive'), 15000);
 
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibility);
-      if (wakeLockRef.current) {
-        wakeLockRef.current.release();
-      }
+      if (wakeLockRef.current) wakeLockRef.current.release();
     };
   }, []);
 
@@ -88,7 +77,6 @@ export const PlayerView: React.FC = () => {
     if (sessionCode) listenToPhaseChanges(sessionCode);
   }, [currentQuiz?.id, sessionCode]);
 
-  // Refresh players toutes les 2s
   useEffect(() => {
     if (currentSession?.id) {
       loadPlayers(currentSession.id);
@@ -99,7 +87,6 @@ export const PlayerView: React.FC = () => {
     }
   }, [currentSession?.id]);
 
-  // Calculer le rang
   useEffect(() => {
     if (currentPlayer && players.length > 0) {
       const sorted = [...players].sort((a, b) => b.total_score - a.total_score);
@@ -108,21 +95,29 @@ export const PlayerView: React.FC = () => {
     }
   }, [players, currentPlayer]);
 
-  // ✅ CRITIQUE: Mettre à jour le score affiché APRÈS les résultats (phase intermission)
+  // ✅ NOUVEAU: Geler le score au début de answer_selection, le mettre à jour au début de theme_announcement
   useEffect(() => {
-    if (currentPhase === 'intermission' && currentQuestionIndex > lastQuestionIndexRef.current) {
-      console.log('📊 Updating displayed score after results');
-      setDisplayedScore(currentPlayer?.total_score || 0);
-      lastQuestionIndexRef.current = currentQuestionIndex;
+    // Quand on passe à answer_selection, on gèle le score actuel
+    if (currentPhase === 'answer_selection' && lastPhaseRef.current !== 'answer_selection') {
+      console.log('🔒 Freezing score at:', currentPlayer?.total_score);
+      setFrozenScore(currentPlayer?.total_score || 0);
     }
-  }, [currentPhase, currentQuestionIndex, currentPlayer?.total_score]);
+    
+    // Quand on revient à theme_announcement (nouvelle question), on met à jour le score
+    if (currentPhase === 'theme_announcement' && lastPhaseRef.current !== 'theme_announcement') {
+      console.log('🔓 Updating score to:', currentPlayer?.total_score);
+      setFrozenScore(currentPlayer?.total_score || 0);
+    }
+    
+    lastPhaseRef.current = currentPhase;
+  }, [currentPhase, currentPlayer?.total_score]);
 
-  // Initialiser le score au début
+  // Initialiser au début
   useEffect(() => {
-    if (currentPlayer && displayedScore === 0 && currentQuestionIndex === 0) {
-      setDisplayedScore(currentPlayer.total_score);
+    if (currentPlayer && frozenScore === 0) {
+      setFrozenScore(currentPlayer.total_score || 0);
     }
-  }, [currentPlayer?.total_score, currentQuestionIndex, displayedScore]);
+  }, [currentPlayer?.total_score, frozenScore]);
 
   const handleJokerAction = async (jokerType: 'protection' | 'block' | 'steal' | 'double_points') => {
     try {
@@ -201,7 +196,7 @@ export const PlayerView: React.FC = () => {
       <TargetSelectorModal />
       
       <div className="max-w-2xl mx-auto p-4 space-y-4">
-        {/* Score + Classement - Affiché avec retard */}
+        {/* Score + Classement - Gelé pendant answer_selection */}
         <Card className="p-4 bg-gradient-to-br from-qb-purple via-qb-magenta to-qb-cyan">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -216,21 +211,19 @@ export const PlayerView: React.FC = () => {
                 <Trophy className="w-6 h-6 text-yellow-400" />
                 <span className="text-3xl font-bold text-yellow-400">#{playerRank || '-'}</span>
               </div>
-              {/* ✅ Afficher le score avec retard */}
-              <div className="text-4xl font-bold text-white">{displayedScore}</div>
+              {/* ✅ Afficher le score gelé */}
+              <div className="text-4xl font-bold text-white">{frozenScore}</div>
               <div className="text-xs text-white/60">points</div>
             </div>
           </div>
         </Card>
 
-        {/* Timer + Phase */}
         <Card className="p-3 text-center bg-gradient-to-br from-qb-dark to-qb-darker border border-white/20">
           <div className="text-xs text-white/70 mb-1 uppercase tracking-wider">
             {currentPhase === 'theme_announcement' && '🃏 Use Your Jokers!'}
             {currentPhase === 'question_display' && '📖 Read Question'}
             {currentPhase === 'answer_selection' && '✍️ Answer Now!'}
             {currentPhase === 'results' && '📊 Results'}
-            {currentPhase === 'intermission' && '⏸️ Get Ready'}
           </div>
           <div className="flex items-center justify-center gap-2">
             <Clock className="w-6 h-6 text-white animate-pulse" />
