@@ -7,6 +7,11 @@ export type ThemeCategory =
   | 'entertainment'
   | 'arts'
   | 'food'
+  | 'myths'
+  | 'everyday_objects'
+  | 'etymology'
+  | 'absurd_laws'
+  | 'human_bizarre'
   | 'mix';
 
 export type ThemeMode = 'standard' | 'funny' | 'kids';
@@ -28,6 +33,46 @@ export const THEMES: Theme[] = [
     description: 'Mix of various topics',
     emoji: '🎯',
     subThemes: ['Current Events', 'Famous People', 'Common Knowledge', 'Trivia'],
+  },
+  {
+    id: 'myths',
+    category: 'myths',
+    label: 'Myths & Urban Legends',
+    description: 'False beliefs and popular misconceptions',
+    emoji: '🦄',
+    subThemes: ['Urban Legends', 'Debunked Myths', 'Popular Misconceptions', 'False Beliefs'],
+  },
+  {
+    id: 'everyday_objects',
+    category: 'everyday_objects',
+    label: 'History of Everyday Objects',
+    description: 'Origins and evolution of common items',
+    emoji: '🔧',
+    subThemes: ['Invention Stories', 'Object Evolution', 'Daily Life History', 'Original Purposes'],
+  },
+  {
+    id: 'etymology',
+    category: 'etymology',
+    label: 'Etymology & Word Origins',
+    description: 'Where words and expressions come from',
+    emoji: '📖',
+    subThemes: ['Word Origins', 'Expressions History', 'Language Evolution', 'Strange Etymology'],
+  },
+  {
+    id: 'absurd_laws',
+    category: 'absurd_laws',
+    label: 'Absurd Laws',
+    description: 'Real but ridiculous laws around the world',
+    emoji: '⚖️',
+    subThemes: ['Weird Regulations', 'Outdated Laws', 'Strange Prohibitions', 'Legal Curiosities'],
+  },
+  {
+    id: 'human_bizarre',
+    category: 'human_bizarre',
+    label: 'Bizarre Human Facts (True/False)',
+    description: 'Strange but true facts about humans',
+    emoji: '🧠',
+    subThemes: ['Body Facts', 'Psychology', 'Human Abilities', 'Medical Oddities'],
   },
   {
     id: 'sport',

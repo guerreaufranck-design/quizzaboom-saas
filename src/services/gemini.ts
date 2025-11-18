@@ -58,7 +58,7 @@ export const generateMultiStageQuiz = async (
       const model = genAI.getGenerativeModel({ 
         model: 'gemini-2.0-flash-exp',
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.9,
           maxOutputTokens: 8192,
         },
       });
@@ -74,56 +74,103 @@ export const generateMultiStageQuiz = async (
 
       const fullLanguage = languageMap[request.language] || 'French';
 
-      const prompt = `Create a quiz in ${fullLanguage} about: ${request.theme}
+      const prompt = `Create a HIGHLY ENGAGING quiz in ${fullLanguage} about: ${request.theme}
 
 Generate EXACTLY ${structure.totalQuestions} questions organized in ${structure.totalStages} stages.
 Each stage has ${structure.questionsPerStage} questions.
 
-CRITICAL MICRO-THEME RULES:
-1. The micro_theme must be a GENERAL CATEGORY (2-4 words maximum)
-2. NEVER use specific terms that appear in the answer
-3. Be BROAD, not specific
+🎯 CRITICAL QUALITY RULES:
 
-EXAMPLES:
-✅ GOOD micro_themes:
-- Question about "Capgras Syndrome" → micro_theme: "Medical Syndromes" (NOT "Capgras Syndrome")
-- Question about "Camembert cheese" → micro_theme: "French Cheeses" (NOT "Camembert")
-- Question about "Tour Eiffel" → micro_theme: "Paris Landmarks" (NOT "Eiffel Tower")
-- Question about "1969 Moon Landing" → micro_theme: "Space Exploration" (NOT "Moon Landing")
-- Question about "Vincent Van Gogh" → micro_theme: "Famous Painters" (NOT "Van Gogh")
+1. QUESTION DIVERSITY:
+   - NEVER repeat similar questions
+   - Each question must be UNIQUE and surprising
+   - Avoid common/obvious trivia
+   - Mix question styles (dates, names, concepts, processes)
 
-❌ BAD micro_themes (TOO SPECIFIC):
-- "Capgras Syndrome" when answer contains "Capgras"
-- "Eiffel Tower" when answer is about the tower
-- "1969" when asking about the year
+2. DIFFICULTY & DEPTH:
+   - Questions should make players THINK
+   - Avoid questions answerable by simple elimination
+   - Include lesser-known but fascinating facts
+   - Balance "I learned something!" with "That was fun!"
+   - All 4 options must be PLAUSIBLE (no obviously absurd answers)
+
+3. EDUCATIONAL + FUN:
+   - Players should laugh OR be amazed by the answer
+   - Include surprising/counter-intuitive facts
+   - Explanations should be engaging, not boring
+   - Fun facts should be genuinely interesting
+
+4. ANSWER DESIGN:
+   - Make ALL 4 options believable
+   - Don't make correct answer obvious by length/detail
+   - Avoid patterns (e.g., "C is always right")
+   - Wrong answers should be tempting but clearly wrong once explained
+
+5. MICRO-THEME RULES:
+   - Micro_theme = GENERAL CATEGORY (2-4 words max)
+   - NEVER use specific terms from the answer
+   - Be BROAD, not specific
+
+EXAMPLES OF GOOD QUESTIONS:
+
+✅ Myths & Urban Legends:
+Q: "Which popular belief about the Great Wall of China is FALSE?"
+A: "It's visible from space with naked eye" (wrong - it's a myth)
+Explanation: Despite popular belief, the Great Wall is NOT visible from space without aid. This myth has been debunked by astronauts.
+
+✅ Etymology:
+Q: "The word 'quarantine' comes from Italian 'quaranta'. What does it mean?"
+A: "Forty" (the number of days ships were isolated)
+Fun fact: Venice used 40-day isolation periods during plague outbreaks in the 1300s.
+
+✅ Everyday Objects:
+Q: "Why were high heels originally invented in the 17th century?"
+A: "For Persian cavalry soldiers to secure feet in stirrups"
+Fun fact: King Louis XIV popularized them in France, making heels a fashion symbol!
+
+✅ Absurd Laws:
+Q: "In Switzerland, it's illegal after 10 PM to:"
+A: "Flush the toilet in apartment buildings"
+Fun fact: This law exists to prevent noise complaints in multi-story buildings.
+
+✅ Human Bizarre (True/False format):
+Q: "TRUE or FALSE: Humans are the only animals that can blush"
+A: "TRUE"
+Explanation: Blushing is caused by adrenaline affecting facial blood vessels, unique to humans due to our complex emotional responses.
+
+❌ BAD QUESTIONS (TOO EASY/OBVIOUS):
+- "What color is the sky?" (too simple)
+- "In what year was 1+1=2 discovered?" (absurd option makes answer obvious)
+- "Who painted the Mona Lisa?" with options: "Da Vinci, My uncle Bob, A potato, Aliens" (obviously bad options)
 
 REQUIREMENTS:
-- Use real facts, real answers (not "Option A/B/C/D")
 - Difficulty: ${request.difficulty}
 - Language: ${fullLanguage}
-- Each micro_theme should be a category that groups 5-10 similar questions
+- Use REAL facts, REAL answers
+- Make players say "Wow, I didn't know that!"
+- Questions should be sharable (players want to tell friends)
 
 Return ONLY valid JSON (no markdown):
 {
-  "title": "Quiz Title",
-  "description": "Description",
+  "title": "Engaging Quiz Title",
+  "description": "Intriguing description",
   "estimatedDuration": ${request.duration},
   "stages": [
     {
       "stageNumber": 1,
-      "theme": "General Stage Theme",
+      "theme": "Stage Theme",
       "questions": [
         {
-          "question_text": "Real question?",
+          "question_text": "Engaging question that makes you think?",
           "question_type": "multiple_choice",
-          "options": ["Real answer 1", "Real answer 2", "Real answer 3", "Real answer 4"],
-          "correct_answer": "Real answer X",
-          "explanation": "Why this is correct",
-          "fun_fact": "Interesting fact",
+          "options": ["Plausible answer 1", "Plausible answer 2", "Plausible answer 3", "Plausible answer 4"],
+          "correct_answer": "The actual correct answer",
+          "explanation": "Why this is correct + interesting context",
+          "fun_fact": "Surprising additional fact that makes people go 'wow!'",
           "points": 100,
           "time_limit": 20,
           "difficulty": "${request.difficulty}",
-          "micro_theme": "GENERAL category (2-4 words, no specific terms from answer)"
+          "micro_theme": "GENERAL category (2-4 words)"
         }
       ]
     }
