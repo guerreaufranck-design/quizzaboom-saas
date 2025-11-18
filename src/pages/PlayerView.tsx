@@ -31,10 +31,6 @@ export const PlayerView: React.FC = () => {
   const lastPhaseRef = useRef<string>('');
 
   useEffect(() => {
-    eruda.init();
-  }, []);
-
-  useEffect(() => {
     const keepAwake = async () => {
       try {
         if ('wakeLock' in navigator) {
@@ -48,24 +44,49 @@ export const PlayerView: React.FC = () => {
             });
           }
         }
-      } catch (err) {}
+      } catch (err) {
+        console.log('⚠️ Wake Lock error:', err);
+      }
     };
     
     keepAwake();
     
+    // Réactiver sur visibilité
     const handleVisibility = () => {
       if (!document.hidden && !wakeLockRef.current) {
         keepAwake();
       }
     };
     
+    // Réactiver sur touch/click
+    const handleInteraction = () => {
+      if (!wakeLockRef.current) {
+        keepAwake();
+      }
+    };
+    
     document.addEventListener('visibilitychange', handleVisibility);
-    const interval = setInterval(() => console.log('🔔 Keep-alive'), 15000);
+    document.addEventListener('touchstart', handleInteraction, { passive: true });
+    document.addEventListener('click', handleInteraction);
+    
+    // Keep-alive très agressif
+    const interval = setInterval(() => {
+      console.log('🔔 Keep-alive ping');
+      if (!wakeLockRef.current) {
+        keepAwake();
+      }
+    }, 5000);
 
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibility);
-      if (wakeLockRef.current) wakeLockRef.current.release();
+      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('click', handleInteraction);
+      if (wakeLockRef.current) {
+        try {
+          wakeLockRef.current.release();
+        } catch (err) {}
+      }
     };
   }, []);
 
