@@ -156,6 +156,16 @@ export const Pricing: React.FC = () => {
     <div className="min-h-screen bg-qb-dark py-12">
       <div className="container mx-auto px-4">
         <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => window.location.href = '/'}
+              icon={<ArrowLeft />}
+            >
+              Back to Home
+            </Button>
+          </div>
+
           <div className="text-center mb-16">
             <h1 className="text-6xl font-bold gradient-primary bg-clip-text text-transparent mb-4">
               Choose Your Plan
