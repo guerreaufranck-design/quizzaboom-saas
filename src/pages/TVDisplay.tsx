@@ -113,114 +113,107 @@ export const TVDisplay: React.FC = () => {
     }
   }, [currentPhase, sessionCode]);
 
-  // PHASE 0: Instructions Screen (before quiz starts)
+    // PHASE 0: Instructions Screen (vertical layout, fits on screen)
   if (showInstructions || !isReady || allQuestions.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-qb-purple via-qb-cyan to-qb-magenta p-12 overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="text-9xl mb-6 animate-bounce">🎮</div>
-            <h1 className="text-8xl font-bold text-white mb-4">HOW TO PLAY</h1>
-            <p className="text-4xl text-yellow-300 font-bold animate-pulse">
-              Follow these simple steps!
-            </p>
+      <div className="min-h-screen bg-gradient-to-br from-qb-purple via-qb-dark to-qb-cyan p-8 overflow-hidden">
+        <div className="max-w-5xl mx-auto h-full flex flex-col justify-between">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="text-7xl mb-4 animate-bounce">🎮</div>
+            <h1 className="text-6xl font-bold text-white mb-2">HOW TO PLAY</h1>
+            <p className="text-3xl text-yellow-300 font-bold">Follow these 4 steps!</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-8">
+          {/* Steps - Vertical */}
+          <div className="space-y-4 flex-1">
             {/* Step 1: Join */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border-4 border-white/30">
-              <div className="text-7xl mb-4">📱</div>
-              <h2 className="text-5xl font-bold text-white mb-4">1. JOIN THE GAME</h2>
-              <p className="text-3xl text-white/90 leading-relaxed">
-                Scan the <span className="text-yellow-300 font-bold">QR code</span> or enter the session code on your phone
-              </p>
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border-2 border-white/30">
+              <div className="flex items-center gap-6">
+                <div className="text-6xl">📱</div>
+                <div className="flex-1">
+                  <h2 className="text-4xl font-bold text-white mb-2">1. JOIN THE GAME</h2>
+                  <p className="text-2xl text-white/90">
+                    Scan the <span className="text-yellow-300 font-bold">QR code</span> or enter session code
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* Step 2: Email - STRONG EMPHASIS */}
-            <div className="bg-gradient-to-br from-yellow-500/30 to-orange-500/30 backdrop-blur-xl rounded-3xl p-8 border-4 border-yellow-400 relative overflow-hidden animate-pulse">
-              <div className="absolute top-0 right-0 text-9xl opacity-20 animate-spin" style={{ animationDuration: '10s' }}>✨</div>
-              <div className="text-7xl mb-4 animate-bounce">📧</div>
-              <h2 className="text-5xl font-bold text-white mb-4">2. ENTER YOUR EMAIL!</h2>
-              <p className="text-3xl text-white/90 leading-relaxed mb-3">
-                Get your <span className="text-yellow-300 font-bold">personalized results</span> with:
-              </p>
-              <ul className="text-2xl text-white/90 space-y-2">
-                <li>✅ Your final ranking</li>
-                <li>✅ Detailed statistics</li>
-                <li>✅ Beautiful certificate</li>
-                <li>✅ Share with friends!</li>
-              </ul>
-              <div className="mt-4 p-3 bg-yellow-500/50 rounded-xl text-center">
-                <p className="text-2xl text-white font-bold animate-pulse">
-                  🎁 Don't miss your results!
-                </p>
+            {/* Step 2: Email - MAXIMUM VISIBILITY */}
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-6 border-4 border-yellow-300 shadow-2xl shadow-yellow-500/50 animate-pulse">
+              <div className="flex items-center gap-6">
+                <div className="text-6xl animate-bounce">📧</div>
+                <div className="flex-1">
+                  <h2 className="text-4xl font-bold text-gray-900 mb-2">2. ENTER YOUR EMAIL!</h2>
+                  <p className="text-2xl text-gray-900 font-bold mb-2">
+                    🎁 Receive your PERSONALIZED RESULTS:
+                  </p>
+                  <div className="flex gap-4 text-xl text-gray-900">
+                    <span>✅ Final Ranking</span>
+                    <span>✅ Statistics</span>
+                    <span>✅ Certificate</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Step 3: Jokers */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border-4 border-purple-400">
-              <div className="text-7xl mb-4">🎯</div>
-              <h2 className="text-5xl font-bold text-white mb-4">3. USE YOUR JOKERS</h2>
-              <p className="text-3xl text-white/90 mb-4">
-                Activate during <span className="text-purple-300 font-bold">THEME phase</span> (first 8 seconds):
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-blue-500/30 rounded-xl p-3 text-center">
-                  <div className="text-4xl mb-1">🛡️</div>
-                  <div className="text-xl font-bold text-white">Protection</div>
-                  <div className="text-sm text-white/70">Shields you</div>
-                </div>
-                <div className="bg-red-500/30 rounded-xl p-3 text-center">
-                  <div className="text-4xl mb-1">🚫</div>
-                  <div className="text-xl font-bold text-white">Block</div>
-                  <div className="text-sm text-white/70">Block opponent</div>
-                </div>
-                <div className="bg-yellow-500/30 rounded-xl p-3 text-center">
-                  <div className="text-4xl mb-1">💰</div>
-                  <div className="text-xl font-bold text-white">Steal</div>
-                  <div className="text-sm text-white/70">Take points</div>
-                </div>
-                <div className="bg-green-500/30 rounded-xl p-3 text-center">
-                  <div className="text-4xl mb-1">⭐</div>
-                  <div className="text-xl font-bold text-white">Double</div>
-                  <div className="text-sm text-white/70">2x points</div>
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border-2 border-purple-400">
+              <div className="flex items-center gap-6">
+                <div className="text-6xl">🎯</div>
+                <div className="flex-1">
+                  <h2 className="text-4xl font-bold text-white mb-2">3. USE JOKERS</h2>
+                  <p className="text-2xl text-white/90 mb-2">
+                    Activate during <span className="text-purple-300 font-bold">THEME phase</span> (8s):
+                  </p>
+                  <div className="flex gap-2">
+                    <div className="bg-blue-500/30 rounded-lg px-3 py-2 text-center">
+                      <div className="text-3xl">🛡️</div>
+                      <div className="text-sm text-white">Protection</div>
+                    </div>
+                    <div className="bg-red-500/30 rounded-lg px-3 py-2 text-center">
+                      <div className="text-3xl">🚫</div>
+                      <div className="text-sm text-white">Block</div>
+                    </div>
+                    <div className="bg-yellow-500/30 rounded-lg px-3 py-2 text-center">
+                      <div className="text-3xl">💰</div>
+                      <div className="text-sm text-white">Steal</div>
+                    </div>
+                    <div className="bg-green-500/30 rounded-lg px-3 py-2 text-center">
+                      <div className="text-3xl">⭐</div>
+                      <div className="text-sm text-white">Double</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Step 4: Game Flow */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border-4 border-cyan-400">
-              <div className="text-7xl mb-4">⏱️</div>
-              <h2 className="text-5xl font-bold text-white mb-4">4. GAME PHASES</h2>
-              <div className="space-y-3 text-2xl text-white/90">
-                <div className="flex items-center gap-3 bg-purple-500/20 p-3 rounded-xl">
-                  <span className="font-bold text-purple-300">🎯 Theme (8s)</span>
-                  <span>→ Activate jokers</span>
-                </div>
-                <div className="flex items-center gap-3 bg-blue-500/20 p-3 rounded-xl">
-                  <span className="font-bold text-blue-300">📖 Question (10s)</span>
-                  <span>→ Read carefully</span>
-                </div>
-                <div className="flex items-center gap-3 bg-cyan-500/20 p-3 rounded-xl">
-                  <span className="font-bold text-cyan-300">✍️ Answer (15s)</span>
-                  <span>→ Pick A, B, C or D</span>
-                </div>
-                <div className="flex items-center gap-3 bg-green-500/20 p-3 rounded-xl">
-                  <span className="font-bold text-green-300">📊 Results (8s)</span>
-                  <span>→ See leaderboard</span>
+            {/* Step 4: Phases */}
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border-2 border-cyan-400">
+              <div className="flex items-center gap-6">
+                <div className="text-6xl">⏱️</div>
+                <div className="flex-1">
+                  <h2 className="text-4xl font-bold text-white mb-2">4. GAME FLOW</h2>
+                  <div className="grid grid-cols-2 gap-2 text-lg text-white/90">
+                    <div className="bg-purple-500/20 p-2 rounded">🎯 Theme (8s) → Jokers</div>
+                    <div className="bg-blue-500/20 p-2 rounded">📖 Question (10s) → Read</div>
+                    <div className="bg-cyan-500/20 p-2 rounded">✍️ Answer (15s) → Choose</div>
+                    <div className="bg-green-500/20 p-2 rounded">📊 Results (8s) → Score</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Bottom CTA */}
-          <div className="mt-12 text-center">
-            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-3xl p-8 animate-pulse">
-              <p className="text-5xl font-bold text-white mb-2">
-                🚀 Waiting for host to start the quiz...
+          {/* Bottom */}
+          <div className="text-center mt-6">
+            <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6">
+              <p className="text-4xl font-bold text-white mb-1">
+                🚀 Waiting for host to start...
               </p>
-              <p className="text-3xl text-white/90">
-                Session: <span className="font-mono font-bold">{sessionCode}</span>
+              <p className="text-2xl text-white/90 font-mono">
+                Session: <span className="font-bold">{sessionCode}</span>
               </p>
             </div>
           </div>
@@ -228,6 +221,9 @@ export const TVDisplay: React.FC = () => {
       </div>
     );
   }
+
+
+  // PHASE 1:
 
   // PHASE 1: Theme Announcement
   if (currentPhase === 'theme_announcement') {
