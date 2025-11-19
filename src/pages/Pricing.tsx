@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Check, AlertCircle, Building2, Users, Crown, Shield } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 export const Pricing: React.FC = () => {
   const [showB2B, setShowB2B] = useState(false);
@@ -14,13 +11,6 @@ export const Pricing: React.FC = () => {
     setLoading(priceId);
     
     try {
-      const stripe = await stripePromise;
-      
-      if (!stripe) {
-        throw new Error('Stripe not loaded');
-      }
-
-      // Créer la session Checkout côté serveur
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -36,19 +26,13 @@ export const Pricing: React.FC = () => {
         throw new Error('Failed to create checkout session');
       }
 
-      const { sessionId } = await response.json();
+      const { url } = await response.json();
       
-      // Rediriger vers Stripe Checkout
-      const result = await stripe.redirectToCheckout({ sessionId });
-      
-      if (result.error) {
-        console.error('Stripe error:', result.error);
-        alert(result.error.message || 'Payment failed. Please try again.');
-      }
+      // Redirection directe vers Stripe
+      window.location.href = url;
     } catch (error: any) {
       console.error('Checkout error:', error);
       alert('Payment failed. Please try again.');
-    } finally {
       setLoading(null);
     }
   };
