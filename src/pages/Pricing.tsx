@@ -2,16 +2,58 @@ import React, { useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Check, AlertCircle, Building2, Users, Crown, Shield } from 'lucide-react';
-import { useQuizStore } from '../stores/useQuizStore';
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 export const Pricing: React.FC = () => {
-  const { setCurrentView } = useQuizStore();
   const [showB2B, setShowB2B] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleCheckout = async (priceId: string, planName: string) => {
+    setLoading(priceId);
+    
+    try {
+      const stripe = await stripePromise;
+      
+      if (!stripe) {
+        throw new Error('Stripe not loaded');
+      }
+
+      // Créer la session Checkout
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          priceId,
+          planName,
+          successUrl: `${window.location.origin}?payment=success`,
+          cancelUrl: `${window.location.origin}/pricing?payment=cancel`
+        }),
+      });
+
+      const { sessionId } = await response.json();
+      
+      // Rediriger vers Stripe
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+      
+      if (error) {
+        console.error('Stripe error:', error);
+        alert('Payment failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Payment failed. Please try again.');
+    } finally {
+      setLoading(null);
+    }
+  };
 
   const b2cPlans = [
     {
       name: 'Solo',
       price: 1.99,
+      priceId: import.meta.env.VITE_STRIPE_PRICE_SOLO,
       players: 5,
       icon: '🎮',
       popular: false,
@@ -27,6 +69,7 @@ export const Pricing: React.FC = () => {
     {
       name: 'Friends',
       price: 4.99,
+      priceId: import.meta.env.VITE_STRIPE_PRICE_FRIENDS,
       players: 15,
       icon: '🎉',
       popular: true,
@@ -43,6 +86,7 @@ export const Pricing: React.FC = () => {
     {
       name: 'Party',
       price: 9.99,
+      priceId: import.meta.env.VITE_STRIPE_PRICE_PARTY,
       players: 50,
       icon: '🔥',
       popular: false,
@@ -59,6 +103,7 @@ export const Pricing: React.FC = () => {
     {
       name: 'Pro Event',
       price: 19.99,
+      priceId: import.meta.env.VITE_STRIPE_PRICE_PRO_EVENT,
       players: 250,
       icon: '👑',
       popular: false,
@@ -78,6 +123,7 @@ export const Pricing: React.FC = () => {
     {
       name: 'Starter',
       price: 69,
+      priceId: import.meta.env.VITE_STRIPE_PRICE_STARTER,
       icon: <Building2 className="w-8 h-8" />,
       trial: true,
       features: [
@@ -97,6 +143,7 @@ export const Pricing: React.FC = () => {
     {
       name: 'Pro',
       price: 99,
+      priceId: import.meta.env.VITE_STRIPE_PRICE_PRO,
       icon: <Crown className="w-8 h-8" />,
       trial: false,
       features: [
@@ -121,7 +168,6 @@ export const Pricing: React.FC = () => {
     <div className="min-h-screen bg-qb-dark py-12">
       <div className="container mx-auto px-4">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
           <div className="text-center mb-16">
             <h1 className="text-6xl font-bold gradient-primary bg-clip-text text-transparent mb-4">
               Choose Your Plan
@@ -131,7 +177,7 @@ export const Pricing: React.FC = () => {
             </p>
           </div>
 
-          {/* B2C Plans - HIGHLIGHTED */}
+          {/* B2C Plans */}
           <div className="mb-20">
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full">
@@ -183,16 +229,18 @@ export const Pricing: React.FC = () => {
                     size="lg"
                     gradient={plan.popular}
                     variant={plan.popular ? 'primary' : 'secondary'}
-                    onClick={() => setCurrentView('home')}
+                    onClick={() => handleCheckout(plan.priceId, plan.name)}
+                    loading={loading === plan.priceId}
+                    disabled={!!loading}
                   >
-                    Get Started
+                    {loading === plan.priceId ? 'Processing...' : 'Buy Now'}
                   </Button>
                 </Card>
               ))}
             </div>
           </div>
 
-          {/* B2B Section - Hidden by default, dissuasive */}
+          {/* B2B Section */}
           <div className="border-t border-white/10 pt-12">
             <div className="text-center mb-8">
               <button
@@ -209,7 +257,6 @@ export const Pricing: React.FC = () => {
 
             {showB2B && (
               <>
-                {/* Warning Banner */}
                 <div className="mb-8 p-6 bg-yellow-500/10 border-2 border-yellow-500/50 rounded-xl">
                   <div className="flex items-start gap-4">
                     <AlertCircle className="w-8 h-8 text-yellow-400 shrink-0" />
@@ -257,7 +304,6 @@ export const Pricing: React.FC = () => {
                         ))}
                       </ul>
 
-                      {/* Warnings */}
                       <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
                         <p className="text-sm font-bold text-red-300 mb-2 flex items-center gap-2">
                           <Shield className="w-4 h-4" />
