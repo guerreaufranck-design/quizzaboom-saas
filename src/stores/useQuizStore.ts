@@ -45,7 +45,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   totalPlayers: 0,
   currentStage: 0,
   currentQuestionIndex: 0,
-  currentView: 'home' | 'pricing',
+  currentView: 'home',
   isLoading: false,
   error: null,
   realtimeChannel: null,

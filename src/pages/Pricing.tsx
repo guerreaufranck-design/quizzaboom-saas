@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Check, AlertCircle, Building2, Users, Zap, Crown, Shield } from 'lucide-react';
+import { Check, AlertCircle, Building2, Users, Crown, Shield } from 'lucide-react';
 import { useQuizStore } from '../stores/useQuizStore';
 
 export const Pricing: React.FC = () => {
