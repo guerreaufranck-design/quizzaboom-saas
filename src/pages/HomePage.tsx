@@ -1,7 +1,6 @@
 import React from 'react';
 import { useQuizStore } from '../stores/useQuizStore';
 import { useAuthStore } from '../stores/useAuthStore';
-import { signOut } from '../services/auth';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Sparkles, Users, Zap, LogIn, User } from 'lucide-react';

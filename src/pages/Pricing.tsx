@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Check, AlertCircle, Building2, Users, Crown, Shield } from 'lucide-react';
+import { Check, AlertCircle, Building2, Users, Crown, Shield, ArrowLeft } from 'lucide-react';
 
 export const Pricing: React.FC = () => {
   const [showB2B, setShowB2B] = useState(false);

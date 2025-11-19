@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { ArrowLeft, Mail, Check } from 'lucide-react';
+import { ArrowLeft, Mail } from 'lucide-react';
 import { signInWithGoogle, signInWithMagicLink } from '../services/auth';
 
 export const Auth: React.FC = () => {
