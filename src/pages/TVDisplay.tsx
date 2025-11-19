@@ -77,10 +77,11 @@ export const TVDisplay: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (currentPhase === 'theme_announcement' && showInstructions) {
+    // Hide instructions only when timer actually starts counting down
+    if (currentPhase === 'theme_announcement' && phaseTimeRemaining < 8 && showInstructions) {
       setShowInstructions(false);
     }
-  }, [currentPhase]);
+  }, [currentPhase, phaseTimeRemaining]);
 
   const loadTopPlayers = async (sessionId: string) => {
     const { data: players } = await supabase
