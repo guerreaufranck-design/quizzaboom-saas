@@ -19,6 +19,7 @@ export const TVDisplay: React.FC = () => {
   const [sessionCode, setSessionCode] = useState<string>('');
   const [topPlayers, setTopPlayers] = useState<Player[]>([]);
   const [isReady, setIsReady] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
 
   useEffect(() => {
     const initTVDisplay = async () => {
@@ -34,7 +35,6 @@ export const TVDisplay: React.FC = () => {
 
       setSessionCode(tvCode);
 
-      // 1. Charger la session
       const { data: session, error: sessionError } = await supabase
         .from('quiz_sessions')
         .select('*')
@@ -48,7 +48,6 @@ export const TVDisplay: React.FC = () => {
 
       console.log('✅ Session loaded:', session.id);
 
-      // 2. Charger le quiz
       const { data: quiz, error: quizError } = await supabase
         .from('ai_generated_quizzes')
         .select('*')
@@ -62,15 +61,12 @@ export const TVDisplay: React.FC = () => {
 
       console.log('✅ Quiz loaded:', quiz.title);
 
-      // 3. Charger les questions
       await loadQuestions(quiz.id);
       console.log('✅ Questions loaded');
 
-      // 4. S'abonner aux changements de phase
       listenToPhaseChanges(tvCode);
       console.log('✅ Listening to phase changes');
 
-      // 5. Charger les joueurs
       loadTopPlayers(session.id);
       console.log('✅ Players loaded');
 
@@ -79,6 +75,12 @@ export const TVDisplay: React.FC = () => {
 
     initTVDisplay();
   }, []);
+
+  useEffect(() => {
+    if (currentPhase === 'theme_announcement' && showInstructions) {
+      setShowInstructions(false);
+    }
+  }, [currentPhase]);
 
   const loadTopPlayers = async (sessionId: string) => {
     const { data: players } = await supabase
@@ -110,18 +112,116 @@ export const TVDisplay: React.FC = () => {
     }
   }, [currentPhase, sessionCode]);
 
-  // Loading state
-  if (!isReady || allQuestions.length === 0) {
+  // PHASE 0: Instructions Screen (before quiz starts)
+  if (showInstructions || !isReady || allQuestions.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-qb-purple via-qb-cyan to-qb-magenta flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-9xl mb-8 animate-bounce">📺</div>
-          <h1 className="text-7xl font-bold text-white mb-4">TV Display</h1>
-          <p className="text-4xl text-white/70 mb-8">Loading quiz data...</p>
-          <div className="flex items-center justify-center gap-3">
-            <div className="w-4 h-4 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-            <div className="w-4 h-4 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-            <div className="w-4 h-4 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+      <div className="min-h-screen bg-gradient-to-br from-qb-purple via-qb-cyan to-qb-magenta p-12 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="text-9xl mb-6 animate-bounce">🎮</div>
+            <h1 className="text-8xl font-bold text-white mb-4">HOW TO PLAY</h1>
+            <p className="text-4xl text-yellow-300 font-bold animate-pulse">
+              Follow these simple steps!
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8">
+            {/* Step 1: Join */}
+            <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border-4 border-white/30">
+              <div className="text-7xl mb-4">📱</div>
+              <h2 className="text-5xl font-bold text-white mb-4">1. JOIN THE GAME</h2>
+              <p className="text-3xl text-white/90 leading-relaxed">
+                Scan the <span className="text-yellow-300 font-bold">QR code</span> or enter the session code on your phone
+              </p>
+            </div>
+
+            {/* Step 2: Email - STRONG EMPHASIS */}
+            <div className="bg-gradient-to-br from-yellow-500/30 to-orange-500/30 backdrop-blur-xl rounded-3xl p-8 border-4 border-yellow-400 relative overflow-hidden animate-pulse">
+              <div className="absolute top-0 right-0 text-9xl opacity-20 animate-spin" style={{ animationDuration: '10s' }}>✨</div>
+              <div className="text-7xl mb-4 animate-bounce">📧</div>
+              <h2 className="text-5xl font-bold text-white mb-4">2. ENTER YOUR EMAIL!</h2>
+              <p className="text-3xl text-white/90 leading-relaxed mb-3">
+                Get your <span className="text-yellow-300 font-bold">personalized results</span> with:
+              </p>
+              <ul className="text-2xl text-white/90 space-y-2">
+                <li>✅ Your final ranking</li>
+                <li>✅ Detailed statistics</li>
+                <li>✅ Beautiful certificate</li>
+                <li>✅ Share with friends!</li>
+              </ul>
+              <div className="mt-4 p-3 bg-yellow-500/50 rounded-xl text-center">
+                <p className="text-2xl text-white font-bold animate-pulse">
+                  🎁 Don't miss your results!
+                </p>
+              </div>
+            </div>
+
+            {/* Step 3: Jokers */}
+            <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border-4 border-purple-400">
+              <div className="text-7xl mb-4">🎯</div>
+              <h2 className="text-5xl font-bold text-white mb-4">3. USE YOUR JOKERS</h2>
+              <p className="text-3xl text-white/90 mb-4">
+                Activate during <span className="text-purple-300 font-bold">THEME phase</span> (first 8 seconds):
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-blue-500/30 rounded-xl p-3 text-center">
+                  <div className="text-4xl mb-1">🛡️</div>
+                  <div className="text-xl font-bold text-white">Protection</div>
+                  <div className="text-sm text-white/70">Shields you</div>
+                </div>
+                <div className="bg-red-500/30 rounded-xl p-3 text-center">
+                  <div className="text-4xl mb-1">🚫</div>
+                  <div className="text-xl font-bold text-white">Block</div>
+                  <div className="text-sm text-white/70">Block opponent</div>
+                </div>
+                <div className="bg-yellow-500/30 rounded-xl p-3 text-center">
+                  <div className="text-4xl mb-1">💰</div>
+                  <div className="text-xl font-bold text-white">Steal</div>
+                  <div className="text-sm text-white/70">Take points</div>
+                </div>
+                <div className="bg-green-500/30 rounded-xl p-3 text-center">
+                  <div className="text-4xl mb-1">⭐</div>
+                  <div className="text-xl font-bold text-white">Double</div>
+                  <div className="text-sm text-white/70">2x points</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 4: Game Flow */}
+            <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border-4 border-cyan-400">
+              <div className="text-7xl mb-4">⏱️</div>
+              <h2 className="text-5xl font-bold text-white mb-4">4. GAME PHASES</h2>
+              <div className="space-y-3 text-2xl text-white/90">
+                <div className="flex items-center gap-3 bg-purple-500/20 p-3 rounded-xl">
+                  <span className="font-bold text-purple-300">🎯 Theme (8s)</span>
+                  <span>→ Activate jokers</span>
+                </div>
+                <div className="flex items-center gap-3 bg-blue-500/20 p-3 rounded-xl">
+                  <span className="font-bold text-blue-300">📖 Question (10s)</span>
+                  <span>→ Read carefully</span>
+                </div>
+                <div className="flex items-center gap-3 bg-cyan-500/20 p-3 rounded-xl">
+                  <span className="font-bold text-cyan-300">✍️ Answer (15s)</span>
+                  <span>→ Pick A, B, C or D</span>
+                </div>
+                <div className="flex items-center gap-3 bg-green-500/20 p-3 rounded-xl">
+                  <span className="font-bold text-green-300">📊 Results (8s)</span>
+                  <span>→ See leaderboard</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom CTA */}
+          <div className="mt-12 text-center">
+            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-3xl p-8 animate-pulse">
+              <p className="text-5xl font-bold text-white mb-2">
+                🚀 Waiting for host to start the quiz...
+              </p>
+              <p className="text-3xl text-white/90">
+                Session: <span className="font-mono font-bold">{sessionCode}</span>
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -141,6 +241,9 @@ export const TVDisplay: React.FC = () => {
             <p className="text-7xl font-bold text-yellow-300">
               {currentThemeTitle || currentQuestion?.stage_id || 'General Knowledge'}
             </p>
+          </div>
+          <div className="mb-8 text-4xl text-white/90 bg-white/10 rounded-2xl p-6 inline-block">
+            ⚡ Use your JOKERS now! ⚡
           </div>
           <div className="flex items-center justify-center gap-6 text-white">
             <Clock className="w-16 h-16 animate-pulse" />
@@ -176,7 +279,6 @@ export const TVDisplay: React.FC = () => {
     return (
       <div className="min-h-screen bg-qb-dark p-12">
         <div className="max-w-7xl mx-auto space-y-12">
-          {/* Timer */}
           <div className="text-center">
             <div className="inline-flex items-center gap-6 px-12 py-6 bg-qb-cyan/20 rounded-3xl">
               <Clock className="w-12 h-12 text-qb-cyan animate-pulse" />
@@ -186,13 +288,11 @@ export const TVDisplay: React.FC = () => {
             </div>
           </div>
 
-          {/* Question */}
           <Card className="p-12 bg-gradient-to-br from-qb-purple/30 to-qb-cyan/30 border-white/20">
             <h2 className="text-6xl font-bold text-white text-center mb-12">
               {currentQuestion?.question_text}
             </h2>
 
-            {/* Answer Grid */}
             <div className="grid grid-cols-2 gap-8">
               {currentQuestion?.options?.map((option, idx) => (
                 <div
@@ -221,7 +321,6 @@ export const TVDisplay: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 p-12">
         <div className="max-w-7xl mx-auto space-y-12">
-          {/* Correct Answer */}
           <div className="text-center">
             <div className="text-9xl mb-8 animate-bounce">✅</div>
             <h1 className="text-7xl font-bold text-white mb-12">CORRECT ANSWER</h1>
@@ -232,7 +331,6 @@ export const TVDisplay: React.FC = () => {
             </div>
           </div>
 
-          {/* Top 5 Leaderboard */}
           {topPlayers.length > 0 && (
             <Card className="p-12 bg-white/10 backdrop-blur-xl border-white/20">
               <h2 className="text-5xl font-bold text-white mb-8 flex items-center justify-center gap-4">
@@ -275,7 +373,6 @@ export const TVDisplay: React.FC = () => {
             </Card>
           )}
 
-          {/* Timer */}
           <div className="text-center">
             <div className="inline-flex items-center gap-6 px-12 py-6 bg-white/10 rounded-3xl">
               <Clock className="w-12 h-12 text-white" />
