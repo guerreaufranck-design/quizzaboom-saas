@@ -20,7 +20,7 @@ export const Pricing: React.FC = () => {
         throw new Error('Stripe not loaded');
       }
 
-      // Créer la session Checkout
+      // Créer la session Checkout côté serveur
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -32,16 +32,20 @@ export const Pricing: React.FC = () => {
         }),
       });
 
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
       const { sessionId } = await response.json();
       
-      // Rediriger vers Stripe
-      const { error } = await stripe.redirectToCheckout({ sessionId });
+      // Rediriger vers Stripe Checkout
+      const result = await stripe.redirectToCheckout({ sessionId });
       
-      if (error) {
-        console.error('Stripe error:', error);
-        alert('Payment failed. Please try again.');
+      if (result.error) {
+        console.error('Stripe error:', result.error);
+        alert(result.error.message || 'Payment failed. Please try again.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Checkout error:', error);
       alert('Payment failed. Please try again.');
     } finally {
@@ -177,7 +181,6 @@ export const Pricing: React.FC = () => {
             </p>
           </div>
 
-          {/* B2C Plans */}
           <div className="mb-20">
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full">
@@ -192,9 +195,7 @@ export const Pricing: React.FC = () => {
                   key={plan.name}
                   gradient
                   className={`p-8 relative ${
-                    plan.popular
-                      ? 'ring-4 ring-qb-cyan scale-105 shadow-2xl shadow-qb-cyan/50'
-                      : ''
+                    plan.popular ? 'ring-4 ring-qb-cyan scale-105 shadow-2xl shadow-qb-cyan/50' : ''
                   }`}
                 >
                   {plan.popular && (
@@ -240,7 +241,6 @@ export const Pricing: React.FC = () => {
             </div>
           </div>
 
-          {/* B2B Section */}
           <div className="border-t border-white/10 pt-12">
             <div className="text-center mb-8">
               <button
