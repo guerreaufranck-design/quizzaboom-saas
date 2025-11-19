@@ -17,7 +17,7 @@ export const Pricing: React.FC = () => {
         body: JSON.stringify({ 
           priceId,
           planName,
-          successUrl: `${window.location.origin}?payment=success`,
+          successUrl: `${window.location.origin}/auth?payment=success`,
           cancelUrl: `${window.location.origin}/pricing?payment=cancel`
         }),
       });

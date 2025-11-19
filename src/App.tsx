@@ -3,6 +3,8 @@ import { useAuthStore } from './stores/useAuthStore';
 import { useQuizStore } from './stores/useQuizStore';
 import { HomePage } from './pages/HomePage';
 import { Pricing } from './pages/Pricing';
+import { Auth } from './pages/Auth';
+import { Dashboard } from './pages/Dashboard';
 import { CreateQuiz } from './pages/CreateQuiz';
 import { JoinQuiz } from './pages/JoinQuiz';
 import { QuizLobby } from './pages/QuizLobby';
@@ -54,6 +56,10 @@ function App() {
         return <HomePage />;
       case 'pricing':
         return <Pricing />;
+      case 'auth':
+        return <Auth />;
+      case 'dashboard':
+        return <Dashboard />;
       case 'create':
         return <CreateQuiz />;
       case 'join':

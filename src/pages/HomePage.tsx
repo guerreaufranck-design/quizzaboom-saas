@@ -1,14 +1,37 @@
 import React from 'react';
 import { useQuizStore } from '../stores/useQuizStore';
+import { useAuthStore } from '../stores/useAuthStore';
+import { signOut } from '../services/auth';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Sparkles, Users, Zap } from 'lucide-react';
+import { Sparkles, Users, Zap, LogIn, User } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
   const { setCurrentView } = useQuizStore();
+  const { user } = useAuthStore();
+
+  const handleAuth = () => {
+    if (user) {
+      setCurrentView('dashboard');
+    } else {
+      setCurrentView('auth');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-qb-dark">
+      {/* Auth Header */}
+      <div className="container mx-auto px-4 pt-6">
+        <div className="flex justify-end">
+          <Button
+            variant="ghost"
+            onClick={handleAuth}
+            icon={user ? <User /> : <LogIn />}
+          >
+            {user ? 'Dashboard' : 'Sign In'}
+          </Button>
+        </div>
+      </div>
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-6xl mx-auto space-y-16">
           {/* Hero Section */}

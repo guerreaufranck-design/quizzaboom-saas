@@ -15,7 +15,7 @@ interface QuizState {
   totalPlayers: number;
   currentStage: number;
   currentQuestionIndex: number;
-  currentView: 'home' | 'pricing' | 'create' | 'join' | 'lobby' | 'playing' | 'results' | 'tv-display';
+  currentView: 'home' | 'pricing' | 'create' | 'join' | 'lobby' | 'playing' | 'results' | 'tv-display' | 'auth' | 'dashboard';
   isLoading: boolean;
   error: string | null;
   realtimeChannel: any;
