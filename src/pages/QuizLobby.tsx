@@ -32,7 +32,15 @@ export const QuizLobby: React.FC = () => {
       setupRealtimeSubscription(sessionCode);
     }
 
+    // Auto-refresh players every 500ms
+    const refreshInterval = setInterval(() => {
+      if (currentSession?.id) {
+        loadPlayers(currentSession.id);
+      }
+    }, 500);
+
     return () => {
+      clearInterval(refreshInterval);
       cleanupRealtime();
     };
   }, [sessionCode, currentSession?.id]);
