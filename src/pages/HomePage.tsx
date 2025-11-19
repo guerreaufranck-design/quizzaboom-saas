@@ -58,6 +58,17 @@ export const HomePage: React.FC = () => {
                 🎮 Join a Quiz Battle
               </Button>
             </div>
+            
+            <div className="text-center pt-4">
+              <Button
+                size="lg"
+                variant="secondary"
+                onClick={() => setCurrentView('pricing')}
+                className="text-lg"
+              >
+                💰 View Pricing
+              </Button>
+            </div>
           </div>
 
           {/* Features Grid */}

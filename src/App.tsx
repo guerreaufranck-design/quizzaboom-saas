@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAuthStore } from './stores/useAuthStore';
 import { useQuizStore } from './stores/useQuizStore';
 import { HomePage } from './pages/HomePage';
+import { Pricing } from './pages/Pricing';
 import { CreateQuiz } from './pages/CreateQuiz';
 import { JoinQuiz } from './pages/JoinQuiz';
 import { QuizLobby } from './pages/QuizLobby';
@@ -51,6 +52,8 @@ function App() {
     switch (currentView) {
       case 'home':
         return <HomePage />;
+      case 'pricing':
+        return <Pricing />;
       case 'create':
         return <CreateQuiz />;
       case 'join':

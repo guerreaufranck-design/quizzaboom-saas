@@ -15,7 +15,7 @@ interface QuizState {
   totalPlayers: number;
   currentStage: number;
   currentQuestionIndex: number;
-  currentView: 'home' | 'create' | 'join' | 'lobby' | 'playing' | 'results' | 'tv-display';
+  currentView: 'home' | 'pricing' | 'create' | 'join' | 'lobby' | 'playing' | 'results' | 'tv-display';
   isLoading: boolean;
   error: string | null;
   realtimeChannel: any;
@@ -45,7 +45,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   totalPlayers: 0,
   currentStage: 0,
   currentQuestionIndex: 0,
-  currentView: 'home',
+  currentView: 'home' | 'pricing',
   isLoading: false,
   error: null,
   realtimeChannel: null,
