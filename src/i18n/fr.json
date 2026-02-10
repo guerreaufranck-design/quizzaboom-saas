@@ -175,7 +175,11 @@
     "noPurchases": "Aucun achat",
     "browsePlans": "Voir les plans",
     "useCredit": "Utiliser",
-    "used": "Utilise"
+    "used": "Utilise",
+    "paymentReceived": "Paiement recu !",
+    "syncingPurchase": "Synchronisation de votre achat, cela peut prendre quelques secondes...",
+    "paymentConfirmed": "Paiement confirme !",
+    "creditReady": "Votre credit est pret. Vous pouvez creer un quiz maintenant !"
   },
   "host": {
     "hostDashboard": "Tableau de bord animateur",

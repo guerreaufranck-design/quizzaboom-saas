@@ -175,7 +175,11 @@
     "noPurchases": "Sin compras aun",
     "browsePlans": "Ver planes",
     "useCredit": "Usar",
-    "used": "Usado"
+    "used": "Usado",
+    "paymentReceived": "Pago recibido!",
+    "syncingPurchase": "Sincronizando tu compra, esto puede tomar unos segundos...",
+    "paymentConfirmed": "Pago confirmado!",
+    "creditReady": "Tu credito esta listo. Puedes crear un quiz ahora!"
   },
   "host": {
     "hostDashboard": "Panel del anfitrion",

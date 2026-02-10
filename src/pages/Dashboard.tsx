@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { useAuthStore } from '../stores/useAuthStore';
 import { signOut } from '../services/auth';
 import { supabase } from '../services/supabase/client';
-import { Plus, LogOut, CreditCard, Trophy } from 'lucide-react';
+import { Plus, LogOut, CreditCard, Trophy, CheckCircle, Loader2 } from 'lucide-react';
 import { useAppNavigate } from '../hooks/useAppNavigate';
 
 interface Purchase {
@@ -20,29 +21,81 @@ export const Dashboard: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const navigate = useAppNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [waitingForWebhook, setWaitingForWebhook] = useState(false);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const initialCountRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    loadPurchases();
-  }, [user]);
-
-  const loadPurchases = async () => {
+  const loadPurchases = useCallback(async () => {
+    if (!user) return [];
     try {
       const { data, error } = await supabase
         .from('user_purchases')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPurchases(data || []);
+      const result = data || [];
+      setPurchases(result);
+      return result;
     } catch (error) {
       console.error('Load purchases error:', error);
+      return [];
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  // Initial load
+  useEffect(() => {
+    loadPurchases();
+  }, [loadPurchases]);
+
+  // Detect ?payment=success and poll for new purchase from webhook
+  useEffect(() => {
+    if (searchParams.get('payment') !== 'success' || !user) return;
+
+    setPaymentSuccess(true);
+    setWaitingForWebhook(true);
+
+    // Remove ?payment=success from URL without reload
+    searchParams.delete('payment');
+    setSearchParams(searchParams, { replace: true });
+
+    // Store current purchase count to detect new one
+    const startPolling = async () => {
+      const current = await loadPurchases();
+      initialCountRef.current = current.length;
+
+      let attempts = 0;
+      const maxAttempts = 15; // 15 × 2s = 30 seconds max
+
+      pollIntervalRef.current = setInterval(async () => {
+        attempts++;
+        const updated = await loadPurchases();
+
+        if (updated.length > (initialCountRef.current ?? 0)) {
+          // New purchase detected!
+          setWaitingForWebhook(false);
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        } else if (attempts >= maxAttempts) {
+          // Stop polling after 30s
+          setWaitingForWebhook(false);
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        }
+      }, 2000);
+    };
+
+    startPolling();
+
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, [searchParams, user, setSearchParams, loadPurchases]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -69,6 +122,29 @@ export const Dashboard: React.FC = () => {
               {t('common.signOut')}
             </Button>
           </div>
+
+          {/* Payment success banner */}
+          {paymentSuccess && (
+            <div className="mb-8 p-4 bg-green-500/10 border border-green-500/40 rounded-xl flex items-center gap-4">
+              {waitingForWebhook ? (
+                <>
+                  <Loader2 className="w-6 h-6 text-green-400 animate-spin shrink-0" />
+                  <div>
+                    <p className="text-green-300 font-bold">{t('dashboard.paymentReceived')}</p>
+                    <p className="text-green-200/70 text-sm">{t('dashboard.syncingPurchase')}</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-6 h-6 text-green-400 shrink-0" />
+                  <div>
+                    <p className="text-green-300 font-bold">{t('dashboard.paymentConfirmed')}</p>
+                    <p className="text-green-200/70 text-sm">{t('dashboard.creditReady')}</p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Stats */}
           <div className="grid md:grid-cols-3 gap-6 mb-12">

@@ -175,7 +175,11 @@
     "noPurchases": "No purchases yet",
     "browsePlans": "Browse Plans",
     "useCredit": "Use Credit",
-    "used": "Used"
+    "used": "Used",
+    "paymentReceived": "Payment received!",
+    "syncingPurchase": "Syncing your purchase, this may take a few seconds...",
+    "paymentConfirmed": "Payment confirmed!",
+    "creditReady": "Your credit is ready. You can create a quiz now!"
   },
   "host": {
     "hostDashboard": "Host Dashboard",

@@ -175,7 +175,11 @@
     "noPurchases": "Noch keine Kaufe",
     "browsePlans": "Plane ansehen",
     "useCredit": "Verwenden",
-    "used": "Verwendet"
+    "used": "Verwendet",
+    "paymentReceived": "Zahlung erhalten!",
+    "syncingPurchase": "Kauf wird synchronisiert, dies kann einige Sekunden dauern...",
+    "paymentConfirmed": "Zahlung bestatigt!",
+    "creditReady": "Ihr Guthaben ist bereit. Sie konnen jetzt ein Quiz erstellen!"
   },
   "host": {
     "hostDashboard": "Host-Dashboard",
