@@ -6,7 +6,7 @@ import { Card } from '../components/ui/Card';
 import { useAuthStore } from '../stores/useAuthStore';
 import { signOut } from '../services/auth';
 import { supabase } from '../services/supabase/client';
-import { Plus, LogOut, CreditCard, Trophy, CheckCircle, Loader2 } from 'lucide-react';
+import { Plus, LogOut, CreditCard, Trophy, CheckCircle, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useAppNavigate } from '../hooks/useAppNavigate';
 
 interface Purchase {
@@ -26,6 +26,7 @@ export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [waitingForWebhook, setWaitingForWebhook] = useState(false);
+  const [purchaseFound, setPurchaseFound] = useState(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const initialCountRef = useRef<number | null>(null);
 
@@ -80,10 +81,12 @@ export const Dashboard: React.FC = () => {
 
         if (updated.length > (initialCountRef.current ?? 0)) {
           // New purchase detected!
+          setPurchaseFound(true);
           setWaitingForWebhook(false);
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         } else if (attempts >= maxAttempts) {
-          // Stop polling after 30s
+          // Stop polling after 30s — purchase not yet synced
+          setPurchaseFound(false);
           setWaitingForWebhook(false);
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         }
@@ -125,7 +128,11 @@ export const Dashboard: React.FC = () => {
 
           {/* Payment success banner */}
           {paymentSuccess && (
-            <div className="mb-8 p-4 bg-green-500/10 border border-green-500/40 rounded-xl flex items-center gap-4">
+            <div className={`mb-8 p-4 rounded-xl flex items-center gap-4 ${
+              waitingForWebhook || purchaseFound
+                ? 'bg-green-500/10 border border-green-500/40'
+                : 'bg-yellow-500/10 border border-yellow-500/40'
+            }`}>
               {waitingForWebhook ? (
                 <>
                   <Loader2 className="w-6 h-6 text-green-400 animate-spin shrink-0" />
@@ -134,13 +141,29 @@ export const Dashboard: React.FC = () => {
                     <p className="text-green-200/70 text-sm">{t('dashboard.syncingPurchase')}</p>
                   </div>
                 </>
-              ) : (
+              ) : purchaseFound ? (
                 <>
                   <CheckCircle className="w-6 h-6 text-green-400 shrink-0" />
                   <div>
                     <p className="text-green-300 font-bold">{t('dashboard.paymentConfirmed')}</p>
                     <p className="text-green-200/70 text-sm">{t('dashboard.creditReady')}</p>
                   </div>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="w-6 h-6 text-yellow-400 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-yellow-300 font-bold">{t('dashboard.paymentPending')}</p>
+                    <p className="text-yellow-200/70 text-sm">{t('dashboard.paymentPendingHint')}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={<RefreshCw className="w-4 h-4" />}
+                    onClick={() => window.location.reload()}
+                  >
+                    {t('dashboard.refresh')}
+                  </Button>
                 </>
               )}
             </div>

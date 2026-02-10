@@ -179,7 +179,10 @@
     "paymentReceived": "Zahlung erhalten!",
     "syncingPurchase": "Kauf wird synchronisiert, dies kann einige Sekunden dauern...",
     "paymentConfirmed": "Zahlung bestatigt!",
-    "creditReady": "Ihr Guthaben ist bereit. Sie konnen jetzt ein Quiz erstellen!"
+    "creditReady": "Ihr Guthaben ist bereit. Sie konnen jetzt ein Quiz erstellen!",
+    "paymentPending": "Zahlung erhalten aber noch nicht synchronisiert",
+    "paymentPendingHint": "Dies kann einen Moment dauern. Versuchen Sie die Seite zu aktualisieren.",
+    "refresh": "Aktualisieren"
   },
   "host": {
     "hostDashboard": "Host-Dashboard",

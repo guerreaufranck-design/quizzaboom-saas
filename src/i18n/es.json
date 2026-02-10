@@ -179,7 +179,10 @@
     "paymentReceived": "Pago recibido!",
     "syncingPurchase": "Sincronizando tu compra, esto puede tomar unos segundos...",
     "paymentConfirmed": "Pago confirmado!",
-    "creditReady": "Tu credito esta listo. Puedes crear un quiz ahora!"
+    "creditReady": "Tu credito esta listo. Puedes crear un quiz ahora!",
+    "paymentPending": "Pago recibido pero aun no sincronizado",
+    "paymentPendingHint": "Esto puede tardar un momento. Intenta actualizar la pagina.",
+    "refresh": "Actualizar"
   },
   "host": {
     "hostDashboard": "Panel del anfitrion",

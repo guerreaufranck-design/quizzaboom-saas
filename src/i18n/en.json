@@ -179,7 +179,10 @@
     "paymentReceived": "Payment received!",
     "syncingPurchase": "Syncing your purchase, this may take a few seconds...",
     "paymentConfirmed": "Payment confirmed!",
-    "creditReady": "Your credit is ready. You can create a quiz now!"
+    "creditReady": "Your credit is ready. You can create a quiz now!",
+    "paymentPending": "Payment received but not yet synced",
+    "paymentPendingHint": "This can take a moment. Try refreshing the page.",
+    "refresh": "Refresh"
   },
   "host": {
     "hostDashboard": "Host Dashboard",

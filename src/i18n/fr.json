@@ -179,7 +179,10 @@
     "paymentReceived": "Paiement recu !",
     "syncingPurchase": "Synchronisation de votre achat, cela peut prendre quelques secondes...",
     "paymentConfirmed": "Paiement confirme !",
-    "creditReady": "Votre credit est pret. Vous pouvez creer un quiz maintenant !"
+    "creditReady": "Votre credit est pret. Vous pouvez creer un quiz maintenant !",
+    "paymentPending": "Paiement recu mais pas encore synchronise",
+    "paymentPendingHint": "Cela peut prendre un moment. Essayez de rafraichir la page.",
+    "refresh": "Rafraichir"
   },
   "host": {
     "hostDashboard": "Tableau de bord animateur",
