@@ -137,7 +137,19 @@
     "disabled": "desactivado",
     "questions": "Preguntas",
     "perStage": "Por etapa",
-    "quizStructure": "Estructura del quiz generada:"
+    "quizStructure": "Estructura del quiz generada:",
+    "noCredits": "Se necesitan creditos",
+    "noCreditsDesc": "Necesitas creditos para crear un quiz. Compra un plan para empezar!",
+    "trialExpired": "Prueba expirada",
+    "trialExpiredDesc": "Tu prueba gratis de 30 dias ha terminado. Mejora tu plan para seguir creando quiz.",
+    "quotaReached": "Limite mensual alcanzado",
+    "quotaReachedDesc": "Has utilizado todos tus quiz de este mes. Mejora tu plan para obtener mas.",
+    "cancelled": "Suscripcion cancelada",
+    "cancelledDesc": "Tu suscripcion ha sido cancelada. Reactiva para seguir creando quiz.",
+    "viewPlans": "Ver planes",
+    "monthlyUsage": "Uso mensual",
+    "creditsAvailable": "{{count}} credito(s) disponible(s)",
+    "quizUsageInfo": "{{used}} / {{limit}} quiz usados este mes"
   },
   "auth": {
     "welcome": "Bienvenido!",
@@ -149,7 +161,8 @@
     "magicLinkSent": "Hemos enviado un enlace magico a",
     "closePageHint": "Haz clic en el enlace del email para iniciar sesion. Puedes cerrar esta pagina.",
     "tryAnother": "Probar otro email",
-    "businessHint": "Para cuentas de empresa, usa tu email profesional"
+    "businessHint": "Para cuentas de empresa, usa tu email profesional",
+    "loginRequired": "Inicia sesion para continuar"
   },
   "dashboard": {
     "title": "Mi panel de control",

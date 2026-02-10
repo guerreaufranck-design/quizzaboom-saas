@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/useAuthStore';
@@ -37,11 +37,7 @@ export const ProSignup: React.FC = () => {
 
   const selectedCountry = COUNTRIES.find(c => c.code === country);
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    }
-  }, [user, navigate]);
+  // Auth is handled by ProtectedRoute wrapper
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();

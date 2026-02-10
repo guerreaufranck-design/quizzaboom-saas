@@ -24,11 +24,6 @@ export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
-      navigate('auth');
-      return;
-    }
-
     loadPurchases();
   }, [user]);
 

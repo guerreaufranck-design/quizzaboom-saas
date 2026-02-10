@@ -137,7 +137,19 @@
     "disabled": "deaktiviert",
     "questions": "Fragen",
     "perStage": "Pro Stufe",
-    "quizStructure": "Generierte Quiz-Struktur:"
+    "quizStructure": "Generierte Quiz-Struktur:",
+    "noCredits": "Credits erforderlich",
+    "noCreditsDesc": "Du brauchst Credits, um ein Quiz zu erstellen. Kaufe einen Plan, um loszulegen!",
+    "trialExpired": "Testphase abgelaufen",
+    "trialExpiredDesc": "Deine 30-tagige kostenlose Testphase ist abgelaufen. Upgrade, um weiterhin Quiz zu erstellen.",
+    "quotaReached": "Monatliches Limit erreicht",
+    "quotaReachedDesc": "Du hast alle deine Quiz fur diesen Monat aufgebraucht. Upgrade deinen Plan fur mehr.",
+    "cancelled": "Abo gekundigt",
+    "cancelledDesc": "Dein Abo wurde gekundigt. Reaktiviere es, um weiterhin Quiz zu erstellen.",
+    "viewPlans": "Plane ansehen",
+    "monthlyUsage": "Monatliche Nutzung",
+    "creditsAvailable": "{{count}} Credit(s) verfugbar",
+    "quizUsageInfo": "{{used}} / {{limit}} Quiz diesen Monat verwendet"
   },
   "auth": {
     "welcome": "Willkommen!",
@@ -149,7 +161,8 @@
     "magicLinkSent": "Wir haben einen Magic Link gesendet an",
     "closePageHint": "Klicke auf den Link in der E-Mail, um dich anzumelden. Du kannst diese Seite schliessen.",
     "tryAnother": "Andere E-Mail versuchen",
-    "businessHint": "Fur Geschaftskonten bitte deine berufliche E-Mail verwenden"
+    "businessHint": "Fur Geschaftskonten bitte deine berufliche E-Mail verwenden",
+    "loginRequired": "Melde dich an, um fortzufahren"
   },
   "dashboard": {
     "title": "Mein Dashboard",

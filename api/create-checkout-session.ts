@@ -18,9 +18,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { priceId, planName, successUrl, cancelUrl } = req.body;
+    const { priceId, planName, userId, successUrl, cancelUrl } = req.body;
 
-    console.log('Creating checkout session:', { priceId, planName });
+    console.log('Creating checkout session:', { priceId, planName, userId });
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -35,6 +35,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       cancel_url: cancelUrl,
       metadata: {
         plan_name: planName,
+        user_id: userId || '',
       },
     });
 

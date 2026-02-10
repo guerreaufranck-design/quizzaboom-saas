@@ -137,7 +137,19 @@
     "disabled": "disabled",
     "questions": "Questions",
     "perStage": "Per Stage",
-    "quizStructure": "Generated Quiz Structure:"
+    "quizStructure": "Generated Quiz Structure:",
+    "noCredits": "Credits Required",
+    "noCreditsDesc": "You need credits to create a quiz. Purchase a plan to get started!",
+    "trialExpired": "Trial Expired",
+    "trialExpiredDesc": "Your 30-day free trial has ended. Upgrade to continue creating quizzes.",
+    "quotaReached": "Monthly Limit Reached",
+    "quotaReachedDesc": "You've used all your quizzes for this month. Upgrade your plan for more.",
+    "cancelled": "Subscription Cancelled",
+    "cancelledDesc": "Your subscription has been cancelled. Reactivate to continue creating quizzes.",
+    "viewPlans": "View Plans",
+    "monthlyUsage": "Monthly usage",
+    "creditsAvailable": "{{count}} credit(s) available",
+    "quizUsageInfo": "{{used}} / {{limit}} quizzes used this month"
   },
   "auth": {
     "welcome": "Welcome!",
@@ -149,7 +161,8 @@
     "magicLinkSent": "We sent a magic link to",
     "closePageHint": "Click the link in the email to sign in. You can close this page.",
     "tryAnother": "Try another email",
-    "businessHint": "For business accounts, please use your professional email"
+    "businessHint": "For business accounts, please use your professional email",
+    "loginRequired": "Sign in to continue"
   },
   "dashboard": {
     "title": "My Dashboard",

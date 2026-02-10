@@ -55,39 +55,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       console.log('Payment completed:', session.id);
 
-      // Get price details to extract metadata
+      // Extract user_id and plan_name from session metadata (set during checkout)
+      const sessionMetadata = session.metadata || {};
+      const userId = sessionMetadata.user_id;
+      const planName = sessionMetadata.plan_name;
+
+      // Get price details for max_players from product metadata
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
       const priceId = lineItems.data[0]?.price?.id;
 
+      let maxPlayers = 5;
       if (priceId) {
         const price = await stripe.prices.retrieve(priceId, {
           expand: ['product'],
         });
-
         const product = price.product as Stripe.Product;
-        const metadata = product.metadata;
+        maxPlayers = parseInt(product.metadata.max_players || '5');
+      }
 
-        // Get or create user based on email
-        const email = session.customer_details?.email;
-        
-        if (email) {
-          // Create purchase record
-          const { error: purchaseError } = await supabase
-            .from('user_purchases')
-            .insert({
-              stripe_session_id: session.id,
-              plan_name: metadata.plan_name || 'Unknown',
-              max_players: parseInt(metadata.max_players || '5'),
-              amount: session.amount_total || 0,
-              used: false,
-            });
+      if (userId) {
+        // Create purchase record linked to the authenticated user
+        const { error: purchaseError } = await supabase
+          .from('user_purchases')
+          .insert({
+            user_id: userId,
+            stripe_session_id: session.id,
+            plan_name: planName || 'Unknown',
+            max_players: maxPlayers,
+            amount: session.amount_total || 0,
+            used: false,
+          });
 
-          if (purchaseError) {
-            console.error('Failed to create purchase:', purchaseError);
-          } else {
-            console.log('Purchase recorded successfully');
-          }
+        if (purchaseError) {
+          console.error('Failed to create purchase:', purchaseError);
+        } else {
+          console.log('Purchase recorded successfully for user:', userId);
         }
+      } else {
+        console.error('No user_id in session metadata — purchase cannot be linked to a user');
       }
     }
 

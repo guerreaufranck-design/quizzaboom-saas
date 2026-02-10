@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuizStore } from '../stores/useQuizStore';
 import { useAppNavigate } from '../hooks/useAppNavigate';
+import { useUserEntitlement } from '../hooks/useUserEntitlement';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Select } from '../components/ui/Select';
-import { ArrowLeft, Sparkles, Clock, Target, Globe, Zap, Loader2 } from 'lucide-react';
+import { ArrowLeft, Sparkles, Clock, Target, Globe, Zap, Loader2, Lock, CreditCard, AlertTriangle } from 'lucide-react';
 import { calculateQuizStructure } from '../services/gemini';
 import { THEMES, THEME_MODES, type ThemeCategory, type ThemeMode } from '../types/themes';
 import type { QuizGenRequest } from '../types/quiz';
@@ -14,6 +16,8 @@ export const CreateQuiz: React.FC = () => {
   const { t } = useTranslation();
   const { generateQuiz, createSession, isLoading } = useQuizStore();
   const navigate = useAppNavigate();
+  const routerNavigate = useNavigate();
+  const entitlement = useUserEntitlement();
 
   const [selectedTheme, setSelectedTheme] = useState<ThemeCategory>('general');
   const [selectedMode, setSelectedMode] = useState<ThemeMode>('standard');
@@ -47,7 +51,10 @@ export const CreateQuiz: React.FC = () => {
       setGenerationStep(t('create.generationSteps.generating', { count: quizStructure.totalQuestions }));
       const quiz = await generateQuiz(request);
 
+      // Consume credit before creating session
       setGenerationStep(t('create.generationSteps.creating'));
+      await entitlement.consumeCredit();
+
       await createSession(quiz.id);
 
       setGenerationStep(t('create.generationSteps.ready'));
@@ -66,6 +73,8 @@ export const CreateQuiz: React.FC = () => {
         errorMessage += 'API key not configured properly.';
       } else if (msg.includes('attempts')) {
         errorMessage += 'The AI service is taking too long. Please try again.';
+      } else if (msg.includes('credits') || msg.includes('Credits')) {
+        errorMessage += 'No credits available.';
       } else {
         errorMessage += 'Please try again.';
       }
@@ -73,6 +82,97 @@ export const CreateQuiz: React.FC = () => {
       alert(errorMessage);
     }
   };
+
+  // Entitlement loading state
+  if (entitlement.isLoading) {
+    return (
+      <div className="min-h-screen bg-qb-dark flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-qb-cyan animate-spin mx-auto mb-4" />
+          <p className="text-white/60">{t('common.loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Entitlement gate - show blocking card if user cannot create
+  if (!entitlement.canCreate) {
+    const gateConfig = {
+      no_credits: {
+        icon: <CreditCard className="w-16 h-16 text-qb-cyan" />,
+        title: t('create.noCredits'),
+        description: t('create.noCreditsDesc'),
+        buttonText: t('create.viewPlans'),
+        buttonAction: () => routerNavigate('/pricing'),
+      },
+      trial_expired: {
+        icon: <AlertTriangle className="w-16 h-16 text-qb-yellow" />,
+        title: t('create.trialExpired'),
+        description: t('create.trialExpiredDesc'),
+        buttonText: t('create.viewPlans'),
+        buttonAction: () => routerNavigate('/pricing'),
+      },
+      quota_reached: {
+        icon: <Lock className="w-16 h-16 text-qb-magenta" />,
+        title: t('create.quotaReached'),
+        description: t('create.quotaReachedDesc'),
+        buttonText: t('create.viewPlans'),
+        buttonAction: () => routerNavigate('/pricing'),
+      },
+      cancelled: {
+        icon: <AlertTriangle className="w-16 h-16 text-red-400" />,
+        title: t('create.cancelled'),
+        description: t('create.cancelledDesc'),
+        buttonText: t('create.viewPlans'),
+        buttonAction: () => routerNavigate('/pricing'),
+      },
+      ok: { icon: null, title: '', description: '', buttonText: '', buttonAction: () => {} },
+    };
+
+    const config = gateConfig[entitlement.reason];
+
+    return (
+      <div className="min-h-screen bg-qb-dark py-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-lg mx-auto">
+            <div className="mb-8">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('home')}
+                icon={<ArrowLeft />}
+              >
+                {t('common.back')}
+              </Button>
+            </div>
+
+            <Card className="p-8 text-center bg-gradient-to-br from-qb-purple/20 to-qb-cyan/20 border border-white/10">
+              <div className="mb-6">{config.icon}</div>
+              <h2 className="text-2xl font-bold text-white mb-3">{config.title}</h2>
+              <p className="text-white/70 mb-8">{config.description}</p>
+
+              {entitlement.quizUsage && (
+                <div className="mb-6 p-4 bg-qb-darker rounded-lg">
+                  <div className="text-sm text-white/60 mb-1">{t('create.monthlyUsage')}</div>
+                  <div className="text-2xl font-bold text-white">
+                    {entitlement.quizUsage.used} / {entitlement.quizUsage.limit}
+                  </div>
+                </div>
+              )}
+
+              <Button
+                size="xl"
+                fullWidth
+                gradient
+                onClick={config.buttonAction}
+              >
+                {config.buttonText}
+              </Button>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-qb-dark py-12">
@@ -93,6 +193,29 @@ export const CreateQuiz: React.FC = () => {
               <p className="text-white/70 mt-2">{t('create.subtitle')}</p>
             </div>
           </div>
+
+          {/* Credit info banner */}
+          {entitlement.userType === 'b2c' && (
+            <Card className="mb-6 p-4 bg-qb-cyan/10 border border-qb-cyan/30">
+              <div className="flex items-center gap-3">
+                <CreditCard className="w-5 h-5 text-qb-cyan" />
+                <span className="text-white/80">
+                  {t('create.creditsAvailable', { count: entitlement.availableCredits })}
+                </span>
+              </div>
+            </Card>
+          )}
+
+          {entitlement.userType === 'b2b' && entitlement.quizUsage && (
+            <Card className="mb-6 p-4 bg-qb-purple/10 border border-qb-purple/30">
+              <div className="flex items-center gap-3">
+                <CreditCard className="w-5 h-5 text-qb-purple" />
+                <span className="text-white/80">
+                  {t('create.quizUsageInfo', { used: entitlement.quizUsage.used, limit: entitlement.quizUsage.limit })}
+                </span>
+              </div>
+            </Card>
+          )}
 
           {/* Loading Overlay */}
           {isLoading && (

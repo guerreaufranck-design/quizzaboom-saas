@@ -137,7 +137,19 @@
     "disabled": "desactive",
     "questions": "Questions",
     "perStage": "Par etape",
-    "quizStructure": "Structure du quiz generee :"
+    "quizStructure": "Structure du quiz generee :",
+    "noCredits": "Credits necessaires",
+    "noCreditsDesc": "Vous avez besoin de credits pour creer un quiz. Achetez un plan pour commencer !",
+    "trialExpired": "Essai expire",
+    "trialExpiredDesc": "Votre essai gratuit de 30 jours est termine. Passez a un plan superieur pour continuer.",
+    "quotaReached": "Limite mensuelle atteinte",
+    "quotaReachedDesc": "Vous avez utilise tous vos quiz du mois. Passez a un plan superieur pour en avoir plus.",
+    "cancelled": "Abonnement annule",
+    "cancelledDesc": "Votre abonnement a ete annule. Reactivez-le pour continuer a creer des quiz.",
+    "viewPlans": "Voir les plans",
+    "monthlyUsage": "Utilisation mensuelle",
+    "creditsAvailable": "{{count}} credit(s) disponible(s)",
+    "quizUsageInfo": "{{used}} / {{limit}} quiz utilises ce mois-ci"
   },
   "auth": {
     "welcome": "Bienvenue !",
@@ -149,7 +161,8 @@
     "magicLinkSent": "Nous avons envoye un lien magique a",
     "closePageHint": "Cliquez sur le lien dans l'email pour vous connecter. Vous pouvez fermer cette page.",
     "tryAnother": "Essayer un autre email",
-    "businessHint": "Pour les comptes professionnels, utilisez votre email pro"
+    "businessHint": "Pour les comptes professionnels, utilisez votre email pro",
+    "loginRequired": "Connectez-vous pour continuer"
   },
   "dashboard": {
     "title": "Mon tableau de bord",

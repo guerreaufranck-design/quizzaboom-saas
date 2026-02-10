@@ -168,7 +168,8 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       console.log('✅ AI generation complete, saving to DB...');
       
       const { data: { user } } = await supabase.auth.getUser();
-      const creatorId = user?.id || uuidv4();
+      if (!user) throw new Error('Authentication required');
+      const creatorId = user.id;
       
       const quizId = uuidv4();
       
@@ -256,8 +257,9 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       console.log('📝 Creating session for quiz:', quizId);
       
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Authentication required');
       const sessionCode = await generateUniqueSessionCode();
-      const hostId = user?.id || uuidv4();
+      const hostId = user.id;
       
       const sessionId = uuidv4();
       

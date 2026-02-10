@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '../stores/useAuthStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Check, AlertCircle, Building2, Users, Crown, Shield, ArrowLeft } from 'lucide-react';
@@ -8,10 +9,17 @@ import { Check, AlertCircle, Building2, Users, Crown, Shield, ArrowLeft } from '
 export const Pricing: React.FC = () => {
   const routerNavigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useAuthStore();
   const [showB2B, setShowB2B] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleCheckout = async (priceId: string, planName: string) => {
+    // Require auth before checkout
+    if (!user) {
+      routerNavigate('/auth?returnTo=/pricing');
+      return;
+    }
+
     setLoading(priceId);
 
     try {
@@ -21,7 +29,8 @@ export const Pricing: React.FC = () => {
         body: JSON.stringify({
           priceId,
           planName,
-          successUrl: `${window.location.origin}/auth?payment=success`,
+          userId: user.id,
+          successUrl: `${window.location.origin}/dashboard?payment=success`,
           cancelUrl: `${window.location.origin}/pricing?payment=cancel`
         }),
       });

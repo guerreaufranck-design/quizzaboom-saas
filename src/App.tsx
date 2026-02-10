@@ -14,6 +14,7 @@ import { HostDashboard } from './pages/HostDashboard';
 import { TVDisplay } from './pages/TVDisplay';
 import { ProSignup } from './pages/ProSignup';
 import { ProDashboard } from './pages/ProDashboard';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function PlayRoute() {
   const { isHost } = useQuizStore();
@@ -55,14 +56,14 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/auth" element={<Auth />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/create" element={<CreateQuiz />} />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/create" element={<ProtectedRoute><CreateQuiz /></ProtectedRoute>} />
       <Route path="/join" element={<JoinQuiz />} />
-      <Route path="/lobby" element={<QuizLobby />} />
+      <Route path="/lobby" element={<ProtectedRoute><QuizLobby /></ProtectedRoute>} />
       <Route path="/play" element={<PlayRoute />} />
       <Route path="/tv" element={<TVDisplay />} />
-      <Route path="/pro-signup" element={<ProSignup />} />
-      <Route path="/pro-dashboard" element={<ProDashboard />} />
+      <Route path="/pro-signup" element={<ProtectedRoute><ProSignup /></ProtectedRoute>} />
+      <Route path="/pro-dashboard" element={<ProtectedRoute><ProDashboard /></ProtectedRoute>} />
       <Route path="*" element={<HomePage />} />
     </Routes>
   );
