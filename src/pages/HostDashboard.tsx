@@ -330,11 +330,15 @@ export const HostDashboard: React.FC = () => {
             <Button
               variant="ghost"
               icon={<Monitor />}
-              onClick={() => window.open(`${window.location.origin}?tv=${sessionCode}`, '_blank')}
+              onClick={() => window.open(`${window.location.origin}/tv?code=${sessionCode}`, '_blank')}
             >
               {t('host.openTV')}
             </Button>
-            <Button variant="ghost" icon={<Eye />}>
+            <Button
+              variant="ghost"
+              icon={<Eye />}
+              onClick={() => window.open(`${window.location.origin}/join?code=${sessionCode}`, '_blank')}
+            >
               {t('host.previewPlayer')}
             </Button>
           </div>

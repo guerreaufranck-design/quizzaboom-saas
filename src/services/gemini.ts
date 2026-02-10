@@ -109,40 +109,56 @@ function buildPrompt(
   duration: number,
 ): string {
   const fullLanguage = languageMap[language] || 'French';
+  const randomSeed = Math.floor(Math.random() * 1000000);
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().toLocaleString('en', { month: 'long' });
 
   return `Create a HIGHLY ENGAGING quiz in ${fullLanguage} about: ${theme}
+
+UNIQUE SESSION SEED: ${randomSeed} — Use this seed to ensure completely different questions from any previous generation.
 
 Generate EXACTLY ${structure.totalQuestions} questions organized in ${structure.totalStages} stages.
 Each stage has ${structure.questionsPerStage} questions.
 
-🎯 CRITICAL QUALITY RULES:
+🎯 ABSOLUTE DIVERSITY REQUIREMENTS:
 
-1. QUESTION DIVERSITY:
-   - NEVER repeat similar questions
-   - Each question must be UNIQUE and surprising
-   - Avoid common/obvious trivia
-   - Mix question styles (dates, names, concepts, processes)
+1. QUESTION UNIQUENESS (MOST IMPORTANT):
+   - This quiz MUST be 100% UNIQUE — assume the same players have already played quizzes on this topic before
+   - NEVER use classic/common trivia questions (capitals, famous paintings, basic history dates)
+   - AVOID "standard quiz questions" that appear in every trivia game
+   - Instead: dig DEEP into unusual, obscure, fascinating corners of the topic
+   - Mix time periods: ancient history, medieval, modern, AND current events from ${currentYear}
+   - Include at least 20% questions about recent events, discoveries, or records from ${currentMonth} ${currentYear} or the last 2 years
+   - Mix question angles: statistics, records, origins, paradoxes, myths vs reality, surprising connections
+   - Each question should cover a DIFFERENT sub-aspect of the theme
 
-2. DIFFICULTY & DEPTH:
-   - Questions should make players THINK
-   - Avoid questions answerable by simple elimination
-   - Include lesser-known but fascinating facts
+2. QUESTION STYLE VARIETY (vary across ALL these types):
+   - "Which of these is TRUE/FALSE?" (myth-busting)
+   - "What year did X happen?" (chronology)
+   - "How many / What percentage?" (statistics & numbers)
+   - "What is the origin of X?" (etymology, history)
+   - "Which person/place holds the record for X?" (records)
+   - "What surprising connection exists between X and Y?" (unexpected links)
+   - "What was recently discovered about X?" (current events / science news)
+
+3. DIFFICULTY & DEPTH:
+   - Questions should make players THINK and DEBATE
+   - All 4 options must be PLAUSIBLE — no obviously absurd answers
+   - Include questions where the intuitive answer is WRONG
    - Balance "I learned something!" with "That was fun!"
-   - All 4 options must be PLAUSIBLE (no obviously absurd answers)
 
-3. EDUCATIONAL + FUN:
+4. EDUCATIONAL + FUN:
    - Players should laugh OR be amazed by the answer
-   - Include surprising/counter-intuitive facts
-   - Explanations should be engaging, not boring
-   - Fun facts should be genuinely interesting
+   - Explanations must be engaging mini-stories, not dry facts
+   - Fun facts should be genuinely mind-blowing
+   - Include counter-intuitive facts that surprise everyone
 
-4. ANSWER DESIGN:
-   - Make ALL 4 options believable
-   - Don't make correct answer obvious by length/detail
-   - Avoid patterns (e.g., "C is always right")
+5. ANSWER DESIGN:
+   - Randomize correct answer position (A/B/C/D equally distributed)
+   - Don't make correct answer obvious by length or detail
    - Wrong answers should be tempting but clearly wrong once explained
 
-5. MICRO-THEME RULES:
+6. MICRO-THEME RULES:
    - Micro_theme = GENERAL CATEGORY (2-4 words max)
    - NEVER use specific terms from the answer
    - Be BROAD, not specific
@@ -150,7 +166,7 @@ Each stage has ${structure.questionsPerStage} questions.
 REQUIREMENTS:
 - Difficulty: ${difficulty}
 - Language: ${fullLanguage}
-- Use REAL facts, REAL answers
+- Use REAL facts, REAL answers — accuracy is essential
 - Make players say "Wow, I didn't know that!"
 - Questions should be sharable (players want to tell friends)
 
@@ -202,7 +218,7 @@ async function generateQuizClientSide(request: QuizGenRequest): Promise<AIQuizRe
 
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.0-flash-exp',
-    generationConfig: { temperature: 0.9, maxOutputTokens: 8192 },
+    generationConfig: { temperature: 1.0, maxOutputTokens: 8192 },
   });
 
   const result = await model.generateContent(prompt);
