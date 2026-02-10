@@ -103,7 +103,7 @@ export const Pricing: React.FC = () => {
     },
     {
       name: 'Pro Event',
-      price: 19.90,
+      price: 19.99,
       priceId: import.meta.env.VITE_STRIPE_PRICE_EVENT,
       players: 100,
       icon: '👑',
