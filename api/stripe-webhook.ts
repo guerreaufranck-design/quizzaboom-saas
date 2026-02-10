@@ -57,8 +57,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Extract user_id and plan_name from session metadata (set during checkout)
       const sessionMetadata = session.metadata || {};
-      const userId = sessionMetadata.user_id;
+      let userId = sessionMetadata.user_id;
       const planName = sessionMetadata.plan_name;
+
+      // Fallback: if user_id missing from metadata, try to find user by email
+      if (!userId && session.customer_details?.email) {
+        console.log('No user_id in metadata, trying email fallback:', session.customer_details.email);
+        const { data: userList } = await supabase.auth.admin.listUsers();
+        const matchingUser = userList?.users?.find(
+          (u: { email?: string }) => u.email === session.customer_details?.email
+        );
+        if (matchingUser) {
+          userId = matchingUser.id;
+          console.log('Found user by email fallback:', userId);
+        }
+      }
 
       // Get price details for max_players from product metadata
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
@@ -92,7 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           console.log('Purchase recorded successfully for user:', userId);
         }
       } else {
-        console.error('No user_id in session metadata — purchase cannot be linked to a user');
+        console.error('No user_id found (metadata + email fallback failed) — purchase cannot be linked');
       }
     }
 
