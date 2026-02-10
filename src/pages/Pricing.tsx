@@ -46,8 +46,9 @@ export const Pricing: React.FC = () => {
       // Redirection directe vers Stripe
       window.location.href = url;
     } catch (error) {
-      console.error('Checkout error:', error);
-      alert('Payment failed. Please try again.');
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Checkout error:', msg);
+      alert(`Payment failed: ${msg}`);
       setLoading(null);
     }
   };
