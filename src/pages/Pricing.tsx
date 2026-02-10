@@ -188,11 +188,26 @@ export const Pricing: React.FC = () => {
           </div>
 
           <div className="mb-20">
-            <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-4 mb-8 flex-wrap">
               <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full">
                 <Users className="w-6 h-6 text-white" />
                 <span className="text-2xl font-bold text-white">{t('pricing.forEveryone')}</span>
               </div>
+              <button
+                onClick={() => {
+                  setShowB2B(!showB2B);
+                  if (!showB2B) {
+                    setTimeout(() => {
+                      document.getElementById('b2b-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }
+                }}
+                className="inline-flex items-center gap-2 px-5 py-3 bg-white/5 hover:bg-white/10 border border-white/20 rounded-full transition-all"
+              >
+                <Building2 className="w-5 h-5 text-white/70" />
+                <span className="text-lg font-bold text-white/70">{t('pricing.businessPlans')}</span>
+                <span className="text-white/50 text-sm">{showB2B ? '▼' : '▶'}</span>
+              </button>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -247,7 +262,7 @@ export const Pricing: React.FC = () => {
             </div>
           </div>
 
-          <div className="border-t border-white/10 pt-12">
+          <div id="b2b-section" className="border-t border-white/10 pt-12">
             <div className="text-center mb-8">
               <button
                 onClick={() => setShowB2B(!showB2B)}
