@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { useAuthStore } from '../stores/useAuthStore';
 import { signOut } from '../services/auth';
 import { supabase } from '../services/supabase/client';
 import { Plus, LogOut, CreditCard, Trophy } from 'lucide-react';
-import { useQuizStore } from '../stores/useQuizStore';
+import { useAppNavigate } from '../hooks/useAppNavigate';
 
 interface Purchase {
   id: string;
@@ -16,14 +17,15 @@ interface Purchase {
 }
 
 export const Dashboard: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
-  const { setCurrentView } = useQuizStore();
+  const navigate = useAppNavigate();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
-      window.location.href = '/auth';
+      navigate('auth');
       return;
     }
 
@@ -49,7 +51,7 @@ export const Dashboard: React.FC = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    window.location.href = '/';
+    navigate('home');
   };
 
   const availableCredits = purchases.filter(p => !p.used).length;
@@ -61,15 +63,15 @@ export const Dashboard: React.FC = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-12">
             <div>
-              <h1 className="text-5xl font-bold text-white mb-2">My Dashboard</h1>
-              <p className="text-white/70">Welcome back, {user?.email}</p>
+              <h1 className="text-5xl font-bold text-white mb-2">{t('dashboard.title')}</h1>
+              <p className="text-white/70">{t('dashboard.welcomeBack', { email: user?.email })}</p>
             </div>
             <Button
               variant="ghost"
               onClick={handleSignOut}
               icon={<LogOut />}
             >
-              Sign Out
+              {t('common.signOut')}
             </Button>
           </div>
 
@@ -82,7 +84,7 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-white">{availableCredits}</div>
-                  <div className="text-white/70">Available Credits</div>
+                  <div className="text-white/70">{t('dashboard.availableCredits')}</div>
                 </div>
               </div>
             </Card>
@@ -94,7 +96,7 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-white">{purchases.length}</div>
-                  <div className="text-white/70">Total Purchases</div>
+                  <div className="text-white/70">{t('dashboard.totalPurchases')}</div>
                 </div>
               </div>
             </Card>
@@ -105,14 +107,14 @@ export const Dashboard: React.FC = () => {
                 size="lg"
                 gradient
                 icon={<Plus />}
-                onClick={() => setCurrentView('create')}
+                onClick={() => navigate('create')}
                 disabled={availableCredits === 0}
               >
-                Create Quiz
+                {t('dashboard.createQuiz')}
               </Button>
               {availableCredits === 0 && (
                 <p className="text-xs text-white/60 mt-2 text-center">
-                  No credits available
+                  {t('dashboard.noCredits')}
                 </p>
               )}
             </Card>
@@ -120,19 +122,19 @@ export const Dashboard: React.FC = () => {
 
           {/* Purchases */}
           <Card gradient className="p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">My Purchases</h2>
-            
+            <h2 className="text-2xl font-bold text-white mb-6">{t('dashboard.myPurchases')}</h2>
+
             {loading ? (
-              <div className="text-center py-8 text-white/50">Loading...</div>
+              <div className="text-center py-8 text-white/50">{t('common.loading')}</div>
             ) : purchases.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🎮</div>
-                <p className="text-white/70 mb-6">No purchases yet</p>
+                <p className="text-white/70 mb-6">{t('dashboard.noPurchases')}</p>
                 <Button
                   gradient
-                  onClick={() => window.location.href = '/pricing'}
+                  onClick={() => navigate('pricing')}
                 >
-                  Browse Plans
+                  {t('dashboard.browsePlans')}
                 </Button>
               </div>
             ) : (
@@ -151,14 +153,14 @@ export const Dashboard: React.FC = () => {
                     <div>
                       {purchase.used ? (
                         <span className="px-4 py-2 bg-white/5 text-white/50 rounded-lg">
-                          Used
+                          {t('dashboard.used')}
                         </span>
                       ) : (
                         <Button
                           gradient
-                          onClick={() => setCurrentView('create')}
+                          onClick={() => navigate('create')}
                         >
-                          Use Credit
+                          {t('dashboard.useCredit')}
                         </Button>
                       )}
                     </div>

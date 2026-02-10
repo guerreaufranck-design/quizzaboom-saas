@@ -1,5 +1,5 @@
 // Language codes
-export type LanguageCode = 'en' | 'fr' | 'es' | 'de' | 'it' | 'pt';
+export type LanguageCode = 'en' | 'fr' | 'es' | 'de';
 
 // Difficulty levels
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';

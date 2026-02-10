@@ -43,9 +43,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         sig,
         process.env.STRIPE_WEBHOOK_SECRET!
       );
-    } catch (err: any) {
-      console.error('Webhook signature verification failed:', err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Webhook signature verification failed:', message);
+      return res.status(400).send(`Webhook Error: ${message}`);
     }
 
     // Handle checkout.session.completed
@@ -91,8 +92,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     res.status(200).json({ received: true });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Webhook error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: message });
   }
 }

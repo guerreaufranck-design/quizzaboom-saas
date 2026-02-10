@@ -1,7 +1,9 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { QuizGenRequest, AIQuizResponse } from '../types/quiz';
+import { setCorsHeaders } from './_cors';
 
-const VITE_GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 const SECONDS_PER_QUESTION = 86;
 const MINUTES_PER_QUESTION = SECONDS_PER_QUESTION / 60;
@@ -14,17 +16,12 @@ const languageMap: Record<string, string> = {
   'de': 'German',
 };
 
-export const calculateQuizStructure = (durationMinutes: number) => {
+function calculateQuizStructure(durationMinutes: number) {
   const totalQuestions = Math.floor(durationMinutes / MINUTES_PER_QUESTION);
   const totalStages = Math.ceil(totalQuestions / QUESTIONS_PER_STAGE);
   const questionsPerStage = Math.ceil(totalQuestions / totalStages);
-
-  return {
-    totalQuestions,
-    totalStages,
-    questionsPerStage,
-  };
-};
+  return { totalQuestions, totalStages, questionsPerStage };
+}
 
 function generateMockQuiz(
   theme: string,
@@ -32,8 +29,8 @@ function generateMockQuiz(
   totalStages: number,
   questionsPerStage: number,
   difficulty: string,
-  duration: number,
-): AIQuizResponse {
+  duration: number
+) {
   const questions = [
     {
       question_text: "Quelle est la capitale de la France ?",
@@ -83,7 +80,7 @@ function generateMockQuiz(
       const baseQuestion = questions[globalQuestionIndex % questions.length];
       stageQuestions.push({
         ...baseQuestion,
-        question_type: 'multiple_choice' as const,
+        question_type: 'multiple_choice',
         points: 100,
         time_limit: 20,
         difficulty,
@@ -101,16 +98,44 @@ function generateMockQuiz(
   };
 }
 
-function buildPrompt(
-  theme: string,
-  structure: { totalQuestions: number; totalStages: number; questionsPerStage: number },
-  difficulty: string,
-  language: string,
-  duration: number,
-): string {
-  const fullLanguage = languageMap[language] || 'French';
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-  return `Create a HIGHLY ENGAGING quiz in ${fullLanguage} about: ${theme}
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  setCorsHeaders(res, req.headers.origin as string);
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { theme, duration, difficulty, language } = req.body;
+
+    if (!theme || !duration || !difficulty || !language) {
+      return res.status(400).json({ error: 'Missing required fields: theme, duration, difficulty, language' });
+    }
+
+    const structure = calculateQuizStructure(duration);
+
+    if (!genAI || !GEMINI_API_KEY) {
+      const mockResult = generateMockQuiz(theme, structure.totalQuestions, structure.totalStages, structure.questionsPerStage, difficulty, duration);
+      return res.status(200).json(mockResult);
+    }
+
+    const retries = 2;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: 'gemini-2.0-flash-exp',
+          generationConfig: { temperature: 0.9, maxOutputTokens: 8192 },
+        });
+
+        const fullLanguage = languageMap[language] || 'French';
+
+        const prompt = `Create a HIGHLY ENGAGING quiz in ${fullLanguage} about: ${theme}
 
 Generate EXACTLY ${structure.totalQuestions} questions organized in ${structure.totalStages} stages.
 Each stage has ${structure.questionsPerStage} questions.
@@ -180,95 +205,38 @@ Return ONLY valid JSON (no markdown):
     }
   ]
 }`;
-}
 
-function parseGeminiResponse(text: string): AIQuizResponse {
-  let cleanedText = text.trim().replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-  const firstBrace = cleanedText.indexOf('{');
-  if (firstBrace > 0) cleanedText = cleanedText.substring(firstBrace);
-  const lastBrace = cleanedText.lastIndexOf('}');
-  if (lastBrace < cleanedText.length - 1) cleanedText = cleanedText.substring(0, lastBrace + 1);
-  return JSON.parse(cleanedText);
-}
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
 
-async function generateQuizClientSide(request: QuizGenRequest): Promise<AIQuizResponse> {
-  if (!VITE_GEMINI_KEY) {
-    throw new Error('No Gemini API key available');
+        let cleanedText = text.trim().replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        const firstBrace = cleanedText.indexOf('{');
+        if (firstBrace > 0) cleanedText = cleanedText.substring(firstBrace);
+        const lastBrace = cleanedText.lastIndexOf('}');
+        if (lastBrace < cleanedText.length - 1) cleanedText = cleanedText.substring(0, lastBrace + 1);
+
+        const parsed = JSON.parse(cleanedText);
+        return res.status(200).json(parsed);
+
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`Gemini attempt ${attempt} failed:`, message);
+        if (attempt < retries) {
+          await sleep(attempt * 1000);
+        } else {
+          const mockResult = generateMockQuiz(theme, structure.totalQuestions, structure.totalStages, structure.questionsPerStage, difficulty, duration);
+          return res.status(200).json(mockResult);
+        }
+      }
+    }
+
+    const mockResult = generateMockQuiz(theme, structure.totalQuestions, structure.totalStages, structure.questionsPerStage, difficulty, duration);
+    return res.status(200).json(mockResult);
+
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Generate quiz error:', message);
+    return res.status(500).json({ error: message });
   }
-
-  const genAI = new GoogleGenerativeAI(VITE_GEMINI_KEY);
-  const structure = calculateQuizStructure(request.duration);
-  const prompt = buildPrompt(request.theme, structure, request.difficulty, request.language, request.duration);
-
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-exp',
-    generationConfig: { temperature: 0.9, maxOutputTokens: 8192 },
-  });
-
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  return parseGeminiResponse(response.text());
 }
-
-export const generateMultiStageQuiz = async (
-  request: QuizGenRequest,
-): Promise<AIQuizResponse> => {
-  const structure = calculateQuizStructure(request.duration);
-
-  // 1. Essayer le backend serverless (fonctionne avec vercel dev et en production)
-  try {
-    const response = await fetch('/api/generate-quiz', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        theme: request.theme,
-        duration: request.duration,
-        difficulty: request.difficulty,
-        language: request.language,
-      }),
-    });
-
-    if (response.ok) {
-      return response.json();
-    }
-
-    // Si erreur autre que 404, propager l'erreur
-    if (response.status !== 404) {
-      const error = await response.json().catch(() => ({ error: 'Quiz generation failed' }));
-      throw new Error(error.error || 'Quiz generation failed');
-    }
-
-    // 404 = pas de backend → fallback client-side
-    console.log('⚡ API not available, falling back to client-side Gemini...');
-  } catch (error) {
-    // Erreur réseau (fetch failed) → fallback client-side
-    if (error instanceof TypeError) {
-      console.log('⚡ Network error, falling back to client-side Gemini...');
-    } else if (error instanceof Error && error.message !== 'Quiz generation failed') {
-      // 404 case already logged above, continue to fallback
-    } else {
-      throw error;
-    }
-  }
-
-  // 2. Fallback : appel Gemini direct côté client
-  if (VITE_GEMINI_KEY) {
-    try {
-      console.log('🤖 Generating quiz with client-side Gemini...');
-      return await generateQuizClientSide(request);
-    } catch (error) {
-      console.error('❌ Client-side Gemini failed:', error);
-    }
-  }
-
-  // 3. Fallback ultime : mock quiz
-  console.log('📦 Using mock quiz as last resort...');
-  return generateMockQuiz(
-    request.theme,
-    structure.totalQuestions,
-    structure.totalStages,
-    structure.questionsPerStage,
-    request.difficulty,
-    request.duration,
-  );
-};

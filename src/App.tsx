@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
+import { Routes, Route, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from './stores/useAuthStore';
-import { useQuizStore } from './stores/useQuizStore';
+import { useQuizStore, setNavigateCallback } from './stores/useQuizStore';
 import { HomePage } from './pages/HomePage';
 import { Pricing } from './pages/Pricing';
 import { Auth } from './pages/Auth';
@@ -11,69 +12,60 @@ import { QuizLobby } from './pages/QuizLobby';
 import { PlayerView } from './pages/PlayerView';
 import { HostDashboard } from './pages/HostDashboard';
 import { TVDisplay } from './pages/TVDisplay';
+import { ProSignup } from './pages/ProSignup';
+import { ProDashboard } from './pages/ProDashboard';
+
+function PlayRoute() {
+  const { isHost } = useQuizStore();
+  return isHost ? <HostDashboard /> : <PlayerView />;
+}
 
 function App() {
   const { initialize } = useAuthStore();
-  const { currentView, setCurrentView, isHost, restoreSession } = useQuizStore();
+  const { restoreSession } = useQuizStore();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Register the navigate callback so the store can trigger route changes
+  useEffect(() => {
+    setNavigateCallback(navigate);
+  }, [navigate]);
 
   useEffect(() => {
     const init = async () => {
       await initialize();
-      
-      const urlParams = new URLSearchParams(window.location.search);
-      const tvCode = urlParams.get('tv');
-      const code = urlParams.get('code');
-      const view = urlParams.get('view');
 
-      // TV Display mode (for Chromecast)
-      if (tvCode) {
-        return; // TVDisplay component handles its own routing
-      }
+      const tvCode = searchParams.get('tv');
+      if (tvCode) return;
 
-      // Try to restore session
       await restoreSession();
 
-      // Direct join link
+      const code = searchParams.get('code');
+      const view = searchParams.get('view');
       if (code && view === 'join') {
-        setCurrentView('join');
-        return;
+        navigate('/join' + window.location.search);
       }
     };
 
     init();
   }, []);
 
-  // Check if TV mode
-  const urlParams = new URLSearchParams(window.location.search);
-  const tvCode = urlParams.get('tv');
-  if (tvCode) {
-    return <TVDisplay />;
-  }
-
-  const renderView = () => {
-    switch (currentView) {
-      case 'home':
-        return <HomePage />;
-      case 'pricing':
-        return <Pricing />;
-      case 'auth':
-        return <Auth />;
-      case 'dashboard':
-        return <Dashboard />;
-      case 'create':
-        return <CreateQuiz />;
-      case 'join':
-        return <JoinQuiz />;
-      case 'lobby':
-        return <QuizLobby />;
-      case 'playing':
-        return isHost ? <HostDashboard /> : <PlayerView />;
-      default:
-        return <HomePage />;
-    }
-  };
-
-  return renderView();
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/create" element={<CreateQuiz />} />
+      <Route path="/join" element={<JoinQuiz />} />
+      <Route path="/lobby" element={<QuizLobby />} />
+      <Route path="/play" element={<PlayRoute />} />
+      <Route path="/tv" element={<TVDisplay />} />
+      <Route path="/pro-signup" element={<ProSignup />} />
+      <Route path="/pro-dashboard" element={<ProDashboard />} />
+      <Route path="*" element={<HomePage />} />
+    </Routes>
+  );
 }
 
 export default App;

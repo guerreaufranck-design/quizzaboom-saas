@@ -136,8 +136,8 @@ export const PlayerView: React.FC = () => {
     try {
       await executeJokerAction(jokerType);
       alert(`✅ ${jokerType.toUpperCase()} activated!`);
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Action failed');
     }
   };
 

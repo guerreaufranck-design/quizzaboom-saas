@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useQuizStore } from '../stores/useQuizStore';
+import { useAppNavigate } from '../hooks/useAppNavigate';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { QRCodeDisplay } from '../components/ui/QRCodeDisplay';
 import { ArrowLeft, Users, Play, Copy, Check, Share2, Clock } from 'lucide-react';
 
 export const QuizLobby: React.FC = () => {
+  const navigate = useAppNavigate();
   const {
     currentSession,
     currentQuiz,
     sessionCode,
     players,
     isHost,
-    setCurrentView,
     startSession,
     setupRealtimeSubscription,
     cleanupRealtime,
@@ -175,7 +176,7 @@ export const QuizLobby: React.FC = () => {
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
-                onClick={() => setCurrentView('home')}
+                onClick={() => navigate('home')}
                 icon={<ArrowLeft />}
               >
                 Cancel
