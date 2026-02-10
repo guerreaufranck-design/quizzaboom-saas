@@ -86,25 +86,8 @@ export const Pricing: React.FC = () => {
     },
     {
       name: 'Party',
-      price: 9.90,
+      price: 9.99,
       priceId: import.meta.env.VITE_STRIPE_PRICE_PARTY,
-      players: 30,
-      icon: '🔥',
-      popular: false,
-      features: [
-        '1 Quiz Session',
-        'Up to 30 Players',
-        'All Game Modes',
-        'Strategic Jokers',
-        'Real-time Leaderboard',
-        'Email Results',
-        'Great for parties!',
-      ],
-    },
-    {
-      name: 'Big Party',
-      price: 14.99,
-      priceId: import.meta.env.VITE_STRIPE_PRICE_BIG_PARTY,
       players: 50,
       icon: '🔥',
       popular: false,
@@ -115,12 +98,12 @@ export const Pricing: React.FC = () => {
         'Strategic Jokers',
         'Real-time Leaderboard',
         'Email Results',
-        'Perfect for big groups!',
+        'Perfect for parties!',
       ],
     },
     {
-      name: 'Event',
-      price: 24.99,
+      name: 'Pro Event',
+      price: 19.90,
       priceId: import.meta.env.VITE_STRIPE_PRICE_EVENT,
       players: 100,
       icon: '👑',
@@ -212,7 +195,7 @@ export const Pricing: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {b2cPlans.map((plan) => (
                 <Card
                   key={plan.name}
