@@ -24,8 +24,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing priceId — check VITE_STRIPE_PRICE_* env vars' });
     }
 
+    // Fetch the price to determine if it's one-time or recurring
+    const price = await stripe.prices.retrieve(priceId);
+    const mode = price.type === 'recurring' ? 'subscription' : 'payment';
+
+    console.log('Price type:', price.type, '→ mode:', mode);
+
     const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
+      mode,
       payment_method_types: ['card'],
       line_items: [
         {
@@ -46,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ url: session.url });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Stripe error:', error);
+    console.error('Stripe error:', message, error);
     return res.status(500).json({ error: message });
   }
 }

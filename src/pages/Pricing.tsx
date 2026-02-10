@@ -35,11 +35,13 @@ export const Pricing: React.FC = () => {
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to create checkout session');
+        throw new Error(data.error || 'Failed to create checkout session');
       }
 
-      const { url } = await response.json();
+      const { url } = data;
 
       // Redirection directe vers Stripe
       window.location.href = url;
@@ -188,8 +190,8 @@ export const Pricing: React.FC = () => {
           </div>
 
           <div className="mb-20">
-            <div className="flex items-center justify-center gap-4 mb-8 flex-wrap">
-              <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full">
+            <div className="flex items-center justify-center gap-6 mb-14 flex-wrap">
+              <div className="inline-flex items-center gap-3 px-8 py-3.5 bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full shadow-lg shadow-qb-purple/20">
                 <Users className="w-6 h-6 text-white" />
                 <span className="text-2xl font-bold text-white">{t('pricing.forEveryone')}</span>
               </div>
@@ -202,11 +204,11 @@ export const Pricing: React.FC = () => {
                     }, 100);
                   }
                 }}
-                className="inline-flex items-center gap-2 px-5 py-3 bg-white/5 hover:bg-white/10 border border-white/20 rounded-full transition-all"
+                className="inline-flex items-center gap-2.5 px-6 py-3.5 bg-white/5 hover:bg-white/10 border border-white/20 hover:border-white/40 rounded-full transition-all"
               >
-                <Building2 className="w-5 h-5 text-white/70" />
-                <span className="text-lg font-bold text-white/70">{t('pricing.businessPlans')}</span>
-                <span className="text-white/50 text-sm">{showB2B ? '▼' : '▶'}</span>
+                <Building2 className="w-5 h-5 text-white/60" />
+                <span className="text-lg font-semibold text-white/60">{t('pricing.businessPlans')}</span>
+                <span className="text-white/40 text-sm">{showB2B ? '▼' : '▶'}</span>
               </button>
             </div>
 
