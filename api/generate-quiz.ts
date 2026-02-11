@@ -5,7 +5,7 @@ import { setCorsHeaders } from './_cors';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
-const SECONDS_PER_QUESTION = 23;
+const SECONDS_PER_QUESTION = 90;
 const MINUTES_PER_QUESTION = SECONDS_PER_QUESTION / 60;
 const QUESTIONS_PER_STAGE = 5;
 
@@ -56,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         const model = genAI.getGenerativeModel({
-          model: 'gemini-2.0-flash-exp',
+          model: 'gemini-2.0-flash',
           generationConfig: { temperature: 1.0, maxOutputTokens: 8192 },
         });
 
