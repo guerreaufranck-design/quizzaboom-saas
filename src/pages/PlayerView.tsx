@@ -136,8 +136,8 @@ export const PlayerView: React.FC = () => {
     try {
       await executeJokerAction(jokerType);
       alert(`✅ ${jokerType.toUpperCase()} activated!`);
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Action failed');
     }
   };
 
@@ -192,6 +192,12 @@ export const PlayerView: React.FC = () => {
   
   const jokersEnabled = currentPhase === 'theme_announcement';
   const answersEnabled = currentPhase === 'answer_selection' && !isBlocked && !hasAnswered;
+
+  // Filter jokers based on session settings
+  const sessionSettings = (currentSession?.settings as Record<string, unknown>) || {};
+  const sessionEnabledJokers = (sessionSettings.enabledJokers as Record<string, boolean>) || {
+    protection: true, block: true, steal: true, double_points: true,
+  };
 
   if (!currentPlayer || !sessionCode || !currentQuiz) {
     return (
@@ -272,49 +278,57 @@ export const PlayerView: React.FC = () => {
             Jokers {jokersEnabled ? '✅ Choose Now!' : '🔒 Wait for joker phase'}
           </h3>
           <div className="grid grid-cols-2 gap-3">
-            <Button
-              size="lg"
-              onClick={() => handleJokerAction('protection')}
-              disabled={!jokersEnabled || playerInventory.protection === 0 || isProtected}
-              className="h-24 flex-col bg-blue-600 hover:bg-blue-700 disabled:opacity-30"
-            >
-              <Shield className="w-8 h-8 mb-1" />
-              <span className="font-bold text-sm">Protection</span>
-              <span className="text-xs">{playerInventory.protection === 0 ? 'Used' : 'Ready'}</span>
-            </Button>
+            {sessionEnabledJokers.protection && (
+              <Button
+                size="lg"
+                onClick={() => handleJokerAction('protection')}
+                disabled={!jokersEnabled || playerInventory.protection === 0 || isProtected}
+                className="h-24 flex-col bg-blue-600 hover:bg-blue-700 disabled:opacity-30"
+              >
+                <Shield className="w-8 h-8 mb-1" />
+                <span className="font-bold text-sm">Protection</span>
+                <span className="text-xs">{playerInventory.protection === 0 ? 'Used' : 'Ready'}</span>
+              </Button>
+            )}
 
-            <Button
-              size="lg"
-              onClick={() => handleJokerAction('double_points')}
-              disabled={!jokersEnabled || playerInventory.double_points === 0 || hasDoublePoints}
-              className="h-24 flex-col bg-purple-600 hover:bg-purple-700 disabled:opacity-30"
-            >
-              <Star className="w-8 h-8 mb-1" />
-              <span className="font-bold text-sm">Double</span>
-              <span className="text-xs">{playerInventory.double_points === 0 ? 'Used' : 'Ready'}</span>
-            </Button>
+            {sessionEnabledJokers.double_points && (
+              <Button
+                size="lg"
+                onClick={() => handleJokerAction('double_points')}
+                disabled={!jokersEnabled || playerInventory.double_points === 0 || hasDoublePoints}
+                className="h-24 flex-col bg-purple-600 hover:bg-purple-700 disabled:opacity-30"
+              >
+                <Star className="w-8 h-8 mb-1" />
+                <span className="font-bold text-sm">Double</span>
+                <span className="text-xs">{playerInventory.double_points === 0 ? 'Used' : 'Ready'}</span>
+              </Button>
+            )}
 
-            <Button
-              size="lg"
-              onClick={() => handleJokerAction('block')}
-              disabled={!jokersEnabled || playerInventory.block === 0}
-              className="h-24 flex-col bg-red-600 hover:bg-red-700 disabled:opacity-30"
-            >
-              <Ban className="w-8 h-8 mb-1" />
-              <span className="font-bold text-sm">Block</span>
-              <span className="text-xs">{playerInventory.block === 0 ? 'Used' : 'Ready'}</span>
-            </Button>
+            {sessionEnabledJokers.block && (
+              <Button
+                size="lg"
+                onClick={() => handleJokerAction('block')}
+                disabled={!jokersEnabled || playerInventory.block === 0}
+                className="h-24 flex-col bg-red-600 hover:bg-red-700 disabled:opacity-30"
+              >
+                <Ban className="w-8 h-8 mb-1" />
+                <span className="font-bold text-sm">Block</span>
+                <span className="text-xs">{playerInventory.block === 0 ? 'Used' : 'Ready'}</span>
+              </Button>
+            )}
 
-            <Button
-              size="lg"
-              onClick={() => handleJokerAction('steal')}
-              disabled={!jokersEnabled || playerInventory.steal === 0}
-              className="h-24 flex-col bg-yellow-600 hover:bg-yellow-700 disabled:opacity-30"
-            >
-              <Coins className="w-8 h-8 mb-1" />
-              <span className="font-bold text-sm">Steal</span>
-              <span className="text-xs">{playerInventory.steal === 0 ? 'Used' : 'Ready'}</span>
-            </Button>
+            {sessionEnabledJokers.steal && (
+              <Button
+                size="lg"
+                onClick={() => handleJokerAction('steal')}
+                disabled={!jokersEnabled || playerInventory.steal === 0}
+                className="h-24 flex-col bg-yellow-600 hover:bg-yellow-700 disabled:opacity-30"
+              >
+                <Coins className="w-8 h-8 mb-1" />
+                <span className="font-bold text-sm">Steal</span>
+                <span className="text-xs">{playerInventory.steal === 0 ? 'Used' : 'Ready'}</span>
+              </Button>
+            )}
           </div>
         </Card>
 

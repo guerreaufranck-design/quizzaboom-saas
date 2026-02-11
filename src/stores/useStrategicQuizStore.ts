@@ -57,7 +57,7 @@ interface StrategicQuizState {
   closeTargetSelector: () => void;
 }
 
-let globalRealtimeChannel: any = null;
+let globalRealtimeChannel: ReturnType<typeof supabase.channel> | null = null;
 
 export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   currentPhase: 'theme_announcement',
@@ -376,11 +376,11 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     globalRealtimeChannel = supabase.channel(channelName);
 
     globalRealtimeChannel
-      .on('broadcast', { event: 'phase_change' }, (payload: any) => {
+      .on('broadcast', { event: 'phase_change' }, (payload: { payload: PhaseData }) => {
         console.log('📢 Phase change received:', payload.payload.phase);
-        get().setPhaseData(payload.payload as PhaseData);
+        get().setPhaseData(payload.payload);
       })
-      .on('broadcast', { event: 'timer_update' }, (payload: any) => {
+      .on('broadcast', { event: 'timer_update' }, (payload: { payload: { timeRemaining: number } }) => {
         set({ phaseTimeRemaining: payload.payload.timeRemaining });
       })
       .on('broadcast', { event: 'score_updated' }, () => {

@@ -1,5 +1,5 @@
 // Language codes
-export type LanguageCode = 'en' | 'fr' | 'es' | 'de' | 'it' | 'pt';
+export type LanguageCode = 'en' | 'fr' | 'es' | 'de';
 
 // Difficulty levels
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
@@ -33,6 +33,12 @@ export interface QuizGenRequest {
   difficulty: DifficultyLevel;
   language: LanguageCode;
   includeJokers: boolean;
+  enabledJokers?: {
+    protection: boolean;
+    block: boolean;
+    steal: boolean;
+    double_points: boolean;
+  };
 }
 
 // AI Quiz Response

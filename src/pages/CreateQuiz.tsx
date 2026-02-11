@@ -1,18 +1,29 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuizStore } from '../stores/useQuizStore';
+import { useAppNavigate } from '../hooks/useAppNavigate';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Select } from '../components/ui/Select';
-import { ArrowLeft, Sparkles, Clock, Target, Globe, Zap, Loader2 } from 'lucide-react';
+import { ArrowLeft, Sparkles, Clock, Target, Globe, Zap, Loader2, X, Shield, Ban, Repeat, Gem } from 'lucide-react';
 import { calculateQuizStructure } from '../services/gemini';
 import { THEMES, THEME_MODES, type ThemeCategory, type ThemeMode } from '../types/themes';
 import type { QuizGenRequest } from '../types/quiz';
 
 export const CreateQuiz: React.FC = () => {
-  const { generateQuiz, createSession, setCurrentView, isLoading } = useQuizStore();
-  
+  const { t } = useTranslation();
+  const { generateQuiz, createSession, isLoading } = useQuizStore();
+  const navigate = useAppNavigate();
+
   const [selectedTheme, setSelectedTheme] = useState<ThemeCategory>('general');
   const [selectedMode, setSelectedMode] = useState<ThemeMode>('standard');
+  const [excludedSubThemes, setExcludedSubThemes] = useState<string[]>([]);
+  const [enabledJokers, setEnabledJokers] = useState({
+    protection: true,
+    block: true,
+    steal: true,
+    double_points: true,
+  });
   const [formData, setFormData] = useState({
     duration: 30,
     difficulty: 'medium' as 'easy' | 'medium' | 'hard',
@@ -24,47 +35,55 @@ export const CreateQuiz: React.FC = () => {
 
   const quizStructure = calculateQuizStructure(formData.duration);
   const currentTheme = THEMES.find(t => t.category === selectedTheme);
+  const activeSubThemes = currentTheme?.subThemes?.filter(st => !excludedSubThemes.includes(st)) || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      setGenerationStep('🤖 Connecting to AI...');
+      setGenerationStep(t('create.generationSteps.connecting'));
       console.log('🎨 Starting quiz generation...');
-      
+
+      // Build theme string with active sub-themes for AI diversity
+      const themeLabel = currentTheme?.label || selectedTheme;
+      const modeLabel = THEME_MODES[selectedMode].label;
+      const subThemesStr = activeSubThemes.length > 0 ? ` (focus: ${activeSubThemes.join(', ')})` : '';
+
       const request: QuizGenRequest = {
-        theme: `${currentTheme?.label} - ${THEME_MODES[selectedMode].label}`,
+        theme: `${themeLabel} - ${modeLabel}${subThemesStr}`,
         duration: formData.duration,
         difficulty: formData.difficulty,
         language: formData.language,
         includeJokers: formData.includeJokers,
+        enabledJokers: formData.includeJokers ? enabledJokers : undefined,
       };
 
-      setGenerationStep(`🎨 Generating ${quizStructure.totalQuestions} questions...`);
+      setGenerationStep(t('create.generationSteps.generating', { count: quizStructure.totalQuestions }));
       const quiz = await generateQuiz(request);
-      
-      setGenerationStep('📝 Creating session...');
-      await createSession(quiz.id);
-      
-      setGenerationStep('✅ Ready!');
+
+      setGenerationStep(t('create.generationSteps.creating'));
+      await createSession(quiz.id, formData.includeJokers ? enabledJokers : undefined);
+
+      setGenerationStep(t('create.generationSteps.ready'));
       setTimeout(() => {
-        setCurrentView('lobby');
+        navigate('lobby');
       }, 500);
-      
-    } catch (error: any) {
+
+    } catch (error) {
       console.error('Failed to create quiz:', error);
       setGenerationStep('');
-      
+
       let errorMessage = 'Failed to generate quiz. ';
-      
-      if (error.message.includes('API key')) {
+      const msg = error instanceof Error ? error.message : '';
+
+      if (msg.includes('API key')) {
         errorMessage += 'API key not configured properly.';
-      } else if (error.message.includes('attempts')) {
+      } else if (msg.includes('attempts')) {
         errorMessage += 'The AI service is taking too long. Please try again.';
       } else {
         errorMessage += 'Please try again.';
       }
-      
+
       alert(errorMessage);
     }
   };
@@ -77,15 +96,15 @@ export const CreateQuiz: React.FC = () => {
           <div className="flex items-center gap-4 mb-8">
             <Button
               variant="ghost"
-              onClick={() => setCurrentView('home')}
+              onClick={() => navigate('home')}
               icon={<ArrowLeft />}
               disabled={isLoading}
             >
-              Back
+              {t('common.back')}
             </Button>
             <div>
-              <h1 className="text-4xl font-bold text-white">Create Your Quiz</h1>
-              <p className="text-white/70 mt-2">AI-powered quiz generation in seconds</p>
+              <h1 className="text-4xl font-bold text-white">{t('create.title')}</h1>
+              <p className="text-white/70 mt-2">{t('create.subtitle')}</p>
             </div>
           </div>
 
@@ -94,7 +113,7 @@ export const CreateQuiz: React.FC = () => {
             <Card className="mb-6 p-8 text-center bg-gradient-to-br from-qb-purple to-qb-cyan">
               <Loader2 className="w-16 h-16 text-white animate-spin mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">
-                {generationStep || 'Generating Quiz...'}
+                {generationStep || t('create.generating')}
               </h2>
               <p className="text-white/80">
                 This may take up to 30 seconds. Please wait...
@@ -112,14 +131,14 @@ export const CreateQuiz: React.FC = () => {
             <Card gradient className="p-6">
               <label className="block text-white font-bold mb-4 flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-qb-magenta" />
-                Choose Quiz Theme *
+                {t('create.chooseTheme')} *
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {THEMES.map((theme) => (
                   <button
                     key={theme.id}
                     type="button"
-                    onClick={() => setSelectedTheme(theme.category)}
+                    onClick={() => { setSelectedTheme(theme.category); setExcludedSubThemes([]); }}
                     disabled={isLoading}
                     className={`p-6 rounded-xl border-2 transition-all ${
                       selectedTheme === theme.category
@@ -136,17 +155,51 @@ export const CreateQuiz: React.FC = () => {
 
               {currentTheme && currentTheme.subThemes && (
                 <div className="mt-4 p-4 bg-qb-darker rounded-lg">
-                  <div className="text-sm text-white/70 mb-2">This quiz will include:</div>
-                  <div className="flex flex-wrap gap-2">
-                    {currentTheme.subThemes.map((subTheme) => (
-                      <span
-                        key={subTheme}
-                        className="px-3 py-1 bg-qb-purple/30 border border-qb-purple rounded-full text-xs text-white"
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm text-white/70">This quiz will include:</div>
+                    {excludedSubThemes.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setExcludedSubThemes([])}
+                        className="text-xs text-qb-cyan hover:text-qb-cyan/80 underline"
                       >
-                        {subTheme}
-                      </span>
-                    ))}
+                        Reset all
+                      </button>
+                    )}
                   </div>
+                  <div className="flex flex-wrap gap-2">
+                    {currentTheme.subThemes.map((subTheme) => {
+                      const isExcluded = excludedSubThemes.includes(subTheme);
+                      return (
+                        <button
+                          key={subTheme}
+                          type="button"
+                          onClick={() => {
+                            if (isExcluded) {
+                              setExcludedSubThemes(excludedSubThemes.filter(s => s !== subTheme));
+                            } else if (activeSubThemes.length > 1) {
+                              setExcludedSubThemes([...excludedSubThemes, subTheme]);
+                            }
+                          }}
+                          className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-all ${
+                            isExcluded
+                              ? 'bg-white/5 border border-white/10 text-white/40 line-through'
+                              : 'bg-qb-purple/30 border border-qb-purple text-white hover:bg-qb-purple/50'
+                          }`}
+                        >
+                          {subTheme}
+                          {!isExcluded && activeSubThemes.length > 1 && (
+                            <X className="w-3 h-3 ml-1" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {excludedSubThemes.length > 0 && (
+                    <div className="text-xs text-white/50 mt-2">
+                      {activeSubThemes.length} sub-theme{activeSubThemes.length > 1 ? 's' : ''} active
+                    </div>
+                  )}
                 </div>
               )}
             </Card>
@@ -154,7 +207,7 @@ export const CreateQuiz: React.FC = () => {
             {/* Mode Selection */}
             <Card gradient className="p-6">
               <label className="block text-white font-bold mb-4">
-                🎭 Quiz Mode
+                {t('create.quizMode')}
               </label>
               <div className="grid grid-cols-3 gap-4">
                 {Object.values(THEME_MODES).map((mode) => (
@@ -181,7 +234,7 @@ export const CreateQuiz: React.FC = () => {
             <Card gradient className="p-6">
               <label className="block text-white font-bold mb-2 flex items-center gap-2">
                 <Clock className="w-5 h-5 text-qb-cyan" />
-                Quiz Duration
+                {t('create.duration')}
               </label>
               <Select
                 value={formData.duration.toString()}
@@ -194,21 +247,21 @@ export const CreateQuiz: React.FC = () => {
                 <option value="60">60 minutes (~40 questions)</option>
                 <option value="90">90 minutes (~60 questions)</option>
               </Select>
-              
+
               <div className="mt-4 p-4 bg-qb-darker rounded-lg">
-                <div className="text-sm text-white/70 mb-2">Generated Quiz Structure:</div>
+                <div className="text-sm text-white/70 mb-2">{t('create.quizStructure')}</div>
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
                     <div className="text-3xl font-bold text-qb-cyan">{quizStructure.totalQuestions}</div>
-                    <div className="text-xs text-white/60">Questions</div>
+                    <div className="text-xs text-white/60">{t('create.questions')}</div>
                   </div>
                   <div>
                     <div className="text-3xl font-bold text-qb-purple">{quizStructure.totalStages}</div>
-                    <div className="text-xs text-white/60">Stages</div>
+                    <div className="text-xs text-white/60">{t('create.stages')}</div>
                   </div>
                   <div>
                     <div className="text-3xl font-bold text-qb-magenta">{quizStructure.questionsPerStage}</div>
-                    <div className="text-xs text-white/60">Per Stage</div>
+                    <div className="text-xs text-white/60">{t('create.perStage')}</div>
                   </div>
                 </div>
               </div>
@@ -218,13 +271,13 @@ export const CreateQuiz: React.FC = () => {
             <Card gradient className="p-6">
               <label className="block text-white font-bold mb-2 flex items-center gap-2">
                 <Target className="w-5 h-5 text-qb-yellow" />
-                Difficulty Level
+                {t('create.difficulty')}
               </label>
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { value: 'easy' as const, label: 'Easy', emoji: '😊', desc: 'Everyone can play' },
-                  { value: 'medium' as const, label: 'Medium', emoji: '🤔', desc: 'Balanced challenge' },
-                  { value: 'hard' as const, label: 'Hard', emoji: '🔥', desc: 'For experts' },
+                  { value: 'easy' as const, label: t('create.easy'), emoji: '😊', desc: t('create.easyDesc') },
+                  { value: 'medium' as const, label: t('create.medium'), emoji: '🤔', desc: t('create.mediumDesc') },
+                  { value: 'hard' as const, label: t('create.hard'), emoji: '🔥', desc: t('create.hardDesc') },
                 ].map((level) => (
                   <button
                     key={level.value}
@@ -249,7 +302,7 @@ export const CreateQuiz: React.FC = () => {
             <Card gradient className="p-6">
               <label className="block text-white font-bold mb-2 flex items-center gap-2">
                 <Globe className="w-5 h-5 text-qb-lime" />
-                Language
+                {t('create.language')}
               </label>
               <Select
                 value={formData.language}
@@ -260,8 +313,6 @@ export const CreateQuiz: React.FC = () => {
                 <option value="fr">Français</option>
                 <option value="es">Español</option>
                 <option value="de">Deutsch</option>
-                <option value="it">Italiano</option>
-                <option value="pt">Português</option>
               </Select>
             </Card>
 
@@ -278,13 +329,42 @@ export const CreateQuiz: React.FC = () => {
                 <div className="flex-1">
                   <div className="text-white font-bold flex items-center gap-2">
                     <Zap className="w-5 h-5 text-qb-magenta" />
-                    Strategic Mode (Jokers)
+                    {t('create.strategicMode')}
                   </div>
                   <p className="text-sm text-white/70 mt-1">
-                    Players get 1 joker of each type: Protection 🛡️, Block 🚫, Steal 💰, Double Points ⭐
+                    {t('create.strategicDesc')}
                   </p>
                 </div>
               </label>
+
+              {formData.includeJokers && (
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  {[
+                    { key: 'protection' as const, icon: <Shield className="w-4 h-4" />, label: 'Protection', color: 'bg-blue-500' },
+                    { key: 'block' as const, icon: <Ban className="w-4 h-4" />, label: 'Block', color: 'bg-red-500' },
+                    { key: 'steal' as const, icon: <Repeat className="w-4 h-4" />, label: 'Steal', color: 'bg-orange-500' },
+                    { key: 'double_points' as const, icon: <Gem className="w-4 h-4" />, label: 'Double Points', color: 'bg-yellow-500' },
+                  ].map((joker) => (
+                    <button
+                      key={joker.key}
+                      type="button"
+                      onClick={() => setEnabledJokers({ ...enabledJokers, [joker.key]: !enabledJokers[joker.key] })}
+                      disabled={isLoading}
+                      className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                        enabledJokers[joker.key]
+                          ? `${joker.color}/20 border-white/30 text-white`
+                          : 'bg-white/5 border-white/10 text-white/40'
+                      }`}
+                    >
+                      {joker.icon}
+                      <span className="text-sm font-medium">{joker.label}</span>
+                      <span className="ml-auto text-xs">
+                        {enabledJokers[joker.key] ? 'ON' : 'OFF'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </Card>
 
             {/* Submit */}
@@ -296,13 +376,13 @@ export const CreateQuiz: React.FC = () => {
               disabled={isLoading}
               icon={isLoading ? <Loader2 className="animate-spin" /> : <Sparkles />}
             >
-              {isLoading ? generationStep || 'Generating...' : `Generate ${quizStructure.totalQuestions} Questions`}
+              {isLoading ? generationStep || t('create.generating') : t('create.generateBtn', { count: quizStructure.totalQuestions })}
             </Button>
           </form>
 
           {/* Preview */}
           <Card className="mt-8 p-6 bg-gradient-to-br from-qb-purple/20 to-qb-cyan/20 border border-white/10">
-            <h3 className="text-lg font-bold text-white mb-3">🎯 Your Quiz:</h3>
+            <h3 className="text-lg font-bold text-white mb-3">{t('create.preview')}</h3>
             <div className="space-y-2 text-sm text-white/80">
               <div className="flex items-center gap-2">
                 <span className="text-3xl">{currentTheme?.emoji}</span>
@@ -312,10 +392,10 @@ export const CreateQuiz: React.FC = () => {
                 </div>
               </div>
               <div className="border-t border-white/10 my-3" />
-              <p>✨ <strong>AI generates</strong> {quizStructure.totalQuestions} unique questions</p>
-              <p>📊 <strong>Organized in</strong> {quizStructure.totalStages} themed stages</p>
-              <p>⏱️ <strong>5 phases per question:</strong> Theme (25s) → Question (15s) → Answers (20s) → Results (20s) → Break (6s)</p>
-              <p>🎮 <strong>Strategic gameplay</strong> {formData.includeJokers ? 'enabled' : 'disabled'}</p>
+              <p><strong>{t('create.aiGenerates')}</strong> {quizStructure.totalQuestions} {t('create.uniqueQuestions')}</p>
+              <p><strong>{t('create.organizedIn')}</strong> {quizStructure.totalStages} {t('create.stages')}</p>
+              <p><strong>{t('create.phasesPerQuestion')}</strong> Theme (25s) → Question (15s) → Answers (20s) → Results (20s) → Break (6s)</p>
+              <p><strong>{t('create.strategicGameplay')}</strong> {formData.includeJokers ? t('create.enabled') : t('create.disabled')}</p>
             </div>
           </Card>
         </div>

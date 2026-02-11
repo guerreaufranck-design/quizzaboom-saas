@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuizStore } from '../stores/useQuizStore';
+import { useAppNavigate } from '../hooks/useAppNavigate';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ArrowLeft, QrCode, UserCircle } from 'lucide-react';
 
 export const JoinQuiz: React.FC = () => {
-  const { setCurrentView, joinSession, isLoading, error } = useQuizStore();
-  
+  const { t } = useTranslation();
+  const { joinSession, isLoading, error } = useQuizStore();
+  const navigate = useAppNavigate();
+
   const [code, setCode] = useState('');
   const [playerName, setPlayerName] = useState('');
   const [email, setEmail] = useState('');
+  const [emailConsent, setEmailConsent] = useState(false);
   const [selectedEmoji, setSelectedEmoji] = useState('😀');
 
   // Check URL params for code
@@ -26,8 +31,9 @@ export const JoinQuiz: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await joinSession(code.toUpperCase(), playerName, email || undefined, selectedEmoji);
-      setCurrentView('lobby');
+      const playerEmail = (email && emailConsent) ? email : undefined;
+      await joinSession(code.toUpperCase(), playerName, playerEmail, selectedEmoji);
+      navigate('lobby');
     } catch (err) {
       console.error('Failed to join session:', err);
     }
@@ -41,17 +47,17 @@ export const JoinQuiz: React.FC = () => {
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
-              onClick={() => setCurrentView('home')}
+              onClick={() => navigate('home')}
               icon={<ArrowLeft />}
             >
-              Back
+              {t('common.back')}
             </Button>
             <div>
               <h1 className="text-4xl font-bold gradient-primary bg-clip-text text-transparent">
-                Join a Quiz
+                {t('join.title')}
               </h1>
               <p className="text-white/70 mt-2">
-                Enter the session code to join the battle!
+                {t('join.subtitle')}
               </p>
             </div>
           </div>
@@ -63,19 +69,19 @@ export const JoinQuiz: React.FC = () => {
               <div>
                 <label className="block text-white font-medium mb-2 flex items-center gap-2">
                   <QrCode className="w-5 h-5 text-qb-cyan" />
-                  Session Code *
+                  {t('join.sessionCode')} *
                 </label>
                 <input
                   type="text"
                   required
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  placeholder="Enter 6-character code"
+                  placeholder={t('join.codePlaceholder')}
                   maxLength={6}
                   className="w-full px-4 py-3 rounded-lg bg-qb-darker text-white text-center text-2xl font-mono tracking-widest border border-white/20 focus:border-qb-cyan focus:outline-none focus:ring-2 focus:ring-qb-cyan/30 uppercase"
                 />
                 <p className="text-sm text-white/50 mt-2 text-center">
-                  Scan the QR code or enter the code manually
+                  {t('join.codeHint')}
                 </p>
               </div>
 
@@ -83,14 +89,14 @@ export const JoinQuiz: React.FC = () => {
               <div>
                 <label className="block text-white font-medium mb-2 flex items-center gap-2">
                   <UserCircle className="w-5 h-5 text-qb-magenta" />
-                  Your Name *
+                  {t('join.yourName')} *
                 </label>
                 <input
                   type="text"
                   required
                   value={playerName}
                   onChange={(e) => setPlayerName(e.target.value)}
-                  placeholder="Enter your name"
+                  placeholder={t('join.namePlaceholder')}
                   className="w-full px-4 py-3 rounded-lg bg-qb-darker text-white border border-white/20 focus:border-qb-magenta focus:outline-none focus:ring-2 focus:ring-qb-magenta/30"
                 />
               </div>
@@ -98,24 +104,35 @@ export const JoinQuiz: React.FC = () => {
               {/* Email (Optional) */}
               <div>
                 <label className="block text-white font-medium mb-2">
-                  Email (Optional)
+                  {t('join.email')}
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Get your results by email"
+                  placeholder={t('join.emailPlaceholder')}
                   className="w-full px-4 py-3 rounded-lg bg-qb-darker text-white border border-white/20 focus:border-qb-purple focus:outline-none focus:ring-2 focus:ring-qb-purple/30"
                 />
-                <p className="text-sm text-white/50 mt-2">
-                  Receive your performance summary and special offers!
-                </p>
+                {email && (
+                  <label className="flex items-start gap-3 mt-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={emailConsent}
+                      onChange={(e) => setEmailConsent(e.target.checked)}
+                      className="w-5 h-5 mt-0.5 rounded accent-qb-purple shrink-0"
+                    />
+                    <span className="text-xs text-white/60">
+                      {t('join.emailConsent')}{' '}
+                      <a href="/privacy" className="text-qb-cyan underline">{t('join.privacyPolicy')}</a>
+                    </span>
+                  </label>
+                )}
               </div>
 
               {/* Avatar Selection */}
               <div>
                 <label className="block text-white font-medium mb-3">
-                  Choose Your Avatar
+                  {t('join.chooseAvatar')}
                 </label>
                 <div className="grid grid-cols-8 gap-2">
                   {emojis.map((emoji) => (
@@ -151,7 +168,7 @@ export const JoinQuiz: React.FC = () => {
                 loading={isLoading}
                 disabled={!code.trim() || !playerName.trim() || code.length !== 6}
               >
-                {isLoading ? 'Joining...' : '🎮 Join the Battle!'}
+                {isLoading ? t('join.joining') : `🎮 ${t('join.joinBattle')}`}
               </Button>
             </form>
           </Card>
@@ -159,7 +176,7 @@ export const JoinQuiz: React.FC = () => {
           {/* Info */}
           <Card className="p-6 text-center">
             <p className="text-white/70">
-              <span className="font-bold text-qb-cyan">Tip:</span> Make sure you're connected to the internet and the host has started the session!
+              <span className="font-bold text-qb-cyan">{t('common.tip')}:</span> {t('join.connectionTip')}
             </p>
           </Card>
         </div>

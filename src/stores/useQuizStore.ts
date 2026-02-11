@@ -4,6 +4,33 @@ import { supabase } from '../services/supabase/client';
 import { generateMultiStageQuiz } from '../services/gemini';
 import { v4 as uuidv4 } from 'uuid';
 
+const VIEW_TO_PATH: Record<string, string> = {
+  home: '/',
+  pricing: '/pricing',
+  auth: '/auth',
+  dashboard: '/dashboard',
+  create: '/create',
+  join: '/join',
+  lobby: '/lobby',
+  playing: '/play',
+  results: '/results',
+  'pro-signup': '/pro-signup',
+  'pro-dashboard': '/pro-dashboard',
+};
+
+let _navigateCallback: ((path: string) => void) | null = null;
+
+export function setNavigateCallback(cb: (path: string) => void) {
+  _navigateCallback = cb;
+}
+
+function navigateToView(view: string) {
+  const path = VIEW_TO_PATH[view] || '/';
+  if (_navigateCallback) {
+    _navigateCallback(path);
+  }
+}
+
 interface QuizState {
   currentQuiz: Quiz | null;
   currentSession: QuizSession | null;
@@ -15,19 +42,20 @@ interface QuizState {
   totalPlayers: number;
   currentStage: number;
   currentQuestionIndex: number;
-  currentView: 'home' | 'pricing' | 'create' | 'join' | 'lobby' | 'playing' | 'results' | 'tv-display' | 'auth' | 'dashboard';
+  currentView: string;
   isLoading: boolean;
   error: string | null;
-  realtimeChannel: any;
+  realtimeChannel: ReturnType<typeof supabase.channel> | null;
   connectionStatus: 'connected' | 'connecting' | 'disconnected';
-  
-  setCurrentView: (view: QuizState['currentView']) => void;
+
+  setCurrentView: (view: string) => void;
   setError: (error: string | null) => void;
   generateQuiz: (request: QuizGenRequest) => Promise<Quiz>;
-  createSession: (quizId: string) => Promise<string>;
+  createSession: (quizId: string, enabledJokers?: { protection: boolean; block: boolean; steal: boolean; double_points: boolean }) => Promise<string>;
   joinSession: (code: string, playerName: string, email?: string, avatarEmoji?: string) => Promise<void>;
   loadPlayers: (sessionId: string) => Promise<void>;
   startSession: () => Promise<void>;
+  endSession: () => Promise<void>;
   setupRealtimeSubscription: (sessionCode: string) => void;
   cleanupRealtime: () => void;
   restoreSession: () => Promise<void>;
@@ -52,8 +80,8 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   connectionStatus: 'disconnected',
 
   setCurrentView: (view) => {
-    console.log('📍 View changed to:', view);
     set({ currentView: view });
+    navigateToView(view);
     get().saveSessionState();
   },
   
@@ -119,10 +147,12 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         if (player) set({ currentPlayer: player as Player });
       }
 
+      const restoredView = sessionData.currentView || 'playing';
       set({
         isHost: sessionData.isHost,
-        currentView: sessionData.currentView || 'playing',
+        currentView: restoredView,
       });
+      navigateToView(restoredView);
 
     } catch (error) {
       console.error('Failed to restore session:', error);
@@ -213,24 +243,25 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       set({ currentQuiz: quizData as Quiz, isLoading: false });
       return quizData as Quiz;
       
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('❌ Generate quiz error:', error);
-      set({ error: error.message, isLoading: false });
+      set({ error: message, isLoading: false });
       throw error;
     }
   },
 
-  createSession: async (quizId) => {
+  createSession: async (quizId, enabledJokers) => {
     set({ isLoading: true, error: null });
     try {
       console.log('📝 Creating session for quiz:', quizId);
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       const sessionCode = await generateUniqueSessionCode();
       const hostId = user?.id || uuidv4();
-      
+
       const sessionId = uuidv4();
-      
+
       const session: Partial<QuizSession> = {
         id: sessionId,
         quiz_id: quizId,
@@ -240,7 +271,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         current_stage: 0,
         current_question: 0,
         unlimited_players: true,
-        settings: {},
+        settings: enabledJokers ? { enabledJokers } : {},
         party_mode: false,
         total_players: 0,
         active_players: 0,
@@ -282,9 +313,10 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       get().saveSessionState();
       return sessionCode;
       
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('❌ Create session error:', error);
-      set({ error: error.message, isLoading: false });
+      set({ error: message, isLoading: false });
       throw error;
     }
   },
@@ -364,15 +396,17 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         players: (allPlayers as Player[]) || [],
         totalPlayers: allPlayers?.length || 0,
         isLoading: false,
-        currentView: initialView, // ✅ Lobby si waiting, playing si déjà lancé
+        currentView: initialView,
       });
 
+      navigateToView(initialView);
       get().saveSessionState();
       get().setupRealtimeSubscription(code);
 
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('❌ Join error:', error);
-      set({ error: error.message, isLoading: false });
+      set({ error: message, isLoading: false });
       throw error;
     }
   },
@@ -420,7 +454,52 @@ export const useQuizStore = create<QuizState>((set, get) => ({
     console.log('✅ Session started, broadcasted to players');
 
     set({ currentView: 'playing' });
+    navigateToView('playing');
     get().saveSessionState();
+  },
+
+  endSession: async () => {
+    const { currentSession, sessionCode } = get();
+    if (!currentSession) return;
+
+    console.log('🛑 Ending session:', sessionCode);
+
+    // Update session status in DB
+    await supabase
+      .from('quiz_sessions')
+      .update({ status: 'completed', completed_at: new Date().toISOString() })
+      .eq('id', currentSession.id);
+
+    // Broadcast quiz_ended to all players and TV
+    if (sessionCode) {
+      const channel = supabase.channel(`quiz_session_${sessionCode}`);
+      await channel.send({
+        type: 'broadcast',
+        event: 'quiz_ended',
+        payload: { sessionId: currentSession.id },
+      });
+    }
+
+    // Cleanup
+    get().cleanupRealtime();
+    sessionStorage.removeItem('quizzaboom_session');
+
+    set({
+      currentQuiz: null,
+      currentSession: null,
+      currentPlayer: null,
+      currentQuestion: null,
+      isHost: false,
+      sessionCode: null,
+      players: [],
+      totalPlayers: 0,
+      currentStage: 0,
+      currentQuestionIndex: 0,
+      currentView: 'dashboard',
+    });
+
+    navigateToView('dashboard');
+    console.log('✅ Session ended, redirected to dashboard');
   },
 
   setupRealtimeSubscription: (sessionCode) => {
@@ -461,14 +540,16 @@ export const useQuizStore = create<QuizState>((set, get) => ({
           table: 'quiz_sessions',
           filter: `id=eq.${currentSession.id}`,
         },
-        (payload: any) => {
-          console.log('🔄 Session status changed:', payload.new.status);
-          if (payload.new.status === 'playing') {
+        (payload) => {
+          const newRecord = payload.new as Record<string, unknown>;
+          console.log('🔄 Session status changed:', newRecord.status);
+          if (newRecord.status === 'playing') {
             console.log('🎯 Quiz started! Redirecting to playing view...');
-            set({ 
+            set({
               currentView: 'playing',
-              currentSession: payload.new as QuizSession 
+              currentSession: newRecord as unknown as QuizSession
             });
+            navigateToView('playing');
             get().saveSessionState();
           }
         }
@@ -480,6 +561,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       channel.on('broadcast', { event: 'quiz_started' }, (payload) => {
         console.log('📢 Received quiz_started broadcast:', payload);
         set({ currentView: 'playing' });
+        navigateToView('playing');
         get().saveSessionState();
       });
     }
@@ -488,6 +570,27 @@ export const useQuizStore = create<QuizState>((set, get) => ({
     channel.on('broadcast', { event: 'phase_change' }, (payload) => {
       console.log('📢 Phase change:', payload);
     });
+
+    // ✅ Écouter la fin du quiz (host a stoppé)
+    if (!isHost) {
+      channel.on('broadcast', { event: 'quiz_ended' }, () => {
+        console.log('📢 Quiz ended by host');
+        get().cleanupRealtime();
+        sessionStorage.removeItem('quizzaboom_session');
+        set({
+          currentQuiz: null,
+          currentSession: null,
+          currentPlayer: null,
+          currentQuestion: null,
+          isHost: false,
+          sessionCode: null,
+          players: [],
+          totalPlayers: 0,
+          currentView: 'home',
+        });
+        navigateToView('home');
+      });
+    }
 
     channel.subscribe((status) => {
       console.log('📡 Realtime status:', status);

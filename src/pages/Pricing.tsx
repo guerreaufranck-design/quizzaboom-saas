@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Check, AlertCircle, Building2, Users, Crown, Shield, ArrowLeft } from 'lucide-react';
 
 export const Pricing: React.FC = () => {
+  const routerNavigate = useNavigate();
+  const { t } = useTranslation();
   const [showB2B, setShowB2B] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleCheckout = async (priceId: string, planName: string) => {
     setLoading(priceId);
-    
+
     try {
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           priceId,
           planName,
           successUrl: `${window.location.origin}/auth?payment=success`,
@@ -27,10 +31,10 @@ export const Pricing: React.FC = () => {
       }
 
       const { url } = await response.json();
-      
+
       // Redirection directe vers Stripe
       window.location.href = url;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Checkout error:', error);
       alert('Payment failed. Please try again.');
       setLoading(null);
@@ -73,8 +77,25 @@ export const Pricing: React.FC = () => {
     },
     {
       name: 'Party',
-      price: 9.99,
+      price: 9.90,
       priceId: import.meta.env.VITE_STRIPE_PRICE_PARTY,
+      players: 30,
+      icon: '🔥',
+      popular: false,
+      features: [
+        '1 Quiz Session',
+        'Up to 30 Players',
+        'All Game Modes',
+        'Strategic Jokers',
+        'Real-time Leaderboard',
+        'Email Results',
+        'Great for parties!',
+      ],
+    },
+    {
+      name: 'Big Party',
+      price: 14.99,
+      priceId: import.meta.env.VITE_STRIPE_PRICE_BIG_PARTY,
       players: 50,
       icon: '🔥',
       popular: false,
@@ -85,19 +106,19 @@ export const Pricing: React.FC = () => {
         'Strategic Jokers',
         'Real-time Leaderboard',
         'Email Results',
-        'Great for events!',
+        'Perfect for big groups!',
       ],
     },
     {
-      name: 'Pro Event',
-      price: 19.99,
-      priceId: import.meta.env.VITE_STRIPE_PRICE_PRO_EVENT,
-      players: 250,
+      name: 'Event',
+      price: 24.99,
+      priceId: import.meta.env.VITE_STRIPE_PRICE_EVENT,
+      players: 100,
       icon: '👑',
       popular: false,
       features: [
         '1 Quiz Session',
-        'Up to 250 Players',
+        'Up to 100+ Players',
         'All Game Modes',
         'Strategic Jokers',
         'Real-time Leaderboard',
@@ -123,9 +144,9 @@ export const Pricing: React.FC = () => {
         '30-day free trial',
       ],
       warnings: [
-        'Professional business card required',
-        'Proof of business activity required',
-        'VAT number verification',
+        'Business registration number required (SIRET/VAT)',
+        'AI-powered instant verification',
+        'Hospitality & entertainment businesses only',
       ],
     },
     {
@@ -144,9 +165,8 @@ export const Pricing: React.FC = () => {
         'Advanced analytics',
       ],
       warnings: [
-        'Professional business card required',
-        'Proof of business activity required',
-        'VAT number verification',
+        'Business registration number required (SIRET/VAT)',
+        'AI-powered instant verification',
         'No free trial - Paid immediately',
       ],
     },
@@ -159,19 +179,19 @@ export const Pricing: React.FC = () => {
           <div className="flex items-center justify-between mb-8">
             <Button
               variant="ghost"
-              onClick={() => window.location.href = '/'}
+              onClick={() => routerNavigate('/')}
               icon={<ArrowLeft />}
             >
-              Back to Home
+              {t('common.backToHome')}
             </Button>
           </div>
 
           <div className="text-center mb-16">
             <h1 className="text-6xl font-bold gradient-primary bg-clip-text text-transparent mb-4">
-              Choose Your Plan
+              {t('pricing.title')}
             </h1>
             <p className="text-2xl text-white/70">
-              One-time payment, instant access. No subscription.
+              {t('pricing.subtitle')}
             </p>
           </div>
 
@@ -179,11 +199,11 @@ export const Pricing: React.FC = () => {
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full">
                 <Users className="w-6 h-6 text-white" />
-                <span className="text-2xl font-bold text-white">For Everyone</span>
+                <span className="text-2xl font-bold text-white">{t('pricing.forEveryone')}</span>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
               {b2cPlans.map((plan) => (
                 <Card
                   key={plan.name}
@@ -195,7 +215,7 @@ export const Pricing: React.FC = () => {
                   {plan.popular && (
                     <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                       <div className="bg-gradient-to-r from-qb-cyan to-qb-purple px-6 py-2 rounded-full">
-                        <span className="text-sm font-bold text-white">⭐ MOST POPULAR</span>
+                        <span className="text-sm font-bold text-white">⭐ {t('pricing.mostPopular')}</span>
                       </div>
                     </div>
                   )}
@@ -206,8 +226,8 @@ export const Pricing: React.FC = () => {
                     <div className="flex items-baseline justify-center gap-1">
                       <span className="text-5xl font-bold text-qb-cyan">${plan.price}</span>
                     </div>
-                    <p className="text-white/70 mt-2">One-time payment</p>
-                    <p className="text-qb-cyan font-bold">{plan.players} Players Max</p>
+                    <p className="text-white/70 mt-2">{t('pricing.oneTime')}</p>
+                    <p className="text-qb-cyan font-bold">{t('pricing.playersMax', { count: plan.players })}</p>
                   </div>
 
                   <ul className="space-y-3 mb-8">
@@ -228,7 +248,7 @@ export const Pricing: React.FC = () => {
                     loading={loading === plan.priceId}
                     disabled={!!loading}
                   >
-                    {loading === plan.priceId ? 'Processing...' : 'Buy Now'}
+                    {loading === plan.priceId ? t('pricing.processing') : t('pricing.buyNow')}
                   </Button>
                 </Card>
               ))}
@@ -243,7 +263,7 @@ export const Pricing: React.FC = () => {
               >
                 <Building2 className="w-6 h-6 text-white/70" />
                 <span className="text-xl font-bold text-white/70">
-                  Business Plans (Bars, Restaurants, Hotels)
+                  {t('pricing.businessPlans')}
                 </span>
                 <span className="text-white/50">{showB2B ? '▼' : '▶'}</span>
               </button>
@@ -256,16 +276,16 @@ export const Pricing: React.FC = () => {
                     <AlertCircle className="w-8 h-8 text-yellow-400 shrink-0" />
                     <div>
                       <h3 className="text-2xl font-bold text-yellow-300 mb-2">
-                        ⚠️ Business Accounts Only
+                        ⚠️ {t('pricing.businessOnly')}
                       </h3>
                       <ul className="text-white/90 space-y-1 text-lg">
-                        <li>• Professional business credit card required</li>
-                        <li>• Proof of business activity (SIRET, VAT number, business license)</li>
-                        <li>• Manual verification process (24-48h)</li>
-                        <li>• Monthly billing - automatic renewal</li>
+                        <li>• {t('pricing.businessReqs.registration')}</li>
+                        <li>• {t('pricing.businessReqs.aiVerification')}</li>
+                        <li>• {t('pricing.businessReqs.eligible')}</li>
+                        <li>• {t('pricing.businessReqs.monthlyBilling')}</li>
                       </ul>
                       <p className="text-yellow-200 font-bold mt-3">
-                        💡 For personal use, choose one of our one-time payment plans above!
+                        💡 {t('pricing.personalTip')}
                       </p>
                     </div>
                   </div>
@@ -298,12 +318,12 @@ export const Pricing: React.FC = () => {
                         ))}
                       </ul>
 
-                      <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-                        <p className="text-sm font-bold text-red-300 mb-2 flex items-center gap-2">
+                      <div className="mb-6 p-4 bg-qb-cyan/10 border border-qb-cyan/30 rounded-lg">
+                        <p className="text-sm font-bold text-qb-cyan mb-2 flex items-center gap-2">
                           <Shield className="w-4 h-4" />
-                          Required Documents:
+                          {t('pricing.requirements')}
                         </p>
-                        <ul className="text-xs text-red-200/90 space-y-1">
+                        <ul className="text-xs text-white/70 space-y-1">
                           {plan.warnings.map((warning, idx) => (
                             <li key={idx}>• {warning}</li>
                           ))}
@@ -313,10 +333,11 @@ export const Pricing: React.FC = () => {
                       <Button
                         fullWidth
                         size="lg"
-                        variant="ghost"
-                        onClick={() => alert('Please contact sales@quizzaboom.com for business accounts')}
+                        variant={plan.trial ? 'primary' : 'ghost'}
+                        gradient={plan.trial}
+                        onClick={() => routerNavigate('/pro-signup')}
                       >
-                        Contact Sales
+                        {plan.trial ? t('pricing.startFreeTrial') : t('pricing.getStarted')}
                       </Button>
                     </Card>
                   ))}
@@ -324,7 +345,7 @@ export const Pricing: React.FC = () => {
 
                 <div className="text-center mt-8 p-4 bg-white/5 rounded-lg">
                   <p className="text-white/70">
-                    Business inquiries: <a href="mailto:sales@quizzaboom.com" className="text-qb-cyan font-bold">sales@quizzaboom.com</a>
+                    {t('pricing.questions')} <a href="mailto:sales@quizzaboom.com" className="text-qb-cyan font-bold">sales@quizzaboom.com</a>
                   </p>
                 </div>
               </>
