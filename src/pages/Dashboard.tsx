@@ -87,6 +87,17 @@ export const Dashboard: React.FC = () => {
                   <div className="text-white/70">{t('dashboard.availableCredits')}</div>
                 </div>
               </div>
+              {availableCredits === 0 && purchases.length > 0 && (
+                <Button
+                  size="sm"
+                  gradient
+                  className="mt-4 w-full"
+                  onClick={() => navigate('pricing')}
+                  icon={<Plus />}
+                >
+                  {t('dashboard.buyMore')}
+                </Button>
+              )}
             </Card>
 
             <Card gradient className="p-6">
@@ -166,6 +177,15 @@ export const Dashboard: React.FC = () => {
                     </div>
                   </div>
                 ))}
+                <div className="mt-6 text-center">
+                  <Button
+                    gradient
+                    onClick={() => navigate('pricing')}
+                    icon={<Plus />}
+                  >
+                    {t('dashboard.buyMore')}
+                  </Button>
+                </div>
               </div>
             )}
           </Card>
