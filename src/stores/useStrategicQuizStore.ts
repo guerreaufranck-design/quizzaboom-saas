@@ -168,9 +168,10 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         session_id: sessionId,
         player_id: playerId,
         target_player_id: targetPlayerId || null,
-        joker_type: jokerType,
-        question_index: get().currentQuestionIndex,
-        executed_at: new Date().toISOString(),
+        action_type: jokerType,
+        question_number: get().currentQuestionIndex,
+        timestamp: Date.now(),
+        action_order: 1,
       });
     }
 

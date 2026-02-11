@@ -1,25 +1,33 @@
 import { supabase } from './supabase/client';
 
-export const signInWithGoogle = async () => {
+export const signInWithGoogle = async (returnTo?: string) => {
+  const redirectUrl = returnTo
+    ? `${window.location.origin}/auth?returnTo=${encodeURIComponent(returnTo)}`
+    : `${window.location.origin}/auth`;
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/dashboard`,
+      redirectTo: redirectUrl,
     },
   });
-  
+
   if (error) throw error;
   return data;
 };
 
-export const signInWithMagicLink = async (email: string) => {
+export const signInWithMagicLink = async (email: string, returnTo?: string) => {
+  const redirectUrl = returnTo
+    ? `${window.location.origin}/auth?returnTo=${encodeURIComponent(returnTo)}`
+    : `${window.location.origin}/auth`;
+
   const { data, error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${window.location.origin}/dashboard`,
+      emailRedirectTo: redirectUrl,
     },
   });
-  
+
   if (error) throw error;
   return data;
 };

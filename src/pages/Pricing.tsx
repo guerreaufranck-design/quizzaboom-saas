@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '../stores/useAuthStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Check, AlertCircle, Building2, Users, Crown, Shield, ArrowLeft } from 'lucide-react';
@@ -8,10 +9,17 @@ import { Check, AlertCircle, Building2, Users, Crown, Shield, ArrowLeft } from '
 export const Pricing: React.FC = () => {
   const routerNavigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useAuthStore();
   const [showB2B, setShowB2B] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleCheckout = async (priceId: string, planName: string) => {
+    // Require auth before checkout
+    if (!user) {
+      routerNavigate('/auth?returnTo=/pricing');
+      return;
+    }
+
     setLoading(priceId);
 
     try {
@@ -21,22 +29,26 @@ export const Pricing: React.FC = () => {
         body: JSON.stringify({
           priceId,
           planName,
-          successUrl: `${window.location.origin}/auth?payment=success`,
+          userId: user.id,
+          successUrl: `${window.location.origin}/dashboard?payment=success`,
           cancelUrl: `${window.location.origin}/pricing?payment=cancel`
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to create checkout session');
+        throw new Error(data.error || 'Failed to create checkout session');
       }
 
-      const { url } = await response.json();
+      const { url } = data;
 
       // Redirection directe vers Stripe
       window.location.href = url;
     } catch (error) {
-      console.error('Checkout error:', error);
-      alert('Payment failed. Please try again.');
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Checkout error:', msg);
+      alert(`Payment failed: ${msg}`);
       setLoading(null);
     }
   };
@@ -77,25 +89,8 @@ export const Pricing: React.FC = () => {
     },
     {
       name: 'Party',
-      price: 9.90,
+      price: 9.99,
       priceId: import.meta.env.VITE_STRIPE_PRICE_PARTY,
-      players: 30,
-      icon: '🔥',
-      popular: false,
-      features: [
-        '1 Quiz Session',
-        'Up to 30 Players',
-        'All Game Modes',
-        'Strategic Jokers',
-        'Real-time Leaderboard',
-        'Email Results',
-        'Great for parties!',
-      ],
-    },
-    {
-      name: 'Big Party',
-      price: 14.99,
-      priceId: import.meta.env.VITE_STRIPE_PRICE_BIG_PARTY,
       players: 50,
       icon: '🔥',
       popular: false,
@@ -106,13 +101,13 @@ export const Pricing: React.FC = () => {
         'Strategic Jokers',
         'Real-time Leaderboard',
         'Email Results',
-        'Perfect for big groups!',
+        'Perfect for parties!',
       ],
     },
     {
-      name: 'Event',
-      price: 24.99,
-      priceId: import.meta.env.VITE_STRIPE_PRICE_EVENT,
+      name: 'Pro Event',
+      price: 19.99,
+      priceId: import.meta.env.VITE_STRIPE_PRICE_PRO_EVENT,
       players: 100,
       icon: '👑',
       popular: false,
@@ -196,14 +191,29 @@ export const Pricing: React.FC = () => {
           </div>
 
           <div className="mb-20">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full">
+            <div className="flex items-center justify-center gap-6 mb-14 flex-wrap">
+              <div className="inline-flex items-center gap-3 px-8 py-3.5 bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full shadow-lg shadow-qb-purple/20">
                 <Users className="w-6 h-6 text-white" />
                 <span className="text-2xl font-bold text-white">{t('pricing.forEveryone')}</span>
               </div>
+              <button
+                onClick={() => {
+                  setShowB2B(!showB2B);
+                  if (!showB2B) {
+                    setTimeout(() => {
+                      document.getElementById('b2b-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }
+                }}
+                className="inline-flex items-center gap-2.5 px-6 py-3.5 bg-white/5 hover:bg-white/10 border border-white/20 hover:border-white/40 rounded-full transition-all"
+              >
+                <Building2 className="w-5 h-5 text-white/60" />
+                <span className="text-lg font-semibold text-white/60">{t('pricing.businessPlans')}</span>
+                <span className="text-white/40 text-sm">{showB2B ? '▼' : '▶'}</span>
+              </button>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {b2cPlans.map((plan) => (
                 <Card
                   key={plan.name}
@@ -255,7 +265,7 @@ export const Pricing: React.FC = () => {
             </div>
           </div>
 
-          <div className="border-t border-white/10 pt-12">
+          <div id="b2b-section" className="border-t border-white/10 pt-12">
             <div className="text-center mb-8">
               <button
                 onClick={() => setShowB2B(!showB2B)}

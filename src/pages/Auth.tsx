@@ -1,22 +1,77 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ArrowLeft, Mail } from 'lucide-react';
 import { signInWithGoogle, signInWithMagicLink } from '../services/auth';
+import { useAuthStore } from '../stores/useAuthStore';
+import { supabase } from '../services/supabase/client';
 
 export const Auth: React.FC = () => {
   const { t } = useTranslation();
   const routerNavigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuthStore();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const hasNavigated = useRef(false);
+
+  const returnTo = searchParams.get('returnTo');
+
+  // Smart routing after login (OAuth callback or magic link return)
+  useEffect(() => {
+    if (!user || hasNavigated.current) return;
+    hasNavigated.current = true;
+
+    // If returnTo is specified, go there directly
+    if (returnTo) {
+      routerNavigate(decodeURIComponent(returnTo), { replace: true });
+      return;
+    }
+
+    // Smart routing: determine where to send the user
+    const routeUser = async () => {
+      try {
+        // Check if user has an organization (B2B)
+        const { data: membership } = await supabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (membership) {
+          routerNavigate('/pro-dashboard', { replace: true });
+          return;
+        }
+
+        // Check if user has any B2C purchases
+        const { count } = await supabase
+          .from('user_purchases')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        if (count && count > 0) {
+          routerNavigate('/dashboard', { replace: true });
+          return;
+        }
+
+        // New user with no purchases and no org → pricing
+        routerNavigate('/pricing', { replace: true });
+      } catch {
+        // Fallback to pricing on error
+        routerNavigate('/pricing', { replace: true });
+      }
+    };
+
+    routeUser();
+  }, [user, returnTo, routerNavigate]);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(returnTo || undefined);
     } catch (error) {
       console.error('Google sign in error:', error);
       alert('Sign in failed. Please try again.');
@@ -29,7 +84,7 @@ export const Auth: React.FC = () => {
     setLoading(true);
 
     try {
-      await signInWithMagicLink(email);
+      await signInWithMagicLink(email, returnTo || undefined);
       setMagicLinkSent(true);
     } catch (error) {
       console.error('Magic link error:', error);
@@ -79,7 +134,9 @@ export const Auth: React.FC = () => {
           <Card className="p-8">
             <div className="text-center mb-8">
               <h1 className="text-4xl font-bold text-white mb-2">{t('auth.welcome')}</h1>
-              <p className="text-white/70">{t('auth.signInAccess')}</p>
+              <p className="text-white/70">
+                {returnTo ? t('auth.loginRequired') : t('auth.signInAccess')}
+              </p>
             </div>
 
             {/* Google Sign In */}

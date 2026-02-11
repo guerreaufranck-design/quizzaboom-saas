@@ -24,12 +24,10 @@ export const ProDashboard: React.FC = () => {
   } = useOrganizationStore();
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
+    if (user) {
+      fetchOrganization(user.id);
     }
-    fetchOrganization(user.id);
-  }, [user, fetchOrganization, navigate]);
+  }, [user, fetchOrganization]);
 
   const handleSignOut = async () => {
     await signOut();

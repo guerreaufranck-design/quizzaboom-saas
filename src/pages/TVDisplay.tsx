@@ -24,7 +24,7 @@ export const TVDisplay: React.FC = () => {
   useEffect(() => {
     const initTVDisplay = async () => {
       const params = new URLSearchParams(window.location.search);
-      const tvCode = params.get('tv');
+      const tvCode = params.get('code') || params.get('tv');
       
       console.log('📺 TV Display initializing with code:', tvCode);
       
