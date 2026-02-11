@@ -19,6 +19,7 @@ export const PlayerView: React.FC = () => {
     submitAnswer,
     loadQuestions,
     listenToPhaseChanges,
+    reconnectToSession,
     showTargetSelector,
     pendingJokerType,
     closeTargetSelector,
@@ -50,10 +51,15 @@ export const PlayerView: React.FC = () => {
     
     keepAwake();
     
-    // Réactiver sur visibilité
+    // Réactiver wake lock + reconnexion Realtime sur visibilité
     const handleVisibility = () => {
-      if (!document.hidden && !wakeLockRef.current) {
-        keepAwake();
+      if (!document.hidden) {
+        if (!wakeLockRef.current) keepAwake();
+        // Reconnect to realtime + resync game phase from DB
+        if (currentSession?.id && sessionCode) {
+          console.log('🔄 Tab visible again — reconnecting...');
+          reconnectToSession(currentSession.id, sessionCode);
+        }
       }
     };
     

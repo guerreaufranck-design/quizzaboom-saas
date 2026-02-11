@@ -51,8 +51,9 @@ interface StrategicQuizState {
   submitAnswer: (answer: string) => Promise<void>;
   resetForNextQuestion: () => void;
   listenToPhaseChanges: (sessionCode: string) => void;
+  reconnectToSession: (sessionId: string, sessionCode: string) => Promise<void>;
   broadcastPhaseChange: (sessionCode: string, data: PhaseData) => Promise<void>;
-  
+
   openTargetSelector: (jokerType: 'block' | 'steal') => void;
   closeTargetSelector: () => void;
 }
@@ -393,6 +394,43 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       .subscribe((status: string) => {
         console.log('📡 Realtime status:', status);
       });
+  },
+
+  reconnectToSession: async (sessionId, sessionCode) => {
+    console.log('🔄 Reconnecting player to session...');
+
+    // 1. Re-subscribe to realtime channel
+    get().listenToPhaseChanges(sessionCode);
+
+    // 2. Fetch current phase from DB
+    try {
+      const { data: session, error } = await supabase
+        .from('quiz_sessions')
+        .select('settings, current_question, status')
+        .eq('id', sessionId)
+        .single();
+
+      if (error) {
+        console.error('Failed to fetch session for reconnection:', error);
+        return;
+      }
+
+      // If quiz ended while we were away
+      if (session.status === 'finished' || session.status === 'completed') {
+        console.log('🏁 Quiz ended while disconnected');
+        return;
+      }
+
+      const settings = session.settings as Record<string, unknown>;
+      const currentPhase = settings?.currentPhase as PhaseData | undefined;
+
+      if (currentPhase) {
+        console.log('✅ Resynced to phase:', currentPhase.phase, 'question:', currentPhase.questionIndex);
+        get().setPhaseData(currentPhase);
+      }
+    } catch (error) {
+      console.error('Reconnection error:', error);
+    }
   },
 
   broadcastPhaseChange: async (sessionCode, data) => {

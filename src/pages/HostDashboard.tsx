@@ -17,7 +17,10 @@ import {
   Mail,
   CheckCircle,
   Square,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
+import { useQuizAudio } from '../hooks/useQuizAudio';
 import type { GamePhase } from '../types/gamePhases';
 import { PHASE_DURATIONS, PHASE_ORDER } from '../types/gamePhases';
 import type { Question } from '../types/quiz';
@@ -35,6 +38,7 @@ export const HostDashboard: React.FC = () => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [emailsSending, setEmailsSending] = useState(false);
   const [emailsSent, setEmailsSent] = useState(false);
+  const { startMusic, stopAll, onPhaseChange, toggleMute, isMuted } = useQuizAudio();
 
   const currentQuestion: Question | null = allQuestions[currentQuestionIndex] || null;
 
@@ -96,6 +100,7 @@ export const HostDashboard: React.FC = () => {
       } else {
         setIsPlaying(false);
         setQuizCompleted(true);
+        stopAll(); // Stop all audio when quiz ends
       }
     }
   };
@@ -125,9 +130,31 @@ export const HostDashboard: React.FC = () => {
     if (sessionCode) {
       broadcastPhaseChange(sessionCode, phaseData);
     }
+
+    // Trigger audio for this phase
+    onPhaseChange(newPhase, PHASE_DURATIONS[newPhase]);
+
+    // Persist current phase to DB so disconnected players can resync
+    if (currentSession?.id) {
+      supabase.from('quiz_sessions')
+        .update({
+          settings: {
+            ...(typeof currentSession.settings === 'object' && currentSession.settings ? currentSession.settings : {}),
+            currentPhase: phaseData,
+          },
+          current_question: questionIndex,
+        })
+        .eq('id', currentSession.id)
+        .then(({ error }) => {
+          if (error) console.error('Failed to persist phase to DB:', error);
+        });
+    }
   };
 
   const handleStartPause = () => {
+    if (!isPlaying) {
+      startMusic(); // Start background music when quiz begins
+    }
     setIsPlaying(!isPlaying);
     if (!isPlaying && currentPhaseState === 'theme_announcement' && currentQuestionIndex === 0) {
       changePhase('theme_announcement', 0);
@@ -383,7 +410,7 @@ export const HostDashboard: React.FC = () => {
             </Card>
 
             <Card gradient className="p-6">
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
                 <Button
                   size="xl"
                   onClick={handleStartPause}
@@ -401,6 +428,14 @@ export const HostDashboard: React.FC = () => {
                   disabled={!isPlaying}
                 >
                   {t('host.skipPhase')}
+                </Button>
+                <Button
+                  size="xl"
+                  onClick={toggleMute}
+                  icon={isMuted ? <VolumeX /> : <Volume2 />}
+                  variant={isMuted ? 'ghost' : 'secondary'}
+                >
+                  {isMuted ? 'Mute' : 'Sound'}
                 </Button>
               </div>
 

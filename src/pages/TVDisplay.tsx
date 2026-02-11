@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { supabase } from '../services/supabase/client';
 import { Card } from '../components/ui/Card';
 import { Clock, Trophy, Star } from 'lucide-react';
 import type { Player } from '../types/quiz';
+import { useQuizAudio } from '../hooks/useQuizAudio';
 
 export const TVDisplay: React.FC = () => {
   const {
@@ -15,6 +16,8 @@ export const TVDisplay: React.FC = () => {
     listenToPhaseChanges,
     loadQuestions,
   } = useStrategicQuizStore();
+  const { startMusic, stopAll, onPhaseChange } = useQuizAudio();
+  const musicStartedRef = useRef(false);
 
   const [sessionCode, setSessionCode] = useState<string>('');
   const [topPlayers, setTopPlayers] = useState<Player[]>([]);
@@ -78,10 +81,26 @@ export const TVDisplay: React.FC = () => {
 
   useEffect(() => {
     // Hide instructions only when timer actually starts counting down
-    if (currentPhase === 'theme_announcement' && phaseTimeRemaining < 8 && showInstructions) {
+    if (currentPhase === 'theme_announcement' && phaseTimeRemaining < 5 && showInstructions) {
       setShowInstructions(false);
     }
   }, [currentPhase, phaseTimeRemaining]);
+
+  // Start music on first phase change + trigger audio per phase
+  useEffect(() => {
+    if (currentPhase !== 'theme_announcement' || !showInstructions) {
+      if (!musicStartedRef.current) {
+        startMusic();
+        musicStartedRef.current = true;
+      }
+      onPhaseChange(currentPhase, phaseTimeRemaining);
+    }
+  }, [currentPhase]);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => stopAll();
+  }, []);
 
   const loadTopPlayers = async (sessionId: string) => {
     const { data: players } = await supabase

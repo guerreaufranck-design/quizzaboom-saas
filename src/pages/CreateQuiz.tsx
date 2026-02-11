@@ -9,11 +9,13 @@ import { ArrowLeft, Sparkles, Clock, Target, Globe, Zap, Loader2, X, Shield, Ban
 import { calculateQuizStructure } from '../services/gemini';
 import { THEMES, THEME_MODES, type ThemeCategory, type ThemeMode } from '../types/themes';
 import type { QuizGenRequest } from '../types/quiz';
+import { useUserEntitlement } from '../hooks/useUserEntitlement';
 
 export const CreateQuiz: React.FC = () => {
   const { t } = useTranslation();
   const { generateQuiz, createSession, isLoading } = useQuizStore();
   const navigate = useAppNavigate();
+  const { consumeCredit } = useUserEntitlement();
 
   const [selectedTheme, setSelectedTheme] = useState<ThemeCategory>('general');
   const [selectedMode, setSelectedMode] = useState<ThemeMode>('standard');
@@ -63,6 +65,15 @@ export const CreateQuiz: React.FC = () => {
 
       setGenerationStep(t('create.generationSteps.creating'));
       await createSession(quiz.id, formData.includeJokers ? enabledJokers : undefined);
+
+      // Consume one credit (mark oldest unused purchase as used)
+      try {
+        await consumeCredit();
+        console.log('✅ Credit consumed successfully');
+      } catch (creditError) {
+        console.error('⚠️ Failed to consume credit:', creditError);
+        // Don't block quiz — session already created
+      }
 
       setGenerationStep(t('create.generationSteps.ready'));
       setTimeout(() => {
