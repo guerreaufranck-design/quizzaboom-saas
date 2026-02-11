@@ -99,11 +99,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         if (purchaseError) {
           console.error('Failed to create purchase:', purchaseError);
-        } else {
-          console.log('Purchase recorded successfully for user:', userId);
+          // Return 500 so Stripe will RETRY the webhook
+          return res.status(500).json({ error: 'Failed to create purchase', details: purchaseError.message });
         }
+
+        console.log('Purchase recorded successfully for user:', userId);
       } else {
         console.error('No user_id found (metadata + email fallback failed) — purchase cannot be linked');
+        // Return 500 so Stripe will RETRY (user might authenticate later)
+        return res.status(500).json({ error: 'No user_id found for this payment' });
       }
     }
 

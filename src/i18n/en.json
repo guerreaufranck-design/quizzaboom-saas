@@ -162,6 +162,7 @@
     "noPurchases": "No purchases yet",
     "browsePlans": "Browse Plans",
     "buyMore": "Buy More Credits",
+    "paymentProcessing": "Payment received! Adding your credits...",
     "useCredit": "Use Credit",
     "used": "Used"
   },

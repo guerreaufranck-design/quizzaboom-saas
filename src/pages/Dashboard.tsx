@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { useAuthStore } from '../stores/useAuthStore';
 import { signOut } from '../services/auth';
 import { supabase } from '../services/supabase/client';
-import { Plus, LogOut, CreditCard, Trophy } from 'lucide-react';
+import { Plus, LogOut, CreditCard, Trophy, Loader2 } from 'lucide-react';
 import { useAppNavigate } from '../hooks/useAppNavigate';
 
 interface Purchase {
@@ -20,8 +21,12 @@ export const Dashboard: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const navigate = useAppNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
+  const [waitingForPayment, setWaitingForPayment] = useState(false);
+  const pollCountRef = useRef(0);
+  const initialPurchaseCountRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -31,6 +36,54 @@ export const Dashboard: React.FC = () => {
 
     loadPurchases();
   }, [user]);
+
+  // Poll for new purchase after Stripe payment redirect
+  useEffect(() => {
+    if (searchParams.get('payment') !== 'success' || !user) return;
+
+    setWaitingForPayment(true);
+    pollCountRef.current = 0;
+
+    const pollInterval = setInterval(async () => {
+      pollCountRef.current++;
+      console.log(`💳 Polling for new purchase (attempt ${pollCountRef.current})...`);
+
+      const { data } = await supabase
+        .from('user_purchases')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      const currentCount = data?.length || 0;
+
+      // First poll: store initial count
+      if (initialPurchaseCountRef.current === null) {
+        initialPurchaseCountRef.current = purchases.length;
+      }
+
+      // New purchase detected!
+      if (currentCount > (initialPurchaseCountRef.current || 0)) {
+        console.log('✅ New purchase detected!');
+        setPurchases(data || []);
+        setWaitingForPayment(false);
+        setSearchParams({}, { replace: true }); // Clean URL
+        clearInterval(pollInterval);
+        return;
+      }
+
+      // Timeout after 30 attempts (60 seconds)
+      if (pollCountRef.current >= 30) {
+        console.log('⏱️ Payment polling timeout');
+        setWaitingForPayment(false);
+        setSearchParams({}, { replace: true });
+        clearInterval(pollInterval);
+        // Reload one final time
+        setPurchases(data || []);
+      }
+    }, 2000);
+
+    return () => clearInterval(pollInterval);
+  }, [searchParams.get('payment'), user]);
 
   const loadPurchases = async () => {
     try {
@@ -74,6 +127,16 @@ export const Dashboard: React.FC = () => {
               {t('common.signOut')}
             </Button>
           </div>
+
+          {/* Payment processing banner */}
+          {waitingForPayment && (
+            <Card className="p-4 mb-8 bg-gradient-to-r from-green-500/20 to-qb-cyan/20 border border-green-500/50">
+              <div className="flex items-center gap-3 justify-center">
+                <Loader2 className="w-5 h-5 text-green-400 animate-spin" />
+                <span className="text-green-400 font-bold">{t('dashboard.paymentProcessing')}</span>
+              </div>
+            </Card>
+          )}
 
           {/* Stats */}
           <div className="grid md:grid-cols-3 gap-6 mb-12">
