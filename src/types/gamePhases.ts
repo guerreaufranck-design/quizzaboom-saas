@@ -7,8 +7,8 @@ export type GamePhase =
 
 export const PHASE_DURATIONS: Record<GamePhase, number> = {
   theme_announcement: 5,
-  question_display: 3,
-  answer_selection: 8,
+  question_display: 5,
+  answer_selection: 12,
   results: 5,
   intermission: 2,
 };
