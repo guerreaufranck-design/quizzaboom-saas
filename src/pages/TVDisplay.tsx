@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { supabase } from '../services/supabase/client';
 import { Card } from '../components/ui/Card';
@@ -16,8 +16,7 @@ export const TVDisplay: React.FC = () => {
     listenToPhaseChanges,
     loadQuestions,
   } = useStrategicQuizStore();
-  const { startMusic, stopAll, onPhaseChange } = useQuizAudio();
-  const musicStartedRef = useRef(false);
+  const { stopAll, onPhaseChange } = useQuizAudio();
 
   const [sessionCode, setSessionCode] = useState<string>('');
   const [topPlayers, setTopPlayers] = useState<Player[]>([]);
@@ -86,13 +85,9 @@ export const TVDisplay: React.FC = () => {
     }
   }, [currentPhase, phaseTimeRemaining]);
 
-  // Start music on first phase change + trigger audio per phase
+  // Trigger tick-tock audio per phase
   useEffect(() => {
     if (currentPhase !== 'theme_announcement' || !showInstructions) {
-      if (!musicStartedRef.current) {
-        startMusic();
-        musicStartedRef.current = true;
-      }
       onPhaseChange(currentPhase, phaseTimeRemaining);
     }
   }, [currentPhase]);
@@ -215,10 +210,10 @@ export const TVDisplay: React.FC = () => {
                 <div className="flex-1">
                   <h2 className="text-4xl font-bold text-white mb-2">4. GAME FLOW</h2>
                   <div className="grid grid-cols-2 gap-2 text-lg text-white/90">
-                    <div className="bg-purple-500/20 p-2 rounded">🎯 Theme (8s) → Jokers</div>
-                    <div className="bg-blue-500/20 p-2 rounded">📖 Question (10s) → Read</div>
-                    <div className="bg-cyan-500/20 p-2 rounded">✍️ Answer (15s) → Choose</div>
-                    <div className="bg-green-500/20 p-2 rounded">📊 Results (8s) → Score</div>
+                    <div className="bg-purple-500/20 p-2 rounded">🎯 Theme (5s) → Jokers</div>
+                    <div className="bg-blue-500/20 p-2 rounded">📖 Question (3s) → Read</div>
+                    <div className="bg-cyan-500/20 p-2 rounded">✍️ Answer (8s) → Choose</div>
+                    <div className="bg-green-500/20 p-2 rounded">📊 Results (5s) → Score</div>
                   </div>
                 </div>
               </div>

@@ -52,6 +52,7 @@ interface StrategicQuizState {
   resetForNextQuestion: () => void;
   listenToPhaseChanges: (sessionCode: string) => void;
   reconnectToSession: (sessionId: string, sessionCode: string) => Promise<void>;
+  getChannelState: () => string | null;
   broadcastPhaseChange: (sessionCode: string, data: PhaseData) => Promise<void>;
 
   openTargetSelector: (jokerType: 'block' | 'steal') => void;
@@ -399,8 +400,12 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   reconnectToSession: async (sessionId, sessionCode) => {
     console.log('🔄 Reconnecting player to session...');
 
-    // 1. Re-subscribe to realtime channel
-    get().listenToPhaseChanges(sessionCode);
+    // 1. Check if channel is still alive; if not, re-subscribe
+    const channelState = globalRealtimeChannel?.state;
+    if (!globalRealtimeChannel || channelState === 'closed' || channelState === 'errored') {
+      console.log('🔌 Channel dead/missing, re-subscribing...');
+      get().listenToPhaseChanges(sessionCode);
+    }
 
     // 2. Fetch current phase from DB
     try {
@@ -431,6 +436,11 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     } catch (error) {
       console.error('Reconnection error:', error);
     }
+  },
+
+  getChannelState: () => {
+    if (!globalRealtimeChannel) return null;
+    return globalRealtimeChannel.state || null;
   },
 
   broadcastPhaseChange: async (sessionCode, data) => {

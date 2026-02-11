@@ -1,6 +1,6 @@
 import type { QuizGenRequest, AIQuizResponse } from '../types/quiz';
 
-const SECONDS_PER_QUESTION = 86;
+const SECONDS_PER_QUESTION = 23;
 const MINUTES_PER_QUESTION = SECONDS_PER_QUESTION / 60;
 const QUESTIONS_PER_STAGE = 5;
 

@@ -38,7 +38,7 @@ export const HostDashboard: React.FC = () => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [emailsSending, setEmailsSending] = useState(false);
   const [emailsSent, setEmailsSent] = useState(false);
-  const { startMusic, stopAll, onPhaseChange, toggleMute, isMuted } = useQuizAudio();
+  const { stopAll, onPhaseChange, toggleMute, isMuted } = useQuizAudio();
 
   const currentQuestion: Question | null = allQuestions[currentQuestionIndex] || null;
 
@@ -152,9 +152,6 @@ export const HostDashboard: React.FC = () => {
   };
 
   const handleStartPause = () => {
-    if (!isPlaying) {
-      startMusic(); // Start background music when quiz begins
-    }
     setIsPlaying(!isPlaying);
     if (!isPlaying && currentPhaseState === 'theme_announcement' && currentQuestionIndex === 0) {
       changePhase('theme_announcement', 0);

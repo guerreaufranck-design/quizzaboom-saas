@@ -2,10 +2,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { setCorsHeaders } from './_cors';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
-const SECONDS_PER_QUESTION = 86;
+const SECONDS_PER_QUESTION = 23;
 const MINUTES_PER_QUESTION = SECONDS_PER_QUESTION / 60;
 const QUESTIONS_PER_STAGE = 5;
 
@@ -21,81 +21,6 @@ function calculateQuizStructure(durationMinutes: number) {
   const totalStages = Math.ceil(totalQuestions / QUESTIONS_PER_STAGE);
   const questionsPerStage = Math.ceil(totalQuestions / totalStages);
   return { totalQuestions, totalStages, questionsPerStage };
-}
-
-function generateMockQuiz(
-  theme: string,
-  totalQuestions: number,
-  totalStages: number,
-  questionsPerStage: number,
-  difficulty: string,
-  duration: number
-) {
-  const questions = [
-    {
-      question_text: "Quelle est la capitale de la France ?",
-      options: ["Londres", "Paris", "Berlin", "Madrid"],
-      correct_answer: "Paris",
-      explanation: "Paris est la capitale de la France depuis 987.",
-      fun_fact: "Paris compte plus de 400 parcs et jardins !",
-    },
-    {
-      question_text: "Combien de joueurs composent une équipe de football ?",
-      options: ["9", "10", "11", "12"],
-      correct_answer: "11",
-      explanation: "Une équipe de football est composée de 11 joueurs sur le terrain.",
-      fun_fact: "Le football est le sport le plus populaire au monde !",
-    },
-    {
-      question_text: "En quelle année l'homme a-t-il marché sur la Lune ?",
-      options: ["1965", "1967", "1969", "1971"],
-      correct_answer: "1969",
-      explanation: "Neil Armstrong a marché sur la Lune le 21 juillet 1969.",
-      fun_fact: "Les empreintes de pas sur la Lune peuvent durer des millions d'années !",
-    },
-    {
-      question_text: "Quel est le plus grand océan du monde ?",
-      options: ["Atlantique", "Indien", "Arctique", "Pacifique"],
-      correct_answer: "Pacifique",
-      explanation: "L'océan Pacifique couvre environ 165 millions de km².",
-      fun_fact: "Le Pacifique contient plus de 25 000 îles !",
-    },
-    {
-      question_text: "Qui a peint la Joconde ?",
-      options: ["Picasso", "Van Gogh", "Léonard de Vinci", "Michel-Ange"],
-      correct_answer: "Léonard de Vinci",
-      explanation: "Léonard de Vinci a peint la Joconde entre 1503 et 1506.",
-      fun_fact: "La Joconde n'a pas de sourcils !",
-    },
-  ];
-
-  const stages = [];
-  const THEME_NAMES = ['History & Culture', 'Science & Nature', 'Sports & Entertainment', 'Geography & Travel', 'Arts & Literature'];
-  let globalQuestionIndex = 0;
-
-  for (let stageNum = 0; stageNum < totalStages; stageNum++) {
-    const stageQuestions = [];
-    const stageName = THEME_NAMES[stageNum % THEME_NAMES.length];
-    for (let q = 0; q < questionsPerStage && globalQuestionIndex < totalQuestions; q++) {
-      const baseQuestion = questions[globalQuestionIndex % questions.length];
-      stageQuestions.push({
-        ...baseQuestion,
-        question_type: 'multiple_choice',
-        points: 100,
-        time_limit: 20,
-        difficulty,
-      });
-      globalQuestionIndex++;
-    }
-    stages.push({ stageNumber: stageNum + 1, theme: stageName, questions: stageQuestions });
-  }
-
-  return {
-    title: `Quiz ${theme}`,
-    description: `Un quiz ${difficulty} avec ${totalQuestions} questions`,
-    estimatedDuration: duration,
-    stages,
-  };
 }
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -121,8 +46,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const structure = calculateQuizStructure(duration);
 
     if (!genAI || !GEMINI_API_KEY) {
-      const mockResult = generateMockQuiz(theme, structure.totalQuestions, structure.totalStages, structure.questionsPerStage, difficulty, duration);
-      return res.status(200).json(mockResult);
+      console.error('❌ GEMINI_API_KEY is missing! Set GEMINI_API_KEY (without VITE_ prefix) in Vercel environment variables.');
+      return res.status(503).json({
+        error: 'AI service unavailable: GEMINI_API_KEY not configured. Please add GEMINI_API_KEY to your Vercel environment variables.'
+      });
     }
 
     const retries = 2;
@@ -241,14 +168,14 @@ Return ONLY valid JSON (no markdown):
         if (attempt < retries) {
           await sleep(attempt * 1000);
         } else {
-          const mockResult = generateMockQuiz(theme, structure.totalQuestions, structure.totalStages, structure.questionsPerStage, difficulty, duration);
-          return res.status(200).json(mockResult);
+          console.error('❌ All Gemini retries exhausted. Returning error to client.');
+          return res.status(500).json({ error: 'AI quiz generation failed after multiple attempts. Please try again.' });
         }
       }
     }
 
-    const mockResult = generateMockQuiz(theme, structure.totalQuestions, structure.totalStages, structure.questionsPerStage, difficulty, duration);
-    return res.status(200).json(mockResult);
+    // Should never reach here, but safety net
+    return res.status(500).json({ error: 'Unexpected error in quiz generation' });
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';

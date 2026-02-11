@@ -4,6 +4,7 @@ import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Shield, Ban, Coins, Star, Clock, X, Trophy } from 'lucide-react';
+import { supabase } from '../services/supabase/client';
 
 export const PlayerView: React.FC = () => {
   const { currentPlayer, sessionCode, currentQuiz, players, loadPlayers, currentSession } = useQuizStore();
@@ -20,6 +21,8 @@ export const PlayerView: React.FC = () => {
     loadQuestions,
     listenToPhaseChanges,
     reconnectToSession,
+    getChannelState,
+    setPhaseData,
     showTargetSelector,
     pendingJokerType,
     closeTargetSelector,
@@ -29,6 +32,58 @@ export const PlayerView: React.FC = () => {
   const [playerRank, setPlayerRank] = useState(0);
   const [frozenScore, setFrozenScore] = useState(0);
   const lastPhaseRef = useRef<string>('');
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ===== RECONNECTION ROBUSTE =====
+  // 3 mécanismes complémentaires : polling DB + visibility/pageshow/focus + health check Realtime
+
+  const pollPhaseFromDB = async () => {
+    if (!currentSession?.id) return;
+
+    try {
+      const { data: session, error } = await supabase
+        .from('quiz_sessions')
+        .select('settings, status')
+        .eq('id', currentSession.id)
+        .single();
+
+      if (error || !session) return;
+
+      // Quiz ended
+      if (session.status === 'finished' || session.status === 'completed') return;
+
+      const settings = session.settings as Record<string, unknown>;
+      const dbPhase = settings?.currentPhase as { phase: string; questionIndex: number; stageNumber: number; timeRemaining: number; currentQuestion: unknown; themeTitle?: string } | undefined;
+
+      if (dbPhase) {
+        const { currentPhase: localPhase, currentQuestionIndex: localQIdx } = useStrategicQuizStore.getState();
+
+        // Phase or question has changed → sync
+        if (dbPhase.phase !== localPhase || dbPhase.questionIndex !== localQIdx) {
+          console.log('🔄 Poll detected phase change:', localPhase, '→', dbPhase.phase, 'Q:', localQIdx, '→', dbPhase.questionIndex);
+          setPhaseData(dbPhase as any);
+        }
+      }
+
+      // Health check: if Realtime channel is dead, reconnect
+      const channelState = getChannelState();
+      if (channelState === 'closed' || channelState === 'errored' || channelState === null) {
+        console.log('🔌 Realtime channel dead (state:', channelState, ') — reconnecting...');
+        if (sessionCode) {
+          reconnectToSession(currentSession.id, sessionCode);
+        }
+      }
+    } catch (err) {
+      console.error('Poll error:', err);
+    }
+  };
+
+  const handleReconnect = () => {
+    if (currentSession?.id && sessionCode) {
+      console.log('🔄 Reconnecting (visibility/pageshow/focus)...');
+      reconnectToSession(currentSession.id, sessionCode);
+    }
+  };
 
   useEffect(() => {
     const keepAwake = async () => {
@@ -36,7 +91,7 @@ export const PlayerView: React.FC = () => {
         if ('wakeLock' in navigator) {
           wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
           console.log('🔋 Wake Lock activated');
-          
+
           if (wakeLockRef.current) {
             wakeLockRef.current.addEventListener('release', () => {
               console.log('🔋 Re-requesting wake lock');
@@ -48,43 +103,55 @@ export const PlayerView: React.FC = () => {
         console.log('⚠️ Wake Lock error:', err);
       }
     };
-    
+
     keepAwake();
-    
-    // Réactiver wake lock + reconnexion Realtime sur visibilité
+
+    // === 3 événements de reconnexion (couvrent tous les navigateurs/OS) ===
+
+    // 1. visibilitychange (Chrome Android, desktop)
     const handleVisibility = () => {
       if (!document.hidden) {
         if (!wakeLockRef.current) keepAwake();
-        // Reconnect to realtime + resync game phase from DB
-        if (currentSession?.id && sessionCode) {
-          console.log('🔄 Tab visible again — reconnecting...');
-          reconnectToSession(currentSession.id, sessionCode);
-        }
+        handleReconnect();
       }
     };
-    
-    // Réactiver sur touch/click
+
+    // 2. pageshow (iOS Safari — fire quand la page revient du bfcache)
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        console.log('📱 pageshow (bfcache) — reconnecting...');
+        if (!wakeLockRef.current) keepAwake();
+        handleReconnect();
+      }
+    };
+
+    // 3. focus (onglet reprend le focus)
+    const handleFocus = () => {
+      if (!wakeLockRef.current) keepAwake();
+      handleReconnect();
+    };
+
+    // Touch/click wake lock re-acquire
     const handleInteraction = () => {
       if (!wakeLockRef.current) {
         keepAwake();
       }
     };
-    
+
     document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('pageshow', handlePageShow);
+    window.addEventListener('focus', handleFocus);
     document.addEventListener('touchstart', handleInteraction, { passive: true });
     document.addEventListener('click', handleInteraction);
-    
-    // Keep-alive très agressif
-    const interval = setInterval(() => {
-      console.log('🔔 Keep-alive ping');
-      if (!wakeLockRef.current) {
-        keepAwake();
-      }
-    }, 5000);
+
+    // === Polling périodique de la phase depuis la DB (filet de sécurité) ===
+    pollIntervalRef.current = setInterval(pollPhaseFromDB, 3000);
 
     return () => {
-      clearInterval(interval);
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
       document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('pageshow', handlePageShow);
+      window.removeEventListener('focus', handleFocus);
       document.removeEventListener('touchstart', handleInteraction);
       document.removeEventListener('click', handleInteraction);
       if (wakeLockRef.current) {
@@ -93,7 +160,7 @@ export const PlayerView: React.FC = () => {
         } catch (err) {}
       }
     };
-  }, []);
+  }, [currentSession?.id, sessionCode]);
 
   useEffect(() => {
     if (currentQuiz?.id) loadQuestions(currentQuiz.id);
@@ -123,12 +190,12 @@ export const PlayerView: React.FC = () => {
       console.log('🔒 Freezing score at:', currentPlayer?.total_score);
       setFrozenScore(currentPlayer?.total_score || 0);
     }
-    
+
     if (currentPhase === 'theme_announcement' && lastPhaseRef.current !== 'theme_announcement') {
       console.log('🔓 Updating score to:', currentPlayer?.total_score);
       setFrozenScore(currentPlayer?.total_score || 0);
     }
-    
+
     lastPhaseRef.current = currentPhase;
   }, [currentPhase, currentPlayer?.total_score]);
 
@@ -195,7 +262,7 @@ export const PlayerView: React.FC = () => {
   const isProtected = activeEffects.protections[currentPlayer?.id || ''];
   const hasDoublePoints = activeEffects.doublePoints[currentPlayer?.id || ''];
   const isBlocked = activeEffects.blocks[currentPlayer?.id || ''];
-  
+
   const jokersEnabled = currentPhase === 'theme_announcement';
   const answersEnabled = currentPhase === 'answer_selection' && !isBlocked && !hasAnswered;
 
@@ -219,7 +286,7 @@ export const PlayerView: React.FC = () => {
   return (
     <div className="min-h-screen bg-qb-dark">
       <TargetSelectorModal />
-      
+
       <div className="max-w-2xl mx-auto p-4 space-y-4">
         <Card className="p-4 bg-gradient-to-br from-qb-purple via-qb-magenta to-qb-cyan">
           <div className="flex items-center justify-between">
