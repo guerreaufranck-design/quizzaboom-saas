@@ -175,7 +175,10 @@
     "sendResultsEmails": "Enviar emails de resultados",
     "sent": "Enviado!",
     "playing": "En juego",
-    "paused": "En pausa"
+    "paused": "En pausa",
+    "ttsOn": "Voz ON",
+    "ttsOff": "Voz OFF",
+    "enableVoice": "Toca para activar la lectura de voz"
   },
   "proDashboard": {
     "noAccount": "Sin cuenta de empresa",

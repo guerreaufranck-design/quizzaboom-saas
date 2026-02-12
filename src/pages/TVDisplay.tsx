@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { supabase } from '../services/supabase/client';
 import { Card } from '../components/ui/Card';
-import { Clock, Trophy, Star } from 'lucide-react';
-import type { Player } from '../types/quiz';
+import { Clock, Trophy, Star, Volume2, VolumeX } from 'lucide-react';
+import type { Player, LanguageCode } from '../types/quiz';
 import { useQuizAudio } from '../hooks/useQuizAudio';
+import { useQuizTTS } from '../hooks/useQuizTTS';
+import { getResultsAnnouncement } from '../utils/ttsAnnouncements';
 
 export const TVDisplay: React.FC = () => {
   const {
@@ -22,6 +24,11 @@ export const TVDisplay: React.FC = () => {
   const [topPlayers, setTopPlayers] = useState<Player[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
+  const [quizLanguage, setQuizLanguage] = useState<LanguageCode>('en');
+  const [voiceActivated, setVoiceActivated] = useState(false);
+  const prevQuestionIdRef = useRef<string | null>(null);
+
+  const { speak: ttsSpeak, cancel: ttsCancel, isTTSEnabled, isSpeaking } = useQuizTTS(quizLanguage);
 
   useEffect(() => {
     const initTVDisplay = async () => {
@@ -62,6 +69,7 @@ export const TVDisplay: React.FC = () => {
       }
 
       console.log('✅ Quiz loaded:', quiz.title);
+      setQuizLanguage((quiz.language as LanguageCode) || 'en');
 
       await loadQuestions(quiz.id);
       console.log('✅ Questions loaded');
@@ -92,9 +100,32 @@ export const TVDisplay: React.FC = () => {
     }
   }, [currentPhase]);
 
-  // Cleanup audio on unmount
+  // TTS: speak question and results per phase
   useEffect(() => {
-    return () => stopAll();
+    if (!voiceActivated || !isTTSEnabled) return;
+
+    // Cancel any ongoing speech on phase transition
+    ttsCancel();
+
+    if (currentPhase === 'question_display' && currentQuestion) {
+      // Avoid re-speaking same question if phase re-renders
+      if (prevQuestionIdRef.current !== currentQuestion.id) {
+        prevQuestionIdRef.current = currentQuestion.id;
+      }
+      ttsSpeak(currentQuestion.question_text);
+    }
+
+    if (currentPhase === 'results' && currentQuestion) {
+      ttsSpeak(getResultsAnnouncement(currentQuestion.correct_answer, quizLanguage));
+    }
+  }, [currentPhase, currentQuestion?.id, voiceActivated, isTTSEnabled]);
+
+  // Cleanup audio + TTS on unmount
+  useEffect(() => {
+    return () => {
+      stopAll();
+      ttsCancel();
+    };
   }, []);
 
   const loadTopPlayers = async (sessionId: string) => {
@@ -220,8 +251,40 @@ export const TVDisplay: React.FC = () => {
             </div>
           </div>
 
-          {/* Bottom */}
-          <div className="text-center mt-6">
+          {/* Voice Activation + Bottom */}
+          <div className="text-center mt-6 space-y-4">
+            {/* Voice activation button — required to unlock SpeechSynthesis (browser autoplay policy) */}
+            <button
+              onClick={() => {
+                setVoiceActivated(!voiceActivated);
+                if (!voiceActivated) {
+                  // Trigger a silent utterance to unlock SpeechSynthesis on this tab
+                  if (typeof window !== 'undefined' && window.speechSynthesis) {
+                    const unlock = new SpeechSynthesisUtterance('');
+                    unlock.volume = 0;
+                    speechSynthesis.speak(unlock);
+                  }
+                }
+              }}
+              className={`inline-flex items-center gap-4 px-8 py-4 rounded-2xl text-2xl font-bold transition-all ${
+                voiceActivated
+                  ? 'bg-green-500/30 border-2 border-green-400 text-green-300'
+                  : 'bg-white/10 border-2 border-white/30 text-white/70 hover:bg-white/20 hover:border-white/50'
+              }`}
+            >
+              {voiceActivated ? (
+                <>
+                  <Volume2 className="w-8 h-8" />
+                  🔊 Voice Reading ON
+                </>
+              ) : (
+                <>
+                  <VolumeX className="w-8 h-8" />
+                  🔇 Tap to Enable Voice Reading
+                </>
+              )}
+            </button>
+
             <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6">
               <p className="text-4xl font-bold text-white mb-1">
                 🚀 Waiting for host to start...
@@ -271,10 +334,15 @@ export const TVDisplay: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-500 flex items-center justify-center p-12">
         <div className="max-w-6xl w-full text-center">
           <div className="text-9xl mb-12">📖</div>
-          <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-16 mb-12">
+          <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-16 mb-12 relative">
             <h2 className="text-7xl font-bold text-white leading-tight">
               {currentQuestion?.question_text || 'Loading...'}
             </h2>
+            {isSpeaking && (
+              <div className="absolute top-6 right-6">
+                <Volume2 className="w-10 h-10 text-white/80 animate-pulse" />
+              </div>
+            )}
           </div>
           <div className="flex items-center justify-center gap-6 text-white">
             <Clock className="w-16 h-16 animate-pulse" />
@@ -335,10 +403,15 @@ export const TVDisplay: React.FC = () => {
           <div className="text-center">
             <div className="text-9xl mb-8 animate-bounce">✅</div>
             <h1 className="text-7xl font-bold text-white mb-12">CORRECT ANSWER</h1>
-            <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-12">
+            <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-12 relative">
               <p className="text-6xl font-bold text-white">
                 {currentQuestion?.correct_answer}
               </p>
+              {isSpeaking && (
+                <div className="absolute top-6 right-6">
+                  <Volume2 className="w-10 h-10 text-white/80 animate-pulse" />
+                </div>
+              )}
             </div>
           </div>
 

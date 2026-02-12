@@ -19,11 +19,15 @@ import {
   Square,
   Volume2,
   VolumeX,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 import { useQuizAudio } from '../hooks/useQuizAudio';
+import { useQuizTTS } from '../hooks/useQuizTTS';
+import { getResultsAnnouncement } from '../utils/ttsAnnouncements';
 import type { GamePhase } from '../types/gamePhases';
 import { PHASE_DURATIONS, PHASE_ORDER } from '../types/gamePhases';
-import type { Question } from '../types/quiz';
+import type { Question, LanguageCode } from '../types/quiz';
 import { supabase } from '../services/supabase/client';
 
 export const HostDashboard: React.FC = () => {
@@ -39,6 +43,8 @@ export const HostDashboard: React.FC = () => {
   const [emailsSending, setEmailsSending] = useState(false);
   const [emailsSent, setEmailsSent] = useState(false);
   const { stopAll, onPhaseChange, toggleMute, isMuted } = useQuizAudio();
+  const quizLang = (currentQuiz?.language as LanguageCode) || 'en';
+  const { speak: ttsSpeak, cancel: ttsCancel, isTTSEnabled, toggleTTS, estimateDuration } = useQuizTTS(quizLang);
 
   const currentQuestion: Question | null = allQuestions[currentQuestionIndex] || null;
 
@@ -101,6 +107,7 @@ export const HostDashboard: React.FC = () => {
         setIsPlaying(false);
         setQuizCompleted(true);
         stopAll(); // Stop all audio when quiz ends
+        ttsCancel(); // Stop any ongoing TTS
       }
     }
   };
@@ -109,14 +116,32 @@ export const HostDashboard: React.FC = () => {
     const stageNumber = Math.floor(questionIndex / 5);
     const question = allQuestions[questionIndex];
 
+    // Cancel any ongoing TTS before phase change
+    ttsCancel();
+
+    // Calculate phase duration (extend if TTS is enabled and text is long)
+    let phaseDuration = PHASE_DURATIONS[newPhase];
+
+    if (isTTSEnabled && question) {
+      if (newPhase === 'question_display') {
+        const speechDuration = estimateDuration(question.question_text);
+        phaseDuration = Math.max(phaseDuration, speechDuration + 2);
+      }
+      if (newPhase === 'results') {
+        const announcement = getResultsAnnouncement(question.correct_answer, quizLang);
+        const speechDuration = estimateDuration(announcement);
+        phaseDuration = Math.max(phaseDuration, speechDuration + 2);
+      }
+    }
+
     setCurrentPhaseState(newPhase);
-    setPhaseTimeRemaining(PHASE_DURATIONS[newPhase]);
+    setPhaseTimeRemaining(phaseDuration);
 
     const phaseData = {
       phase: newPhase,
       questionIndex: questionIndex,
       stageNumber,
-      timeRemaining: PHASE_DURATIONS[newPhase],
+      timeRemaining: phaseDuration,
       currentQuestion: question || null,
       themeTitle: question?.stage_id || 'General Knowledge',
     };
@@ -132,7 +157,16 @@ export const HostDashboard: React.FC = () => {
     }
 
     // Trigger audio for this phase
-    onPhaseChange(newPhase, PHASE_DURATIONS[newPhase]);
+    onPhaseChange(newPhase, phaseDuration);
+
+    // Trigger TTS for question and results phases
+    if (isTTSEnabled && question) {
+      if (newPhase === 'question_display') {
+        ttsSpeak(question.question_text);
+      } else if (newPhase === 'results') {
+        ttsSpeak(getResultsAnnouncement(question.correct_answer, quizLang));
+      }
+    }
 
     // Persist current phase to DB so disconnected players can resync
     if (currentSession?.id) {
@@ -408,7 +442,7 @@ export const HostDashboard: React.FC = () => {
             </Card>
 
             <Card gradient className="p-6">
-              <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-4 gap-4 mb-4">
                 <Button
                   size="xl"
                   onClick={handleStartPause}
@@ -434,6 +468,14 @@ export const HostDashboard: React.FC = () => {
                   variant={isMuted ? 'ghost' : 'secondary'}
                 >
                   {isMuted ? 'Mute' : 'Sound'}
+                </Button>
+                <Button
+                  size="xl"
+                  onClick={toggleTTS}
+                  icon={isTTSEnabled ? <Mic /> : <MicOff />}
+                  variant={isTTSEnabled ? 'secondary' : 'ghost'}
+                >
+                  {isTTSEnabled ? t('host.ttsOn', 'Voice') : t('host.ttsOff', 'Voice Off')}
                 </Button>
               </div>
 

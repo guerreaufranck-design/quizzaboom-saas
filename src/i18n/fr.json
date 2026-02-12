@@ -175,7 +175,10 @@
     "sendResultsEmails": "Envoyer les resultats",
     "sent": "Envoye !",
     "playing": "En cours",
-    "paused": "En pause"
+    "paused": "En pause",
+    "ttsOn": "Voix ON",
+    "ttsOff": "Voix OFF",
+    "enableVoice": "Appuyez pour activer la lecture vocale"
   },
   "proDashboard": {
     "noAccount": "Pas de compte pro",
