@@ -40,14 +40,9 @@ export const HomePage: React.FC = () => {
         <div className="max-w-6xl mx-auto space-y-16">
           {/* Hero Section */}
           <div className="text-center space-y-8">
-            <AnimatedLogo size="lg" className="mx-auto" />
+            <AnimatedLogo size="xl" className="mx-auto" />
 
             <div className="space-y-4">
-              <h1 className="text-5xl lg:text-7xl font-bold">
-                <span className="gradient-primary bg-clip-text text-transparent">
-                  {t('home.title')}
-                </span>
-              </h1>
               <p className="text-2xl lg:text-3xl text-white/90 font-medium">
                 {t('home.subtitle')}
               </p>

@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 interface AnimatedLogoProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
 
 const SIZE_CLASSES = {
   sm: 'h-16',
-  md: 'h-24',
-  lg: 'h-40',
+  md: 'h-28',
+  lg: 'h-48',
+  xl: 'h-64',
 };
 
 export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ size = 'md', className = '' }) => {
@@ -42,6 +43,7 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ size = 'md', classNa
       sm: 'text-2xl',
       md: 'text-4xl',
       lg: 'text-6xl',
+      xl: 'text-8xl',
     };
 
     return (
