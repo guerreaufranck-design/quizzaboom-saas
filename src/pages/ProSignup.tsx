@@ -209,8 +209,8 @@ export const ProSignup: React.FC = () => {
             </Button>
             <p className="text-white/50 text-xs mt-4">
               {t('proSignup.mistakeContact')}{' '}
-              <a href="mailto:support@quizzaboom.com" className="text-qb-cyan">
-                support@quizzaboom.com
+              <a href="mailto:support@quizzaboom.app" className="text-qb-cyan">
+                support@quizzaboom.app
               </a>
             </p>
           </div>

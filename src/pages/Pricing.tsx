@@ -355,7 +355,7 @@ export const Pricing: React.FC = () => {
 
                 <div className="text-center mt-8 p-4 bg-white/5 rounded-lg">
                   <p className="text-white/70">
-                    {t('pricing.questions')} <a href="mailto:sales@quizzaboom.com" className="text-qb-cyan font-bold">sales@quizzaboom.com</a>
+                    {t('pricing.questions')} <a href="mailto:support@quizzaboom.app" className="text-qb-cyan font-bold">support@quizzaboom.app</a>
                   </p>
                 </div>
               </>
