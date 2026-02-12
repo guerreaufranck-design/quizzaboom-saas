@@ -5,7 +5,7 @@ import { setCorsHeaders } from './_cors';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
-const SECONDS_PER_QUESTION = 90;
+const SECONDS_PER_QUESTION = 41;
 const MINUTES_PER_QUESTION = SECONDS_PER_QUESTION / 60;
 const QUESTIONS_PER_STAGE = 5;
 

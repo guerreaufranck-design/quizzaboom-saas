@@ -13,6 +13,13 @@ interface PhaseData {
   timeRemaining: number;
   currentQuestion: Question | null;
   themeTitle?: string;
+  topPlayers?: Array<{
+    player_name: string;
+    avatar_emoji: string;
+    total_score: number;
+    correct_answers: number;
+    rank: number;
+  }>;
 }
 
 interface StrategicQuizState {

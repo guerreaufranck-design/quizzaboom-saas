@@ -175,10 +175,7 @@
     "sendResultsEmails": "Ergebnis-E-Mails senden",
     "sent": "Gesendet!",
     "playing": "Lauft",
-    "paused": "Pausiert",
-    "ttsOn": "Stimme AN",
-    "ttsOff": "Stimme AUS",
-    "enableVoice": "Tippen um Sprachausgabe zu aktivieren"
+    "paused": "Pausiert"
   },
   "proDashboard": {
     "noAccount": "Kein Geschaftskonto",

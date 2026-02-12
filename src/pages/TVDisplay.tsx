@@ -1,12 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { supabase } from '../services/supabase/client';
 import { Card } from '../components/ui/Card';
-import { Clock, Trophy, Star, Volume2, VolumeX } from 'lucide-react';
-import type { Player, LanguageCode } from '../types/quiz';
+import { Clock, Trophy, Star } from 'lucide-react';
+import type { Player } from '../types/quiz';
 import { useQuizAudio } from '../hooks/useQuizAudio';
-import { useQuizTTS } from '../hooks/useQuizTTS';
-import { getResultsAnnouncement } from '../utils/ttsAnnouncements';
 
 export const TVDisplay: React.FC = () => {
   const {
@@ -24,19 +22,14 @@ export const TVDisplay: React.FC = () => {
   const [topPlayers, setTopPlayers] = useState<Player[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
-  const [quizLanguage, setQuizLanguage] = useState<LanguageCode>('en');
-  const [voiceActivated, setVoiceActivated] = useState(false);
-  const prevQuestionIdRef = useRef<string | null>(null);
-
-  const { speak: ttsSpeak, cancel: ttsCancel, isTTSEnabled, isSpeaking } = useQuizTTS(quizLanguage);
 
   useEffect(() => {
     const initTVDisplay = async () => {
       const params = new URLSearchParams(window.location.search);
       const tvCode = params.get('code') || params.get('tv');
-      
+
       console.log('📺 TV Display initializing with code:', tvCode);
-      
+
       if (!tvCode) {
         console.error('❌ No TV code in URL');
         return;
@@ -69,7 +62,6 @@ export const TVDisplay: React.FC = () => {
       }
 
       console.log('✅ Quiz loaded:', quiz.title);
-      setQuizLanguage((quiz.language as LanguageCode) || 'en');
 
       await loadQuestions(quiz.id);
       console.log('✅ Questions loaded');
@@ -100,31 +92,10 @@ export const TVDisplay: React.FC = () => {
     }
   }, [currentPhase]);
 
-  // TTS: speak question and results per phase
-  useEffect(() => {
-    if (!voiceActivated || !isTTSEnabled) return;
-
-    // Cancel any ongoing speech on phase transition
-    ttsCancel();
-
-    if (currentPhase === 'question_display' && currentQuestion) {
-      // Avoid re-speaking same question if phase re-renders
-      if (prevQuestionIdRef.current !== currentQuestion.id) {
-        prevQuestionIdRef.current = currentQuestion.id;
-      }
-      ttsSpeak(currentQuestion.question_text);
-    }
-
-    if (currentPhase === 'results' && currentQuestion) {
-      ttsSpeak(getResultsAnnouncement(currentQuestion.correct_answer, quizLanguage));
-    }
-  }, [currentPhase, currentQuestion?.id, voiceActivated, isTTSEnabled]);
-
-  // Cleanup audio + TTS on unmount
+  // Cleanup audio on unmount
   useEffect(() => {
     return () => {
       stopAll();
-      ttsCancel();
     };
   }, []);
 
@@ -134,15 +105,26 @@ export const TVDisplay: React.FC = () => {
       .select('*')
       .eq('session_id', sessionId)
       .order('total_score', { ascending: false })
-      .limit(5);
+      .limit(10);
 
     if (players) {
       setTopPlayers(players as Player[]);
     }
   };
 
+  // Refresh leaderboard during results, intermission, and quiz_complete phases
   useEffect(() => {
-    if (currentPhase === 'results' && sessionCode) {
+    if ((currentPhase === 'results' || currentPhase === 'intermission' || currentPhase === 'quiz_complete') && sessionCode) {
+      // Fetch immediately on phase entry
+      (async () => {
+        const { data: session } = await supabase
+          .from('quiz_sessions')
+          .select('id')
+          .eq('session_code', sessionCode)
+          .single();
+        if (session) loadTopPlayers(session.id);
+      })();
+
       const interval = setInterval(async () => {
         const { data: session } = await supabase
           .from('quiz_sessions')
@@ -153,7 +135,7 @@ export const TVDisplay: React.FC = () => {
         if (session) {
           loadTopPlayers(session.id);
         }
-      }, 5000);
+      }, 3000);
       return () => clearInterval(interval);
     }
   }, [currentPhase, sessionCode]);
@@ -244,47 +226,15 @@ export const TVDisplay: React.FC = () => {
                     <div className="bg-purple-500/20 p-2 rounded">🎯 Theme (5s) → Jokers</div>
                     <div className="bg-blue-500/20 p-2 rounded">📖 Question (8s) → Read</div>
                     <div className="bg-cyan-500/20 p-2 rounded">✍️ Answer (15s) → Choose</div>
-                    <div className="bg-green-500/20 p-2 rounded">📊 Results (5s) → Score</div>
+                    <div className="bg-green-500/20 p-2 rounded">📊 Results (8s) → Score</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Voice Activation + Bottom */}
-          <div className="text-center mt-6 space-y-4">
-            {/* Voice activation button — required to unlock SpeechSynthesis (browser autoplay policy) */}
-            <button
-              onClick={() => {
-                setVoiceActivated(!voiceActivated);
-                if (!voiceActivated) {
-                  // Trigger a silent utterance to unlock SpeechSynthesis on this tab
-                  if (typeof window !== 'undefined' && window.speechSynthesis) {
-                    const unlock = new SpeechSynthesisUtterance('');
-                    unlock.volume = 0;
-                    speechSynthesis.speak(unlock);
-                  }
-                }
-              }}
-              className={`inline-flex items-center gap-4 px-8 py-4 rounded-2xl text-2xl font-bold transition-all ${
-                voiceActivated
-                  ? 'bg-green-500/30 border-2 border-green-400 text-green-300'
-                  : 'bg-white/10 border-2 border-white/30 text-white/70 hover:bg-white/20 hover:border-white/50'
-              }`}
-            >
-              {voiceActivated ? (
-                <>
-                  <Volume2 className="w-8 h-8" />
-                  🔊 Voice Reading ON
-                </>
-              ) : (
-                <>
-                  <VolumeX className="w-8 h-8" />
-                  🔇 Tap to Enable Voice Reading
-                </>
-              )}
-            </button>
-
+          {/* Bottom */}
+          <div className="text-center mt-6">
             <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6">
               <p className="text-4xl font-bold text-white mb-1">
                 🚀 Waiting for host to start...
@@ -299,8 +249,85 @@ export const TVDisplay: React.FC = () => {
     );
   }
 
+  // QUIZ COMPLETE: Thank you screen with final leaderboard
+  if (currentPhase === 'quiz_complete') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 p-12 overflow-hidden relative">
+        {/* Animated background glow */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-yellow-300/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-red-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
 
-  // PHASE 1:
+        <div className="max-w-6xl mx-auto space-y-8 relative z-10">
+          {/* Thank you header */}
+          <div className="text-center">
+            <div className="text-9xl mb-6 animate-bounce">🎉</div>
+            <h1 className="text-8xl font-bold text-white mb-4 uppercase tracking-wider">
+              THANK YOU!
+            </h1>
+            <p className="text-4xl text-white/90 font-medium">
+              Thank you so much for your participation!
+            </p>
+          </div>
+
+          {/* Final Leaderboard */}
+          {topPlayers.length > 0 && (
+            <div className="bg-black/30 backdrop-blur-xl rounded-3xl p-10 border-2 border-yellow-400/50">
+              <h2 className="text-5xl font-bold text-white mb-8 flex items-center justify-center gap-4">
+                <Trophy className="w-14 h-14 text-yellow-300" />
+                FINAL RANKING
+                <Trophy className="w-14 h-14 text-yellow-300" />
+              </h2>
+              <div className="space-y-4">
+                {topPlayers.slice(0, 10).map((player, index) => (
+                  <div
+                    key={player.id}
+                    className={`flex items-center gap-6 p-5 rounded-2xl transition-all ${
+                      index === 0
+                        ? 'bg-yellow-500/40 border-4 border-yellow-300 scale-105 shadow-lg shadow-yellow-500/30'
+                        : index === 1
+                        ? 'bg-gray-400/20 border-2 border-gray-300'
+                        : index === 2
+                        ? 'bg-orange-700/30 border-2 border-orange-500'
+                        : 'bg-white/10 border border-white/20'
+                    }`}
+                  >
+                    <div className="text-5xl font-bold text-white/80 w-20 text-center">
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                    </div>
+                    <div className="text-5xl">{player.avatar_emoji}</div>
+                    <div className="flex-1">
+                      <div className="text-3xl font-bold text-white">
+                        {player.player_name}
+                      </div>
+                      <div className="text-xl text-white/70">
+                        {player.correct_answers}/{player.questions_answered} correct
+                      </div>
+                    </div>
+                    <div className="text-4xl font-bold text-yellow-300">
+                      {player.total_score}
+                      {index === 0 && <Star className="inline w-10 h-10 ml-3 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="text-center">
+            <div className="inline-block bg-black/30 backdrop-blur-xl rounded-2xl px-12 py-6 border border-white/20">
+              <p className="text-3xl text-white font-bold">
+                🎮 Powered by <span className="text-yellow-300">QuizzaBoom</span>
+              </p>
+              <p className="text-xl text-white/60 mt-2">quizzaboom.app</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // PHASE 1: Theme Announcement
   if (currentPhase === 'theme_announcement') {
@@ -334,15 +361,10 @@ export const TVDisplay: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-500 flex items-center justify-center p-12">
         <div className="max-w-6xl w-full text-center">
           <div className="text-9xl mb-12">📖</div>
-          <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-16 mb-12 relative">
+          <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-16 mb-12">
             <h2 className="text-7xl font-bold text-white leading-tight">
               {currentQuestion?.question_text || 'Loading...'}
             </h2>
-            {isSpeaking && (
-              <div className="absolute top-6 right-6">
-                <Volume2 className="w-10 h-10 text-white/80 animate-pulse" />
-              </div>
-            )}
           </div>
           <div className="flex items-center justify-center gap-6 text-white">
             <Clock className="w-16 h-16 animate-pulse" />
@@ -403,59 +425,12 @@ export const TVDisplay: React.FC = () => {
           <div className="text-center">
             <div className="text-9xl mb-8 animate-bounce">✅</div>
             <h1 className="text-7xl font-bold text-white mb-12">CORRECT ANSWER</h1>
-            <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-12 relative">
+            <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-12">
               <p className="text-6xl font-bold text-white">
                 {currentQuestion?.correct_answer}
               </p>
-              {isSpeaking && (
-                <div className="absolute top-6 right-6">
-                  <Volume2 className="w-10 h-10 text-white/80 animate-pulse" />
-                </div>
-              )}
             </div>
           </div>
-
-          {topPlayers.length > 0 && (
-            <Card className="p-12 bg-white/10 backdrop-blur-xl border-white/20">
-              <h2 className="text-5xl font-bold text-white mb-8 flex items-center justify-center gap-4">
-                <Trophy className="w-12 h-12 text-yellow-300" />
-                TOP 5 PLAYERS
-              </h2>
-              <div className="space-y-6">
-                {topPlayers.slice(0, 5).map((player, index) => (
-                  <div
-                    key={player.id}
-                    className={`flex items-center gap-6 p-6 rounded-2xl ${
-                      index === 0
-                        ? 'bg-yellow-500/30 border-4 border-yellow-400 scale-110'
-                        : index === 1
-                        ? 'bg-gray-400/20 border-2 border-gray-300'
-                        : index === 2
-                        ? 'bg-orange-700/20 border-2 border-orange-600'
-                        : 'bg-white/10'
-                    }`}
-                  >
-                    <div className="text-6xl font-bold text-white/80 w-24 text-center">
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                    </div>
-                    <div className="text-5xl">{player.avatar_emoji}</div>
-                    <div className="flex-1">
-                      <div className="text-4xl font-bold text-white">
-                        {player.player_name}
-                      </div>
-                      <div className="text-2xl text-white/70">
-                        {player.correct_answers}/{player.questions_answered} correct
-                      </div>
-                    </div>
-                    <div className="text-5xl font-bold text-yellow-300">
-                      {player.total_score}
-                      {index === 0 && <Star className="inline w-12 h-12 ml-4 text-yellow-400" />}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
 
           <div className="text-center">
             <div className="inline-flex items-center gap-6 px-12 py-6 bg-white/10 rounded-3xl">
@@ -470,18 +445,67 @@ export const TVDisplay: React.FC = () => {
     );
   }
 
-  // PHASE 5: Intermission
+  // PHASE 5: Intermission — Top 5 Leaderboard Update
   if (currentPhase === 'intermission') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 flex items-center justify-center p-12">
-        <div className="text-center">
-          <div className="text-9xl mb-12 animate-pulse">⏸️</div>
-          <h1 className="text-8xl font-bold text-white mb-8">GET READY!</h1>
-          <p className="text-5xl text-white/70 mb-12">
-            Next question coming up...
-          </p>
-          <div className="text-9xl font-mono font-bold text-qb-cyan">
-            {phaseTimeRemaining}
+      <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 p-12">
+        <div className="max-w-6xl mx-auto space-y-8">
+          <div className="text-center">
+            <h1 className="text-7xl font-bold text-white mb-4 flex items-center justify-center gap-6">
+              <Trophy className="w-16 h-16 text-yellow-300" />
+              LEADERBOARD
+              <Trophy className="w-16 h-16 text-yellow-300" />
+            </h1>
+          </div>
+
+          {topPlayers.length > 0 ? (
+            <div className="space-y-5">
+              {topPlayers.slice(0, 5).map((player, index) => (
+                <div
+                  key={player.id}
+                  className={`flex items-center gap-6 p-6 rounded-2xl ${
+                    index === 0
+                      ? 'bg-yellow-500/30 border-4 border-yellow-400 scale-105'
+                      : index === 1
+                      ? 'bg-gray-400/20 border-2 border-gray-300'
+                      : index === 2
+                      ? 'bg-orange-700/20 border-2 border-orange-600'
+                      : 'bg-white/10'
+                  }`}
+                >
+                  <div className="text-6xl font-bold text-white/80 w-24 text-center">
+                    {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                  </div>
+                  <div className="text-5xl">{player.avatar_emoji}</div>
+                  <div className="flex-1">
+                    <div className="text-4xl font-bold text-white">
+                      {player.player_name}
+                    </div>
+                    <div className="text-2xl text-white/70">
+                      {player.correct_answers}/{player.questions_answered} correct
+                    </div>
+                  </div>
+                  <div className="text-5xl font-bold text-yellow-300">
+                    {player.total_score}
+                    {index === 0 && <Star className="inline w-12 h-12 ml-4 text-yellow-400" />}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-9xl mb-8 animate-pulse">⏸️</div>
+              <p className="text-5xl text-white/70">GET READY!</p>
+            </div>
+          )}
+
+          <div className="text-center">
+            <div className="inline-flex items-center gap-4 px-8 py-4 bg-qb-cyan/20 rounded-2xl">
+              <p className="text-3xl text-white/80">Next question in</p>
+              <span className="text-6xl font-mono font-bold text-qb-cyan">
+                {phaseTimeRemaining}
+              </span>
+            </div>
           </div>
         </div>
       </div>

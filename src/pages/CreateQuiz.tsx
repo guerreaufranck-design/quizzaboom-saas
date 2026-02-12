@@ -252,11 +252,11 @@ export const CreateQuiz: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
                 disabled={isLoading}
               >
-                <option value="15">15 minutes (~10 questions)</option>
-                <option value="30">30 minutes (~20 questions)</option>
-                <option value="45">45 minutes (~30 questions)</option>
-                <option value="60">60 minutes (~40 questions)</option>
-                <option value="90">90 minutes (~60 questions)</option>
+                <option value="15">15 minutes (~21 questions)</option>
+                <option value="30">30 minutes (~43 questions)</option>
+                <option value="45">45 minutes (~65 questions)</option>
+                <option value="60">60 minutes (~87 questions)</option>
+                <option value="90">90 minutes (~131 questions)</option>
               </Select>
 
               <div className="mt-4 p-4 bg-qb-darker rounded-lg">

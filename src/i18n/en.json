@@ -175,10 +175,7 @@
     "sendResultsEmails": "Send Results Emails",
     "sent": "Sent!",
     "playing": "Playing",
-    "paused": "Paused",
-    "ttsOn": "Voice ON",
-    "ttsOff": "Voice OFF",
-    "enableVoice": "Tap to Enable Voice Reading"
+    "paused": "Paused"
   },
   "proDashboard": {
     "noAccount": "No Business Account",
