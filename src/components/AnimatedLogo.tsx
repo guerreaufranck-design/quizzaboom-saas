@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface AnimatedLogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -13,6 +13,28 @@ const SIZE_CLASSES = {
 
 export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ size = 'md', className = '' }) => {
   const [videoError, setVideoError] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Force autoplay — React's autoPlay attribute is unreliable on some browsers
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || videoError) return;
+
+    video.muted = true; // Required for autoplay policy
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Autoplay blocked — retry on user interaction
+        const handleInteraction = () => {
+          video.play().catch(() => {});
+          document.removeEventListener('click', handleInteraction);
+          document.removeEventListener('touchstart', handleInteraction);
+        };
+        document.addEventListener('click', handleInteraction);
+        document.addEventListener('touchstart', handleInteraction);
+      });
+    }
+  }, [videoError]);
 
   if (videoError) {
     // Fallback: gradient text logo
@@ -34,10 +56,12 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ size = 'md', classNa
   return (
     <div className={`inline-block ${className}`}>
       <video
+        ref={videoRef}
         autoPlay
         loop
         muted
         playsInline
+        preload="auto"
         className={`${SIZE_CLASSES[size]} w-auto object-contain`}
         onError={() => setVideoError(true)}
       >
