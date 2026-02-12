@@ -151,21 +151,6 @@
     "tryAnother": "Andere E-Mail versuchen",
     "businessHint": "Fur Geschaftskonten bitte deine berufliche E-Mail verwenden"
   },
-  "dashboard": {
-    "title": "Mein Dashboard",
-    "welcomeBack": "Willkommen zuruck, {{email}}",
-    "availableCredits": "Verfugbare Credits",
-    "totalPurchases": "Gesamtkaufe",
-    "createQuiz": "Quiz erstellen",
-    "noCredits": "Keine Credits verfugbar",
-    "myPurchases": "Meine Kaufe",
-    "noPurchases": "Noch keine Kaufe",
-    "browsePlans": "Plane ansehen",
-    "buyMore": "Mehr Credits kaufen",
-    "paymentProcessing": "Zahlung erhalten! Credits werden hinzugefügt...",
-    "useCredit": "Verwenden",
-    "used": "Verwendet"
-  },
   "host": {
     "hostDashboard": "Host-Dashboard",
     "session": "Sitzung",
@@ -239,6 +224,120 @@
     "viewPersonalPlans": "Personliche Plane ansehen",
     "mistakeContact": "Du denkst, das ist ein Fehler? Kontaktiere uns unter",
     "verificationNote": "Die Verifizierung ist sofort und automatisiert. Deine Nummer wird gegen offizielle Register gepruft.",
-    "backToPricing": "Zuruck zu den Preisen"
+    "backToPricing": "Zuruck zu den Preisen",
+    "businessId": "Unternehmens-ID"
+  },
+  "guide": {
+    "title": "So funktioniert QuizzaBoom",
+    "subtitle": "Alles, was du wissen musst, um tolle Quiz-Battles zu erstellen und zu moderieren",
+    "back": "Zuruck",
+    "readyTitle": "Bereit zum Spielen?",
+    "readyDesc": "Erstelle dein erstes Quiz oder tritt einem Spiel bei!",
+    "createQuiz": "Quiz erstellen",
+    "joinQuiz": "Quiz beitreten",
+    "gettingStarted": {
+      "title": "Erste Schritte",
+      "description": "Ein Quiz mit QuizzaBoom zu erstellen ist schnell und KI-gestutzt. So startest du in wenigen Minuten.",
+      "step1": "Melde dich mit Google oder Magic Link auf der Startseite an.",
+      "step2": "Klicke auf 'Quiz erstellen' und wahle dein Thema (Allgemeinwissen, Sport, Wissenschaft, Geschichte, etc.).",
+      "step3": "Wahle den Spielmodus: Standard (klassisches Quiz) oder Strategisch (mit Jokern und Sabotage!).",
+      "step4": "Stelle Dauer (5-60 Minuten), Schwierigkeit (Leicht, Mittel, Schwer) und Sprache ein.",
+      "step5": "Die KI generiert einzigartige Fragen in Sekunden. Jedes Quiz ist anders!",
+      "step6": "Teile den Session-Code oder QR-Code mit deinen Spielern. Los geht's!",
+      "tip": "Jedes Quiz kostet 1 Credit. Kaufe Credits auf der Preisseite oder nutze dein B2B-Kontingent."
+    },
+    "gamePhases": {
+      "title": "Spielphasen",
+      "description": "Jede Frage durchlauft 5 Phasen. Das Timing zu verstehen hilft beim Strategisieren.",
+      "step1": "Themenansage (5 Sek.) - Das aktuelle Thema wird angezeigt (z.B. 'Geographie', 'Kino').",
+      "step2": "Fragenanzeige (8 Sek.) - Die Frage erscheint auf dem Bildschirm. Genau lesen!",
+      "step3": "Antwortauswahl (15 Sek.) - Spieler wahlen ihre Antwort. Im Strategiemodus konnen hier Joker aktiviert werden.",
+      "step4": "Ergebnisse (5 Sek.) - Die richtige Antwort wird enthullt und Punkte in Echtzeit aktualisiert.",
+      "step5": "Pause (5 Sek.) - Kurze Pause vor der nachsten Frage. Schau dir die Rangliste an!",
+      "tip": "Gesamtzeit pro Frage: ~38 Sekunden. Ein 20-Fragen-Quiz dauert etwa 12-13 Minuten."
+    },
+    "jokers": {
+      "title": "Strategische Joker",
+      "description": "Im Strategiemodus erhalt jeder Spieler spezielle Joker, die das Spiel verandern konnen!",
+      "step1": "Schutz (Schild-Symbol) - Blockiert alle Angriffe gegen dich in dieser Runde.",
+      "step2": "Blockade (Verbots-Symbol) - Verhindert, dass ein gewahlter Gegner antworten kann. Er bekommt null Punkte!",
+      "step3": "Diebstahl (Munz-Symbol) - Stiehlt 100% der Punkte eines gewahlten Gegners fur diese Frage.",
+      "step4": "Doppelte Punkte (Stern-Symbol) - Verdoppelt deine Punkte fur diese Frage.",
+      "step5": "Jeder Joker kann nur einmal pro Spiel verwendet werden. Timing ist alles!",
+      "step6": "Schutz blockiert Blockade und Diebstahl. Wenn jemand dich blockiert aber du Schutz hast, kannst du trotzdem antworten.",
+      "tip": "Tipp: Spare deinen Schutz fur spatere Runden, wenn Gegner eher den Fuhrenden angreifen."
+    },
+    "hosting": {
+      "title": "Ein Quiz moderieren",
+      "description": "Als Moderator kontrollierst du das gesamte Quiz-Erlebnis. So organisierst du einen perfekten Spieleabend.",
+      "step1": "Nach dem Erstellen eines Quiz erhaltst du einen einzigartigen 6-stelligen Session-Code und einen QR-Code.",
+      "step2": "Teile den Code oder QR mit den Spielern. Sie scannen ihn oder geben den Code auf der Beitrittsseite ein.",
+      "step3": "Warte, bis alle Spieler in der Lobby sind. Du siehst in Echtzeit, wer sich verbindet.",
+      "step4": "Drucke 'Quiz starten', wenn alle bereit sind. Das Spiel beginnt mit dem ersten Thema.",
+      "step5": "Nutze die Steuerung: Pause, Phase uberspringen oder Live-Rangliste uberwachen.",
+      "step6": "Am Ende siehst du die Endwertung und kannst optional Ergebnisse per E-Mail versenden.",
+      "tip": "Der Moderator braucht KEINEN Fernseher. Das Dashboard funktioniert auf jedem Gerat."
+    },
+    "tvDisplay": {
+      "title": "TV-Anzeige",
+      "description": "Ubertrage das Quiz auf einen grossen Bildschirm! Perfekt fur Bars, Partys und Events.",
+      "step1": "Offne die TV-Display-URL: deine-domain/tv?code=SESSION_CODE.",
+      "step2": "Ubertrage diesen Browser-Tab auf deinen TV via Chromecast, AirPlay oder HDMI-Kabel.",
+      "step3": "Die TV-Anzeige synchronisiert sich automatisch in Echtzeit uber WebSocket.",
+      "step4": "Sie zeigt: aktuelle Frage, Antwortoptionen, Timer, Thema und Live-Rangliste.",
+      "step5": "Die TV-Anzeige ist schreibgeschutzt. Keine Interaktion notig!",
+      "tip": "Mehrere TVs konnen dasselbe Quiz gleichzeitig anzeigen. Perfekt fur grosse Veranstaltungsorte!"
+    },
+    "remotePlay": {
+      "title": "Fernspiel & Standortubergreifende Wettbewerbe",
+      "description": "QuizzaBoom unterstutzt Fernspiel! Organisiere Wettbewerbe zwischen verschiedenen Standorten.",
+      "step1": "Der Moderator erstellt ein Quiz und teilt den Session-Code mit allen Standorten.",
+      "step2": "Jeder Standort offnet die TV-Display-URL und ubertragt sie auf seinen lokalen TV.",
+      "step3": "Spieler an jedem Standort treten mit demselben Session-Code auf ihren Smartphones bei.",
+      "step4": "Alle Spieler und TVs sind in Echtzeit uber Supabase Realtime synchronisiert.",
+      "step5": "Die Rangliste aktualisiert sich live an ALLEN Standorten!",
+      "step6": "Ein Moderator steuert alles. Spieler uberall antworten gleichzeitig auf dieselben Fragen.",
+      "step7": "Perfekt fur: Familien-Quiz zwischen Stadten, Team-Building zwischen Buros, Quiz-Ligen zwischen Bars.",
+      "tip": "Keine Begrenzung der TV-Bildschirme. 1 Moderator, unbegrenzte TVs, bis zu 250 Spieler!"
+    },
+    "playerExperience": {
+      "title": "Spielererlebnis",
+      "description": "Einem Quiz beizutreten ist einfach und funktioniert auf jedem Gerat mit Browser. Kein App-Download notig!",
+      "step1": "Offne die Beitrittsseite und gib den 6-stelligen Session-Code ein (oder scanne den QR-Code).",
+      "step2": "Wahle einen Anzeigenamen und ein Avatar aus 16 lustigen Emojis.",
+      "step3": "Gib optional deine E-Mail ein, um deine Ergebnisse nach dem Quiz zu erhalten.",
+      "step4": "Warte in der Lobby, bis der Moderator das Spiel startet.",
+      "step5": "Wenn eine Frage erscheint, tippe deine Antwort bevor der Timer ablauft!",
+      "step6": "Im Strategiemodus aktiviere Joker durch Antippen vor der Antwortauswahl.",
+      "step7": "Prufe die Live-Rangliste zwischen den Fragen, um deine Position zu sehen.",
+      "tip": "Verbindung verloren? Keine Sorge! QuizzaBoom verbindet dich automatisch wieder."
+    },
+    "emailResults": {
+      "title": "Ergebnisse per E-Mail",
+      "description": "Nach dem Quiz kannst du personalisierte Ergebnisse an alle Spieler senden, die ihre E-Mail angegeben haben.",
+      "step1": "Spieler konnen optional ihre E-Mail beim Beitritt angeben.",
+      "step2": "Nach dem Quiz kann der Moderator 'Ergebnisse senden' vom Dashboard aus auslosen.",
+      "step3": "Jeder Spieler erhalt eine personalisierte E-Mail mit Punktzahl, Rang und Statistiken.",
+      "step4": "Ergebnisse enthalten: Gesamtpunktzahl, richtige Antworten, Rangposition und Joker-Nutzung.",
+      "tip": "E-Mails werden uber SendGrid gesendet und respektieren die DSGVO-Einwilligung."
+    }
+  },
+  "dashboard": {
+    "title": "Mein Dashboard",
+    "welcomeBack": "Willkommen zuruck, {{email}}",
+    "availableCredits": "Verfugbare Credits",
+    "totalPurchases": "Gesamtkaufe",
+    "createQuiz": "Quiz erstellen",
+    "noCredits": "Kaufe Credits um Quizze zu erstellen",
+    "myPurchases": "Meine Kaufe",
+    "noPurchases": "Noch keine Kaufe. Hole dir deinen ersten Quiz-Credit!",
+    "browsePlans": "Plane ansehen",
+    "used": "Verwendet",
+    "useCredit": "Credit nutzen",
+    "buyMore": "Mehr Credits kaufen",
+    "paymentProcessing": "Zahlung wird verarbeitet...",
+    "guideTitle": "Wie funktioniert es?",
+    "guideDesc": "Lerne, wie du Quizze erstellst, moderierst und spielst wie ein Profi.",
+    "viewGuide": "Anleitung ansehen"
   }
 }

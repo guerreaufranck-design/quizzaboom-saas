@@ -151,21 +151,6 @@
     "tryAnother": "Try another email",
     "businessHint": "For business accounts, please use your professional email"
   },
-  "dashboard": {
-    "title": "My Dashboard",
-    "welcomeBack": "Welcome back, {{email}}",
-    "availableCredits": "Available Credits",
-    "totalPurchases": "Total Purchases",
-    "createQuiz": "Create Quiz",
-    "noCredits": "No credits available",
-    "myPurchases": "My Purchases",
-    "noPurchases": "No purchases yet",
-    "browsePlans": "Browse Plans",
-    "buyMore": "Buy More Credits",
-    "paymentProcessing": "Payment received! Adding your credits...",
-    "useCredit": "Use Credit",
-    "used": "Used"
-  },
   "host": {
     "hostDashboard": "Host Dashboard",
     "session": "Session",
@@ -239,6 +224,120 @@
     "viewPersonalPlans": "View Personal Plans Instead",
     "mistakeContact": "Think this is a mistake? Contact us at",
     "verificationNote": "Verification is instant and automated. Your business registration number is checked against official government registries.",
-    "backToPricing": "Back to Pricing"
+    "backToPricing": "Back to Pricing",
+    "businessId": "Business ID"
+  },
+  "guide": {
+    "title": "How to Use QuizzaBoom",
+    "subtitle": "Everything you need to know to create and host amazing quiz battles",
+    "back": "Back",
+    "readyTitle": "Ready to Play?",
+    "readyDesc": "Create your first quiz or join an existing game right now!",
+    "createQuiz": "Create a Quiz",
+    "joinQuiz": "Join a Quiz",
+    "gettingStarted": {
+      "title": "Getting Started",
+      "description": "Creating a quiz with QuizzaBoom is fast and powered by AI. Here's how to get started in minutes.",
+      "step1": "Sign in with Google or Magic Link from the homepage.",
+      "step2": "Click 'Create a Quiz' and choose your theme (General Knowledge, Sports, Science, History, etc.).",
+      "step3": "Select the game mode: Standard (classic quiz) or Strategic (with jokers and sabotage!).",
+      "step4": "Set the duration (5 to 60 minutes), difficulty (Easy, Medium, Hard), and language.",
+      "step5": "The AI generates unique questions in seconds. Each quiz is different!",
+      "step6": "Share the session code or QR code with your players. That's it!",
+      "tip": "Each quiz costs 1 credit. Buy credits from the Pricing page or use your B2B plan allocation."
+    },
+    "gamePhases": {
+      "title": "Game Phases",
+      "description": "Each question in a quiz goes through 5 phases. Understanding the timing helps players strategize.",
+      "step1": "Theme Announcement (5 seconds) - The current theme is displayed (e.g. 'Geography', 'Cinema').",
+      "step2": "Question Display (8 seconds) - The question appears on screen. Read carefully!",
+      "step3": "Answer Selection (15 seconds) - Players choose their answer. In Strategic mode, jokers can be activated here.",
+      "step4": "Results (5 seconds) - The correct answer is revealed and scores are updated in real-time.",
+      "step5": "Intermission (5 seconds) - Brief pause before the next question. Check the leaderboard!",
+      "tip": "Total time per question: ~38 seconds. A 20-question quiz lasts about 12-13 minutes."
+    },
+    "jokers": {
+      "title": "Strategic Jokers",
+      "description": "In Strategic mode, each player gets special jokers that can change the game! Use them wisely.",
+      "step1": "Protection (shield icon) - Blocks all attacks against you for this round. Use it when you expect sabotage.",
+      "step2": "Block (ban icon) - Prevents a chosen opponent from answering this question. They score zero!",
+      "step3": "Steal (coin icon) - Steals 100% of a chosen opponent's points for this question. High risk, high reward!",
+      "step4": "Double Points (star icon) - Doubles your score for this question. Combine with a correct answer for maximum impact!",
+      "step5": "Each joker can only be used once per game. Timing is everything!",
+      "step6": "Protection blocks both Block and Steal. If someone blocks you but you have Protection active, you can still answer.",
+      "tip": "Pro tip: Save your Protection for later rounds when opponents are more likely to attack the leader."
+    },
+    "hosting": {
+      "title": "Hosting a Quiz",
+      "description": "As a host, you control the entire quiz experience. Here's how to run a perfect game night.",
+      "step1": "After creating a quiz, you get a unique 6-character session code and a QR code.",
+      "step2": "Share the code or QR with players. They scan it or enter the code at the join page.",
+      "step3": "Wait for all players to join in the lobby. You can see who has connected in real-time.",
+      "step4": "Press 'Start Quiz' when everyone is ready. The game begins with the first theme.",
+      "step5": "Use the host controls: Pause the game, skip a phase, or monitor the live leaderboard.",
+      "step6": "At the end, view final standings and optionally send results by email to all players.",
+      "tip": "The host does NOT need a TV. The host dashboard works on any device (phone, tablet, laptop)."
+    },
+    "tvDisplay": {
+      "title": "TV Display",
+      "description": "Cast the quiz on a big screen for the ultimate experience! Perfect for bars, parties, and events.",
+      "step1": "Open the TV Display URL: your-domain/tv?code=SESSION_CODE (replace SESSION_CODE with your quiz code).",
+      "step2": "Cast this browser tab to your TV via Chromecast, AirPlay, or HDMI cable.",
+      "step3": "The TV Display automatically syncs with the quiz in real-time via WebSocket.",
+      "step4": "It shows: current question, answer options, timer countdown, theme, and the live leaderboard.",
+      "step5": "The TV Display is read-only. No interaction needed once loaded!",
+      "tip": "Multiple TVs can display the same quiz simultaneously. Perfect for large venues with several screens!"
+    },
+    "remotePlay": {
+      "title": "Remote Play & Multi-Site Competitions",
+      "description": "QuizzaBoom supports remote play! Organize inter-site competitions where teams play from different locations.",
+      "step1": "The host creates a quiz and shares the session code with all locations.",
+      "step2": "Each location opens the TV Display URL (your-domain/tv?code=CODE) and casts it on their local TV.",
+      "step3": "Players at each location join using the same session code on their smartphones.",
+      "step4": "All players and TVs are synchronized in real-time via Supabase Realtime (WebSocket).",
+      "step5": "The leaderboard updates live across ALL locations. Everyone sees the same scores instantly!",
+      "step6": "One host controls everything. Players everywhere answer at the same time, on the same questions.",
+      "step7": "Perfect for: family quiz nights across cities, corporate team building between offices, bar quiz leagues between venues.",
+      "tip": "There is no limit on the number of TV displays. 1 host, unlimited TVs, up to 250 players!"
+    },
+    "playerExperience": {
+      "title": "Player Experience",
+      "description": "Joining a quiz is simple and works on any device with a browser. No app download needed!",
+      "step1": "Open the join page and enter the 6-character session code (or scan the QR code).",
+      "step2": "Choose a display name and pick your avatar from 16 fun emoji options.",
+      "step3": "Optionally enter your email to receive your results after the quiz.",
+      "step4": "Wait in the lobby until the host starts the game.",
+      "step5": "When a question appears, tap your answer before the timer runs out!",
+      "step6": "In Strategic mode, activate jokers by tapping them before selecting your answer.",
+      "step7": "Check the live leaderboard between questions to see your ranking.",
+      "tip": "Lost connection? Don't worry! QuizzaBoom automatically reconnects you to the game."
+    },
+    "emailResults": {
+      "title": "Email Results",
+      "description": "After the quiz, send personalized results to all players who provided their email address.",
+      "step1": "Players can optionally enter their email when joining the quiz.",
+      "step2": "After the quiz ends, the host can trigger 'Send Results' from the host dashboard.",
+      "step3": "Each player receives a personalized email with their score, ranking, and game stats.",
+      "step4": "Results include: total score, correct answers count, ranking position, and joker usage.",
+      "tip": "Emails are sent via SendGrid and respect GDPR consent. Players choose to share their email."
+    }
+  },
+  "dashboard": {
+    "title": "My Dashboard",
+    "welcomeBack": "Welcome back, {{email}}",
+    "availableCredits": "Available Credits",
+    "totalPurchases": "Total Purchases",
+    "createQuiz": "Create a Quiz",
+    "noCredits": "Buy credits to create quizzes",
+    "myPurchases": "My Purchases",
+    "noPurchases": "No purchases yet. Get your first quiz credit!",
+    "browsePlans": "Browse Plans",
+    "used": "Used",
+    "useCredit": "Use Credit",
+    "buyMore": "Buy More Credits",
+    "paymentProcessing": "Processing your payment...",
+    "guideTitle": "How does it work?",
+    "guideDesc": "Learn how to create, host and play quizzes like a pro.",
+    "viewGuide": "View Guide"
   }
 }

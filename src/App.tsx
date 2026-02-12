@@ -14,6 +14,8 @@ import { HostDashboard } from './pages/HostDashboard';
 import { TVDisplay } from './pages/TVDisplay';
 import { ProSignup } from './pages/ProSignup';
 import { ProDashboard } from './pages/ProDashboard';
+import { Guide } from './pages/Guide';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function PlayRoute() {
   const { isHost } = useQuizStore();
@@ -63,8 +65,9 @@ function App() {
       <Route path="/lobby" element={<QuizLobby />} />
       <Route path="/play" element={<PlayRoute />} />
       <Route path="/tv" element={<TVDisplay />} />
-      <Route path="/pro-signup" element={<ProSignup />} />
-      <Route path="/pro-dashboard" element={<ProDashboard />} />
+      <Route path="/pro-signup" element={<ProtectedRoute><ProSignup /></ProtectedRoute>} />
+      <Route path="/pro-dashboard" element={<ProtectedRoute><ProDashboard /></ProtectedRoute>} />
+      <Route path="/guide" element={<Guide />} />
       <Route path="*" element={<HomePage />} />
     </Routes>
   );

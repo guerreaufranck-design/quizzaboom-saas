@@ -8,7 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import {
   LogOut, Plus, Building2, Clock, BarChart3,
-  AlertTriangle, Crown, ArrowLeft,
+  AlertTriangle, Crown, ArrowLeft, BookOpen,
 } from 'lucide-react';
 
 export const ProDashboard: React.FC = () => {
@@ -25,7 +25,14 @@ export const ProDashboard: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      fetchOrganization(user.id);
+      const fetchWithRetry = async (attempts = 0) => {
+        await fetchOrganization(user.id);
+        const { currentOrganization } = useOrganizationStore.getState();
+        if (!currentOrganization && attempts < 3) {
+          setTimeout(() => fetchWithRetry(attempts + 1), 2000);
+        }
+      };
+      fetchWithRetry();
     }
   }, [user, fetchOrganization]);
 
@@ -218,7 +225,7 @@ export const ProDashboard: React.FC = () => {
           {/* Quick Actions */}
           <Card gradient className="p-8">
             <h2 className="text-2xl font-bold text-white mb-6">{t('proDashboard.quickActions')}</h2>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-3 gap-4">
               <Button
                 fullWidth
                 size="lg"
@@ -235,6 +242,15 @@ export const ProDashboard: React.FC = () => {
                 onClick={() => navigate('/pricing')}
               >
                 {org.subscription_status === 'trial' ? t('proDashboard.upgradePlan') : t('proDashboard.manageSubscription')}
+              </Button>
+              <Button
+                fullWidth
+                size="lg"
+                variant="ghost"
+                onClick={() => navigate('/guide')}
+                icon={<BookOpen />}
+              >
+                {t('dashboard.viewGuide')}
               </Button>
             </div>
           </Card>

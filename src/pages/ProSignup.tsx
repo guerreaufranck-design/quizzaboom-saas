@@ -7,7 +7,8 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { ArrowLeft, Building2, Search, CheckCircle, XCircle, AlertCircle, Shield } from 'lucide-react';
-import type { VerificationResult } from '../types/organization';
+import type { VerificationResult, Organization } from '../types/organization';
+import { useOrganizationStore } from '../stores/useOrganizationStore';
 
 type Step = 'form' | 'verifying' | 'result';
 
@@ -143,7 +144,27 @@ export const ProSignup: React.FC = () => {
               size="xl"
               fullWidth
               gradient
-              onClick={() => navigate('/pro-dashboard')}
+              onClick={() => {
+                // Pre-populate the org store to avoid race condition
+                if (result.organizationId) {
+                  const { setOrganizationDirectly } = useOrganizationStore.getState();
+                  setOrganizationDirectly({
+                    id: result.organizationId,
+                    name: result.businessName,
+                    type: (result.detectedType as Organization['type']) || 'other',
+                    subscription_plan: 'starter',
+                    subscription_status: 'trial',
+                    trial_ends_at: result.trialEndsAt,
+                    monthly_quiz_limit: 5,
+                    quizzes_used_this_month: 0,
+                    max_participants: 250,
+                    white_label_enabled: false,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  });
+                }
+                navigate('/pro-dashboard');
+              }}
             >
               {t('proSignup.goToDashboard')}
             </Button>

@@ -151,21 +151,6 @@
     "tryAnother": "Essayer un autre email",
     "businessHint": "Pour les comptes professionnels, utilisez votre email pro"
   },
-  "dashboard": {
-    "title": "Mon tableau de bord",
-    "welcomeBack": "Bienvenue, {{email}}",
-    "availableCredits": "Credits disponibles",
-    "totalPurchases": "Achats totaux",
-    "createQuiz": "Creer un Quiz",
-    "noCredits": "Aucun credit disponible",
-    "myPurchases": "Mes achats",
-    "noPurchases": "Aucun achat",
-    "browsePlans": "Voir les plans",
-    "buyMore": "Acheter plus de crédits",
-    "paymentProcessing": "Paiement reçu ! Ajout de vos crédits en cours...",
-    "useCredit": "Utiliser",
-    "used": "Utilise"
-  },
   "host": {
     "hostDashboard": "Tableau de bord animateur",
     "session": "Session",
@@ -239,6 +224,120 @@
     "viewPersonalPlans": "Voir les plans personnels",
     "mistakeContact": "Vous pensez que c'est une erreur ? Contactez-nous a",
     "verificationNote": "La verification est instantanee et automatisee. Votre numero est verifie aupres des registres officiels.",
-    "backToPricing": "Retour aux tarifs"
+    "backToPricing": "Retour aux tarifs",
+    "businessId": "Identifiant entreprise"
+  },
+  "guide": {
+    "title": "Comment utiliser QuizzaBoom",
+    "subtitle": "Tout ce que vous devez savoir pour creer et animer des quiz inoubliables",
+    "back": "Retour",
+    "readyTitle": "Pret a jouer ?",
+    "readyDesc": "Creez votre premier quiz ou rejoignez une partie maintenant !",
+    "createQuiz": "Creer un Quiz",
+    "joinQuiz": "Rejoindre un Quiz",
+    "gettingStarted": {
+      "title": "Demarrage rapide",
+      "description": "Creer un quiz avec QuizzaBoom est rapide et propulse par l'IA. Voici comment demarrer en quelques minutes.",
+      "step1": "Connectez-vous avec Google ou Magic Link depuis la page d'accueil.",
+      "step2": "Cliquez sur 'Creer un Quiz' et choisissez votre theme (Culture generale, Sport, Science, Histoire, etc.).",
+      "step3": "Selectionnez le mode : Standard (quiz classique) ou Strategique (avec jokers et sabotage !).",
+      "step4": "Definissez la duree (5 a 60 minutes), la difficulte (Facile, Moyen, Difficile) et la langue.",
+      "step5": "L'IA genere des questions uniques en quelques secondes. Chaque quiz est different !",
+      "step6": "Partagez le code de session ou le QR code avec vos joueurs. C'est parti !",
+      "tip": "Chaque quiz coute 1 credit. Achetez des credits depuis la page Tarifs ou utilisez votre allocation B2B."
+    },
+    "gamePhases": {
+      "title": "Phases de jeu",
+      "description": "Chaque question passe par 5 phases. Comprendre le timing aide a mieux jouer.",
+      "step1": "Annonce du theme (5 secondes) - Le theme en cours s'affiche (ex: 'Geographie', 'Cinema').",
+      "step2": "Affichage de la question (8 secondes) - La question apparait a l'ecran. Lisez bien !",
+      "step3": "Selection de la reponse (15 secondes) - Les joueurs choisissent leur reponse. En mode Strategique, les jokers s'activent ici.",
+      "step4": "Resultats (5 secondes) - La bonne reponse est revelee et les scores mis a jour en temps reel.",
+      "step5": "Intermission (5 secondes) - Courte pause avant la question suivante. Consultez le classement !",
+      "tip": "Temps total par question : ~38 secondes. Un quiz de 20 questions dure environ 12-13 minutes."
+    },
+    "jokers": {
+      "title": "Jokers strategiques",
+      "description": "En mode Strategique, chaque joueur dispose de jokers speciaux qui peuvent changer la donne ! Utilisez-les avec sagesse.",
+      "step1": "Protection (icone bouclier) - Bloque toutes les attaques contre vous ce tour. Utilisez-le quand vous sentez le sabotage arriver.",
+      "step2": "Blocage (icone interdiction) - Empeche un adversaire choisi de repondre. Il marque zero !",
+      "step3": "Vol (icone piece) - Vole 100% des points d'un adversaire choisi pour cette question. Risque eleve, recompense elevee !",
+      "step4": "Double Points (icone etoile) - Double votre score pour cette question. Combinez avec une bonne reponse pour un impact maximum !",
+      "step5": "Chaque joker ne peut etre utilise qu'une seule fois par partie. Le timing est crucial !",
+      "step6": "La Protection bloque le Blocage et le Vol. Si quelqu'un vous bloque mais que votre Protection est active, vous pouvez quand meme repondre.",
+      "tip": "Astuce : Gardez votre Protection pour les derniers tours quand les adversaires sont plus susceptibles d'attaquer le leader."
+    },
+    "hosting": {
+      "title": "Animer un quiz",
+      "description": "En tant qu'animateur, vous controlez toute l'experience du quiz. Voici comment organiser une soiree quiz parfaite.",
+      "step1": "Apres avoir cree un quiz, vous obtenez un code de session unique de 6 caracteres et un QR code.",
+      "step2": "Partagez le code ou le QR avec les joueurs. Ils le scannent ou entrent le code sur la page de connexion.",
+      "step3": "Attendez que tous les joueurs rejoignent le lobby. Vous voyez qui se connecte en temps reel.",
+      "step4": "Appuyez sur 'Demarrer le Quiz' quand tout le monde est pret. Le jeu commence avec le premier theme.",
+      "step5": "Utilisez les controles : Pause, passer une phase, ou surveillez le classement en direct.",
+      "step6": "A la fin, consultez le classement final et envoyez optionnellement les resultats par email.",
+      "tip": "L'animateur n'a PAS besoin d'une TV. Le tableau de bord fonctionne sur tout appareil (telephone, tablette, PC)."
+    },
+    "tvDisplay": {
+      "title": "Ecran TV",
+      "description": "Diffusez le quiz sur grand ecran pour une experience ultime ! Parfait pour les bars, soirees et evenements.",
+      "step1": "Ouvrez l'URL TV Display : votre-domaine/tv?code=CODE_SESSION (remplacez par votre code de quiz).",
+      "step2": "Diffusez cet onglet sur votre TV via Chromecast, AirPlay ou cable HDMI.",
+      "step3": "L'ecran TV se synchronise automatiquement avec le quiz en temps reel via WebSocket.",
+      "step4": "Il affiche : la question en cours, les options, le compte a rebours, le theme et le classement en direct.",
+      "step5": "L'ecran TV est en lecture seule. Aucune interaction necessaire une fois charge !",
+      "tip": "Plusieurs TV peuvent afficher le meme quiz simultanement. Parfait pour les grands espaces avec plusieurs ecrans !"
+    },
+    "remotePlay": {
+      "title": "Jeu a distance & Competitions inter-sites",
+      "description": "QuizzaBoom supporte le jeu a distance ! Organisez des competitions entre differents lieux ou chaque equipe joue depuis sa propre location.",
+      "step1": "L'animateur cree un quiz et partage le code de session avec tous les sites.",
+      "step2": "Chaque site ouvre l'URL TV Display (votre-domaine/tv?code=CODE) et le diffuse sur sa TV locale.",
+      "step3": "Les joueurs de chaque site rejoignent avec le meme code de session sur leurs smartphones.",
+      "step4": "Tous les joueurs et TVs sont synchronises en temps reel via Supabase Realtime (WebSocket).",
+      "step5": "Le classement se met a jour en direct sur TOUS les sites. Tout le monde voit les memes scores instantanement !",
+      "step6": "Un seul animateur controle tout. Les joueurs partout repondent en meme temps, aux memes questions.",
+      "step7": "Parfait pour : soirees quiz familiales entre villes, team building entre bureaux, ligues de quiz entre bars.",
+      "tip": "Pas de limite sur le nombre d'ecrans TV. 1 animateur, TVs illimitees, jusqu'a 250 joueurs !"
+    },
+    "playerExperience": {
+      "title": "Experience joueur",
+      "description": "Rejoindre un quiz est simple et fonctionne sur tout appareil avec un navigateur. Aucun telechargement !",
+      "step1": "Ouvrez la page de connexion et entrez le code de session a 6 caracteres (ou scannez le QR code).",
+      "step2": "Choisissez un pseudo et selectionnez votre avatar parmi 16 emojis amusants.",
+      "step3": "Entrez optionnellement votre email pour recevoir vos resultats apres le quiz.",
+      "step4": "Attendez dans le lobby que l'animateur lance la partie.",
+      "step5": "Quand une question apparait, touchez votre reponse avant la fin du compte a rebours !",
+      "step6": "En mode Strategique, activez les jokers en les touchant avant de selectionner votre reponse.",
+      "step7": "Consultez le classement en direct entre les questions pour voir votre position.",
+      "tip": "Connexion perdue ? Pas de panique ! QuizzaBoom vous reconnecte automatiquement a la partie."
+    },
+    "emailResults": {
+      "title": "Resultats par email",
+      "description": "Apres le quiz, envoyez les resultats personnalises a tous les joueurs qui ont fourni leur email.",
+      "step1": "Les joueurs peuvent entrer leur email en option en rejoignant le quiz.",
+      "step2": "Apres la fin du quiz, l'animateur peut declencher 'Envoyer les resultats' depuis son tableau de bord.",
+      "step3": "Chaque joueur recoit un email personnalise avec son score, son classement et ses statistiques.",
+      "step4": "Les resultats incluent : score total, nombre de bonnes reponses, position au classement et utilisation des jokers.",
+      "tip": "Les emails sont envoyes via SendGrid et respectent le consentement RGPD. Les joueurs choisissent de partager leur email."
+    }
+  },
+  "dashboard": {
+    "title": "Mon tableau de bord",
+    "welcomeBack": "Bienvenue, {{email}}",
+    "availableCredits": "Credits disponibles",
+    "totalPurchases": "Total des achats",
+    "createQuiz": "Creer un Quiz",
+    "noCredits": "Achetez des credits pour creer des quiz",
+    "myPurchases": "Mes achats",
+    "noPurchases": "Aucun achat pour le moment. Obtenez votre premier credit quiz !",
+    "browsePlans": "Voir les plans",
+    "used": "Utilise",
+    "useCredit": "Utiliser le credit",
+    "buyMore": "Acheter plus de credits",
+    "paymentProcessing": "Traitement de votre paiement...",
+    "guideTitle": "Comment ca marche ?",
+    "guideDesc": "Apprenez a creer, animer et jouer aux quiz comme un pro.",
+    "viewGuide": "Voir le guide"
   }
 }

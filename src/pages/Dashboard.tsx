@@ -6,7 +6,7 @@ import { Card } from '../components/ui/Card';
 import { useAuthStore } from '../stores/useAuthStore';
 import { signOut } from '../services/auth';
 import { supabase } from '../services/supabase/client';
-import { Plus, LogOut, CreditCard, Trophy, Loader2 } from 'lucide-react';
+import { Plus, LogOut, CreditCard, Trophy, Loader2, BookOpen } from 'lucide-react';
 import { useAppNavigate } from '../hooks/useAppNavigate';
 
 interface Purchase {
@@ -193,6 +193,24 @@ export const Dashboard: React.FC = () => {
               )}
             </Card>
           </div>
+
+          {/* Guide */}
+          <Card gradient className="p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-qb-cyan/20 rounded-xl flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-qb-cyan" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">{t('dashboard.guideTitle')}</h3>
+                  <p className="text-white/60 text-sm">{t('dashboard.guideDesc')}</p>
+                </div>
+              </div>
+              <Button variant="secondary" onClick={() => navigate('guide')}>
+                {t('dashboard.viewGuide')}
+              </Button>
+            </div>
+          </Card>
 
           {/* Purchases */}
           <Card gradient className="p-8">

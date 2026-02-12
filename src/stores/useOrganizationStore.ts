@@ -11,6 +11,7 @@ interface OrganizationState {
 
   // Actions
   fetchOrganization: (userId: string) => Promise<void>;
+  setOrganizationDirectly: (org: Organization) => void;
   updateOrganization: (id: string, updates: Partial<Organization>) => Promise<void>;
   checkQuizLimit: () => boolean;
   incrementQuizUsage: () => Promise<void>;
@@ -74,6 +75,30 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
       const message = error instanceof Error ? error.message : 'Unknown error';
       set({ error: message, isLoading: false });
     }
+  },
+
+  setOrganizationDirectly: (org: Organization) => {
+    let trialDaysRemaining: number | null = null;
+    let isTrialExpired = false;
+
+    if (org.subscription_status === 'trial' && org.trial_ends_at) {
+      const now = new Date();
+      const trialEnd = new Date(org.trial_ends_at);
+      const diffMs = trialEnd.getTime() - now.getTime();
+      trialDaysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      if (trialDaysRemaining <= 0) {
+        isTrialExpired = true;
+        trialDaysRemaining = 0;
+      }
+    }
+
+    set({
+      currentOrganization: org,
+      trialDaysRemaining,
+      isTrialExpired,
+      isLoading: false,
+      error: null,
+    });
   },
 
   updateOrganization: async (id, updates) => {

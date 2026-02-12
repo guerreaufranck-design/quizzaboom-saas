@@ -151,21 +151,6 @@
     "tryAnother": "Probar otro email",
     "businessHint": "Para cuentas de empresa, usa tu email profesional"
   },
-  "dashboard": {
-    "title": "Mi panel de control",
-    "welcomeBack": "Bienvenido, {{email}}",
-    "availableCredits": "Creditos disponibles",
-    "totalPurchases": "Compras totales",
-    "createQuiz": "Crear Quiz",
-    "noCredits": "Sin creditos disponibles",
-    "myPurchases": "Mis compras",
-    "noPurchases": "Sin compras aun",
-    "browsePlans": "Ver planes",
-    "buyMore": "Comprar más créditos",
-    "paymentProcessing": "¡Pago recibido! Añadiendo tus créditos...",
-    "useCredit": "Usar",
-    "used": "Usado"
-  },
   "host": {
     "hostDashboard": "Panel del anfitrion",
     "session": "Sesion",
@@ -239,6 +224,120 @@
     "viewPersonalPlans": "Ver planes personales",
     "mistakeContact": "Crees que es un error? Contactanos en",
     "verificationNote": "La verificacion es instantanea y automatizada. Tu numero se verifica contra registros oficiales.",
-    "backToPricing": "Volver a los precios"
+    "backToPricing": "Volver a los precios",
+    "businessId": "ID de empresa"
+  },
+  "guide": {
+    "title": "Como usar QuizzaBoom",
+    "subtitle": "Todo lo que necesitas saber para crear y animar batallas de quiz increibles",
+    "back": "Volver",
+    "readyTitle": "Listo para jugar?",
+    "readyDesc": "Crea tu primer quiz o unete a una partida ahora mismo!",
+    "createQuiz": "Crear un Quiz",
+    "joinQuiz": "Unirse a un Quiz",
+    "gettingStarted": {
+      "title": "Inicio rapido",
+      "description": "Crear un quiz con QuizzaBoom es rapido y esta impulsado por IA. Asi empiezas en minutos.",
+      "step1": "Inicia sesion con Google o Magic Link desde la pagina de inicio.",
+      "step2": "Haz clic en 'Crear un Quiz' y elige tu tema (Cultura general, Deportes, Ciencia, Historia, etc.).",
+      "step3": "Selecciona el modo: Estandar (quiz clasico) o Estrategico (con comodines y sabotaje!).",
+      "step4": "Configura la duracion (5 a 60 minutos), dificultad (Facil, Medio, Dificil) e idioma.",
+      "step5": "La IA genera preguntas unicas en segundos. Cada quiz es diferente!",
+      "step6": "Comparte el codigo de sesion o el codigo QR con tus jugadores. A jugar!",
+      "tip": "Cada quiz cuesta 1 credito. Compra creditos en la pagina de Precios o usa tu asignacion B2B."
+    },
+    "gamePhases": {
+      "title": "Fases del juego",
+      "description": "Cada pregunta pasa por 5 fases. Entender los tiempos ayuda a jugar mejor.",
+      "step1": "Anuncio del tema (5 seg.) - Se muestra el tema actual (ej: 'Geografia', 'Cine').",
+      "step2": "Visualizacion de pregunta (8 seg.) - La pregunta aparece en pantalla. Lee con atencion!",
+      "step3": "Seleccion de respuesta (15 seg.) - Los jugadores eligen su respuesta. En modo Estrategico, aqui se activan los comodines.",
+      "step4": "Resultados (5 seg.) - Se revela la respuesta correcta y se actualizan las puntuaciones en tiempo real.",
+      "step5": "Intermedio (5 seg.) - Breve pausa antes de la siguiente pregunta. Mira la clasificacion!",
+      "tip": "Tiempo total por pregunta: ~38 segundos. Un quiz de 20 preguntas dura unos 12-13 minutos."
+    },
+    "jokers": {
+      "title": "Comodines estrategicos",
+      "description": "En modo Estrategico, cada jugador tiene comodines especiales que pueden cambiar el juego!",
+      "step1": "Proteccion (icono escudo) - Bloquea todos los ataques contra ti esta ronda.",
+      "step2": "Bloqueo (icono prohibido) - Impide que un oponente elegido responda. Obtiene cero puntos!",
+      "step3": "Robo (icono moneda) - Roba el 100% de los puntos de un oponente elegido para esta pregunta.",
+      "step4": "Doble Puntos (icono estrella) - Duplica tu puntuacion para esta pregunta.",
+      "step5": "Cada comodin solo se puede usar una vez por partida. El momento es clave!",
+      "step6": "La Proteccion bloquea tanto Bloqueo como Robo. Si alguien te bloquea pero tienes Proteccion, puedes responder.",
+      "tip": "Consejo: Guarda tu Proteccion para las ultimas rondas cuando los oponentes atacan mas al lider."
+    },
+    "hosting": {
+      "title": "Animar un quiz",
+      "description": "Como anfitrion, controlas toda la experiencia del quiz. Asi organizas una noche de quiz perfecta.",
+      "step1": "Al crear un quiz, obtienes un codigo de sesion unico de 6 caracteres y un codigo QR.",
+      "step2": "Comparte el codigo o QR con los jugadores. Lo escanean o ingresan el codigo en la pagina.",
+      "step3": "Espera a que todos los jugadores se unan al lobby. Ves quien se conecta en tiempo real.",
+      "step4": "Presiona 'Iniciar Quiz' cuando todos esten listos. El juego comienza con el primer tema.",
+      "step5": "Usa los controles: Pausa, saltar fase o monitorear la clasificacion en vivo.",
+      "step6": "Al final, ve la clasificacion final y opcionalmente envia resultados por email.",
+      "tip": "El anfitrion NO necesita TV. El panel funciona en cualquier dispositivo (telefono, tablet, PC)."
+    },
+    "tvDisplay": {
+      "title": "Pantalla TV",
+      "description": "Transmite el quiz en pantalla grande! Perfecto para bares, fiestas y eventos.",
+      "step1": "Abre la URL de TV Display: tu-dominio/tv?code=CODIGO_SESION.",
+      "step2": "Transmite esta pestana a tu TV via Chromecast, AirPlay o cable HDMI.",
+      "step3": "La pantalla TV se sincroniza automaticamente en tiempo real via WebSocket.",
+      "step4": "Muestra: pregunta actual, opciones de respuesta, temporizador, tema y clasificacion en vivo.",
+      "step5": "La pantalla TV es de solo lectura. No necesita interaccion una vez cargada!",
+      "tip": "Varias TVs pueden mostrar el mismo quiz simultaneamente. Perfecto para grandes espacios!"
+    },
+    "remotePlay": {
+      "title": "Juego remoto y competiciones entre sedes",
+      "description": "QuizzaBoom soporta juego remoto! Organiza competiciones entre diferentes ubicaciones.",
+      "step1": "El anfitrion crea un quiz y comparte el codigo de sesion con todas las sedes.",
+      "step2": "Cada sede abre la URL de TV Display y la transmite en su TV local.",
+      "step3": "Los jugadores de cada sede se unen con el mismo codigo en sus smartphones.",
+      "step4": "Todos los jugadores y TVs estan sincronizados en tiempo real via Supabase Realtime.",
+      "step5": "La clasificacion se actualiza en vivo en TODAS las sedes!",
+      "step6": "Un anfitrion controla todo. Los jugadores en todas partes responden al mismo tiempo.",
+      "step7": "Perfecto para: noches de quiz familiares, team building entre oficinas, ligas de quiz entre bares.",
+      "tip": "Sin limite de pantallas TV. 1 anfitrion, TVs ilimitadas, hasta 250 jugadores!"
+    },
+    "playerExperience": {
+      "title": "Experiencia del jugador",
+      "description": "Unirse a un quiz es simple y funciona en cualquier dispositivo con navegador. Sin descarga!",
+      "step1": "Abre la pagina de union y ingresa el codigo de sesion de 6 caracteres (o escanea el QR).",
+      "step2": "Elige un nombre y selecciona tu avatar entre 16 emojis divertidos.",
+      "step3": "Opcionalmente ingresa tu email para recibir tus resultados despues del quiz.",
+      "step4": "Espera en el lobby hasta que el anfitrion inicie el juego.",
+      "step5": "Cuando aparezca una pregunta, toca tu respuesta antes de que termine el temporizador!",
+      "step6": "En modo Estrategico, activa los comodines tocandolos antes de seleccionar tu respuesta.",
+      "step7": "Revisa la clasificacion en vivo entre preguntas para ver tu posicion.",
+      "tip": "Perdiste la conexion? No te preocupes! QuizzaBoom te reconecta automaticamente."
+    },
+    "emailResults": {
+      "title": "Resultados por email",
+      "description": "Despues del quiz, envia resultados personalizados a todos los jugadores que dieron su email.",
+      "step1": "Los jugadores pueden ingresar opcionalmente su email al unirse al quiz.",
+      "step2": "Despues del quiz, el anfitrion puede activar 'Enviar resultados' desde su panel.",
+      "step3": "Cada jugador recibe un email personalizado con su puntuacion, ranking y estadisticas.",
+      "step4": "Los resultados incluyen: puntuacion total, respuestas correctas, posicion y uso de comodines.",
+      "tip": "Los emails se envian via SendGrid y respetan el consentimiento RGPD."
+    }
+  },
+  "dashboard": {
+    "title": "Mi panel",
+    "welcomeBack": "Bienvenido, {{email}}",
+    "availableCredits": "Creditos disponibles",
+    "totalPurchases": "Total de compras",
+    "createQuiz": "Crear un Quiz",
+    "noCredits": "Compra creditos para crear quizzes",
+    "myPurchases": "Mis compras",
+    "noPurchases": "Sin compras aun. Obtiene tu primer credito quiz!",
+    "browsePlans": "Ver planes",
+    "used": "Usado",
+    "useCredit": "Usar credito",
+    "buyMore": "Comprar mas creditos",
+    "paymentProcessing": "Procesando tu pago...",
+    "guideTitle": "Como funciona?",
+    "guideDesc": "Aprende a crear, animar y jugar quizzes como un profesional.",
+    "viewGuide": "Ver guia"
   }
 }

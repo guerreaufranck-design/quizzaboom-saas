@@ -335,6 +335,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (memberError) {
       console.error('Member creation error:', memberError);
+      // Clean up orphaned organization
+      await supabase.from('organizations').delete().eq('id', org.id);
+      return res.status(500).json({
+        error: 'Failed to link account',
+        message: 'Failed to link your account to the organization. Please try again.',
+      });
     }
 
     // Step 5: Save successful verification
