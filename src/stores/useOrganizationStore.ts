@@ -28,26 +28,25 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   fetchOrganization: async (userId) => {
     set({ isLoading: true, error: null });
     try {
-      // Look up organization through membership table
-      const { data: membership, error: memberError } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', userId)
-        .single();
+      // Use server-side API to bypass RLS restrictions
+      const response = await fetch('/api/get-organization', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
 
-      if (memberError || !membership) {
-        // No organization found - user is not a pro
+      if (!response.ok) {
+        throw new Error('Failed to fetch organization');
+      }
+
+      const data = await response.json();
+
+      if (!data.organization) {
         set({ currentOrganization: null, isLoading: false });
         return;
       }
 
-      const { data: org, error: orgError } = await supabase
-        .from('organizations')
-        .select('*')
-        .eq('id', membership.organization_id)
-        .single();
-
-      if (orgError) throw orgError;
+      const org = data.organization;
 
       // Calculate trial status
       let trialDaysRemaining: number | null = null;
