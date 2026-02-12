@@ -242,19 +242,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } else {
       // EU VAT verification via VIES
       const viesResult = await lookupVIES(registrationNumber);
-      if (!viesResult || !viesResult.valid) {
-        return res.status(404).json({
-          error: 'Business not found',
-          message: 'The VAT number was not found or is invalid. Please check and try again.',
-        });
+      if (viesResult && viesResult.valid) {
+        // VIES validated — use VIES data
+        businessInfo = {
+          name: viesResult.name || businessName || 'Unknown',
+          activityCode: '',
+          activityLabel: businessName || viesResult.name || '',
+          address: viesResult.address || '',
+          country: viesResult.countryCode,
+        };
+      } else {
+        // VIES failed or invalid — fallback to business name + AI verification
+        if (!businessName || !businessName.trim()) {
+          return res.status(400).json({
+            error: 'Verification failed',
+            message: 'VAT verification unavailable for this country. Please provide your business name.',
+          });
+        }
+        businessInfo = {
+          name: businessName.trim(),
+          activityCode: '',
+          activityLabel: businessName.trim(),
+          address: '',
+          country,
+        };
       }
-      businessInfo = {
-        name: viesResult.name || businessName || 'Unknown',
-        activityCode: '',
-        activityLabel: businessName || viesResult.name || '',
-        address: viesResult.address || '',
-        country: viesResult.countryCode,
-      };
     }
 
     // Step 2: AI eligibility check
