@@ -338,6 +338,8 @@
     "paymentProcessing": "Traitement de votre paiement...",
     "guideTitle": "Comment ca marche ?",
     "guideDesc": "Apprenez a creer, animer et jouer aux quiz comme un pro.",
-    "viewGuide": "Voir le guide"
+    "viewGuide": "Voir le guide",
+    "proDashboard": "Dashboard Pro",
+    "proDashboardDesc": "Accedez a votre tableau de bord professionnel et gerez votre abonnement B2B."
   }
 }

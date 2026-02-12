@@ -6,8 +6,9 @@ import { Card } from '../components/ui/Card';
 import { useAuthStore } from '../stores/useAuthStore';
 import { signOut } from '../services/auth';
 import { supabase } from '../services/supabase/client';
-import { Plus, LogOut, CreditCard, Trophy, Loader2, BookOpen } from 'lucide-react';
+import { Plus, LogOut, CreditCard, Trophy, Loader2, BookOpen, Building2 } from 'lucide-react';
 import { useAppNavigate } from '../hooks/useAppNavigate';
+import { useOrganizationStore } from '../stores/useOrganizationStore';
 
 interface Purchase {
   id: string;
@@ -21,6 +22,7 @@ export const Dashboard: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const navigate = useAppNavigate();
+  const { currentOrganization, fetchOrganization } = useOrganizationStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +37,7 @@ export const Dashboard: React.FC = () => {
     }
 
     loadPurchases();
+    fetchOrganization(user.id);
   }, [user]);
 
   // Poll for new purchase after Stripe payment redirect
@@ -211,6 +214,26 @@ export const Dashboard: React.FC = () => {
               </Button>
             </div>
           </Card>
+
+          {/* Pro Dashboard shortcut */}
+          {currentOrganization && (
+            <Card gradient className="p-6 mb-8 bg-gradient-to-r from-qb-purple/10 to-qb-magenta/10 border border-qb-purple/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-qb-purple/20 rounded-xl flex items-center justify-center">
+                    <Building2 className="w-6 h-6 text-qb-purple" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">{t('dashboard.proDashboard')}</h3>
+                    <p className="text-white/60 text-sm">{t('dashboard.proDashboardDesc')}</p>
+                  </div>
+                </div>
+                <Button gradient onClick={() => navigate('pro-dashboard')}>
+                  {t('dashboard.proDashboard')}
+                </Button>
+              </div>
+            </Card>
+          )}
 
           {/* Purchases */}
           <Card gradient className="p-8">

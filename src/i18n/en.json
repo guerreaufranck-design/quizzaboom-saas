@@ -338,6 +338,8 @@
     "paymentProcessing": "Processing your payment...",
     "guideTitle": "How does it work?",
     "guideDesc": "Learn how to create, host and play quizzes like a pro.",
-    "viewGuide": "View Guide"
+    "viewGuide": "View Guide",
+    "proDashboard": "Pro Dashboard",
+    "proDashboardDesc": "Access your professional dashboard and manage your B2B subscription."
   }
 }

@@ -338,6 +338,8 @@
     "paymentProcessing": "Procesando tu pago...",
     "guideTitle": "Como funciona?",
     "guideDesc": "Aprende a crear, animar y jugar quizzes como un profesional.",
-    "viewGuide": "Ver guia"
+    "viewGuide": "Ver guia",
+    "proDashboard": "Dashboard Pro",
+    "proDashboardDesc": "Accede a tu panel profesional y gestiona tu suscripcion B2B."
   }
 }

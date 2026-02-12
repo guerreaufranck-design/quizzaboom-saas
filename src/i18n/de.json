@@ -338,6 +338,8 @@
     "paymentProcessing": "Zahlung wird verarbeitet...",
     "guideTitle": "Wie funktioniert es?",
     "guideDesc": "Lerne, wie du Quizze erstellst, moderierst und spielst wie ein Profi.",
-    "viewGuide": "Anleitung ansehen"
+    "viewGuide": "Anleitung ansehen",
+    "proDashboard": "Pro-Dashboard",
+    "proDashboardDesc": "Zugriff auf Ihr professionelles Dashboard und Verwaltung Ihres B2B-Abonnements."
   }
 }
