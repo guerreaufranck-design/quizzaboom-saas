@@ -211,8 +211,8 @@ export const TVDisplay: React.FC = () => {
                   <h2 className="text-4xl font-bold text-white mb-2">4. GAME FLOW</h2>
                   <div className="grid grid-cols-2 gap-2 text-lg text-white/90">
                     <div className="bg-purple-500/20 p-2 rounded">🎯 Theme (5s) → Jokers</div>
-                    <div className="bg-blue-500/20 p-2 rounded">📖 Question (5s) → Read</div>
-                    <div className="bg-cyan-500/20 p-2 rounded">✍️ Answer (12s) → Choose</div>
+                    <div className="bg-blue-500/20 p-2 rounded">📖 Question (8s) → Read</div>
+                    <div className="bg-cyan-500/20 p-2 rounded">✍️ Answer (15s) → Choose</div>
                     <div className="bg-green-500/20 p-2 rounded">📊 Results (5s) → Score</div>
                   </div>
                 </div>
