@@ -199,6 +199,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       country: string;
     } | null = null;
 
+    const NON_EU_COUNTRIES = ['US', 'AU', 'NZ', 'GB'];
+
     if (country === 'FR') {
       const sireneResult = await lookupSIRENE(registrationNumber);
       if (!sireneResult) {
@@ -214,8 +216,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         address: `${sireneResult.adresse}, ${sireneResult.codePostal} ${sireneResult.ville}`,
         country: 'France',
       };
+    } else if (NON_EU_COUNTRIES.includes(country)) {
+      // Non-EU countries: no VIES, rely on business name + AI verification
+      if (!businessName || !businessName.trim()) {
+        return res.status(400).json({
+          error: 'Business name required',
+          message: 'Please provide your business name for verification.',
+        });
+      }
+
+      const countryNames: Record<string, string> = {
+        US: 'United States',
+        AU: 'Australia',
+        NZ: 'New Zealand',
+        GB: 'United Kingdom',
+      };
+
+      businessInfo = {
+        name: businessName.trim(),
+        activityCode: '',
+        activityLabel: businessName.trim(),
+        address: '',
+        country: countryNames[country] || country,
+      };
     } else {
-      // EU VAT verification
+      // EU VAT verification via VIES
       const viesResult = await lookupVIES(registrationNumber);
       if (!viesResult || !viesResult.valid) {
         return res.status(404).json({

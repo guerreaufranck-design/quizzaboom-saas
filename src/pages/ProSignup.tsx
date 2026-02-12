@@ -21,6 +21,9 @@ const COUNTRIES = [
   { code: 'PT', label: 'Portugal', placeholder: 'PT123456789', hint: 'Enter your VAT number' },
   { code: 'AT', label: 'Austria', placeholder: 'ATU12345678', hint: 'Enter your VAT number' },
   { code: 'GB', label: 'United Kingdom', placeholder: 'GB123456789', hint: 'Enter your VAT number' },
+  { code: 'US', label: 'United States', placeholder: '12-3456789', hint: 'Enter your EIN (Employer Identification Number)' },
+  { code: 'AU', label: 'Australia', placeholder: '12 345 678 901', hint: 'Enter your 11-digit ABN (Australian Business Number)' },
+  { code: 'NZ', label: 'New Zealand', placeholder: '1234567', hint: 'Enter your NZBN or company number' },
 ];
 
 export const ProSignup: React.FC = () => {
@@ -253,7 +256,7 @@ export const ProSignup: React.FC = () => {
               {/* Registration Number */}
               <div>
                 <label className="block text-white font-bold mb-2">
-                  {country === 'FR' ? t('proSignup.siret') : t('proSignup.vatNumber')}
+                  {country === 'FR' ? t('proSignup.siret') : ['US', 'AU', 'NZ'].includes(country) ? t('proSignup.businessId', 'Business ID') : t('proSignup.vatNumber')}
                 </label>
                 <Input
                   type="text"
