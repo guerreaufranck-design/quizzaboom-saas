@@ -3,6 +3,8 @@ import type { VercelResponse } from '@vercel/node';
 const ALLOWED_ORIGINS = [
   process.env.ALLOWED_ORIGIN || 'https://quizzaboom.com',
   'https://www.quizzaboom.com',
+  'https://quizzaboom.app',
+  'https://www.quizzaboom.app',
   'http://localhost:5173',
   'http://localhost:3000',
 ];

@@ -190,6 +190,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Step 0: Check if user already has an organization (prevent duplicates)
+    const { data: existingMembers } = await supabase
+      .from('organization_members')
+      .select('organization_id')
+      .eq('user_id', userId)
+      .limit(1);
+
+    if (existingMembers && existingMembers.length > 0) {
+      const { data: existingOrg } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', existingMembers[0].organization_id)
+        .single();
+
+      if (existingOrg) {
+        return res.status(200).json({
+          eligible: true,
+          businessName: existingOrg.name,
+          detectedType: existingOrg.type,
+          organizationId: existingOrg.id,
+          trialEndsAt: existingOrg.trial_ends_at,
+        });
+      }
+    }
+
     // Step 1: Look up business in official registry
     let businessInfo: {
       name: string;

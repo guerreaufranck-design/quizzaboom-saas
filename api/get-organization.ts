@@ -25,16 +25,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Step 1: Find membership
-    const { data: membership, error: memberError } = await supabase
+    // Step 1: Find membership (use limit(1) instead of single() to handle duplicates)
+    const { data: memberships, error: memberError } = await supabase
       .from('organization_members')
       .select('organization_id, role')
       .eq('user_id', userId)
-      .single();
+      .order('joined_at', { ascending: false })
+      .limit(1);
 
-    if (memberError || !membership) {
+    if (memberError || !memberships || memberships.length === 0) {
       return res.status(200).json({ organization: null });
     }
+
+    const membership = memberships[0];
 
     // Step 2: Fetch organization
     const { data: org, error: orgError } = await supabase
