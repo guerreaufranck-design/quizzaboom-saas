@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { Sparkles, Users, Zap, LogIn, User } from 'lucide-react';
+import { AnimatedLogo } from '../components/AnimatedLogo';
 
 export const HomePage: React.FC = () => {
   const { t } = useTranslation();
@@ -39,16 +40,7 @@ export const HomePage: React.FC = () => {
         <div className="max-w-6xl mx-auto space-y-16">
           {/* Hero Section */}
           <div className="text-center space-y-8">
-            <div className="inline-block">
-              <img
-                src="/images/logo.png"
-                alt="QuizzaBoom"
-                className="h-40 w-auto mx-auto"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </div>
+            <AnimatedLogo size="lg" className="mx-auto" />
 
             <div className="space-y-4">
               <h1 className="text-5xl lg:text-7xl font-bold">

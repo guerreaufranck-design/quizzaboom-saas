@@ -5,6 +5,7 @@ import { Card } from '../components/ui/Card';
 import { Clock, Trophy, Star } from 'lucide-react';
 import type { Player } from '../types/quiz';
 import { useQuizAudio } from '../hooks/useQuizAudio';
+import { AnimatedLogo } from '../components/AnimatedLogo';
 
 export const TVDisplay: React.FC = () => {
   const {
@@ -147,7 +148,7 @@ export const TVDisplay: React.FC = () => {
         <div className="max-w-5xl mx-auto h-full flex flex-col justify-between">
           {/* Header */}
           <div className="text-center mb-6">
-            <div className="text-7xl mb-4 animate-bounce">🎮</div>
+            <AnimatedLogo size="lg" className="mx-auto mb-4" />
             <h1 className="text-6xl font-bold text-white mb-2">HOW TO PLAY</h1>
             <p className="text-3xl text-yellow-300 font-bold">Follow these 4 steps!</p>
           </div>
@@ -318,10 +319,12 @@ export const TVDisplay: React.FC = () => {
           {/* Footer */}
           <div className="text-center">
             <div className="inline-block bg-black/30 backdrop-blur-xl rounded-2xl px-12 py-6 border border-white/20">
-              <p className="text-3xl text-white font-bold">
-                🎮 Powered by <span className="text-yellow-300">QuizzaBoom</span>
+              <AnimatedLogo size="md" className="mx-auto mb-3" />
+              <p className="text-2xl text-white font-bold">
+                Powered by <span className="text-yellow-300">QuizzaBoom</span>
               </p>
-              <p className="text-xl text-white/60 mt-2">quizzaboom.app</p>
+              <p className="text-lg text-white/60 mt-1">quizzaboom.app</p>
+              <p className="text-lg text-white/50 mt-1">contact@quizzaboom.app</p>
             </div>
           </div>
         </div>
@@ -499,7 +502,8 @@ export const TVDisplay: React.FC = () => {
             </div>
           )}
 
-          <div className="text-center">
+          <div className="text-center flex items-center justify-center gap-6">
+            <AnimatedLogo size="sm" />
             <div className="inline-flex items-center gap-4 px-8 py-4 bg-qb-cyan/20 rounded-2xl">
               <p className="text-3xl text-white/80">Next question in</p>
               <span className="text-6xl font-mono font-bold text-qb-cyan">
