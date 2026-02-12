@@ -44,7 +44,10 @@ export const ProSignup: React.FC = () => {
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+      setError('Please sign in to verify your business.');
+      return;
+    }
 
     setStep('verifying');
     setError('');
