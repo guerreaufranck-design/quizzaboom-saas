@@ -229,6 +229,7 @@ export const HostDashboard: React.FC = () => {
           type: 'quiz_results',
           sessionId: currentSession.id,
           quizTitle: currentQuiz.title,
+          language: currentQuiz.language || 'en',
           players: emailPlayers,
         }),
       });
