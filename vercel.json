@@ -1,5 +1,9 @@
 {
   "functions": {
+    "api/generate-quiz.ts": {
+      "runtime": "@vercel/node@5.6.3",
+      "maxDuration": 60
+    },
     "api/**/*.ts": {
       "runtime": "@vercel/node@5.6.3"
     }
