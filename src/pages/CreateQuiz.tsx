@@ -557,8 +557,8 @@ export const CreateQuiz: React.FC = () => {
                 disabled={isLoading}
               >
                 <option value="en">English</option>
-                <option value="fr">Fran\u00e7ais</option>
-                <option value="es">Espa\u00f1ol</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
                 <option value="de">Deutsch</option>
               </Select>
             </Card>
