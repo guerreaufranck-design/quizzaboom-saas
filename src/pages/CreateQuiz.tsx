@@ -29,7 +29,7 @@ export const CreateQuiz: React.FC = () => {
   const { t } = useTranslation();
   const { generateQuiz, createSession, isLoading } = useQuizStore();
   const navigate = useAppNavigate();
-  const [selectedTheme, setSelectedTheme] = useState<ThemeCategory>('general');
+  const [selectedThemes, setSelectedThemes] = useState<ThemeCategory[]>(['general']);
   const [selectedMode, setSelectedMode] = useState<ThemeMode>('standard');
   const [excludedSubThemes, setExcludedSubThemes] = useState<string[]>([]);
   const [enabledJokers, setEnabledJokers] = useState({
@@ -54,8 +54,9 @@ export const CreateQuiz: React.FC = () => {
   const [generationStep, setGenerationStep] = useState<string>('');
 
   const quizStructure = calculateQuizStructureFromCount(formData.questionCount);
-  const currentTheme = THEMES.find(t => t.category === selectedTheme);
-  const activeSubThemes = currentTheme?.subThemes?.filter(st => !excludedSubThemes.includes(st)) || [];
+  const selectedThemeObjects = THEMES.filter(t => selectedThemes.includes(t.category));
+  const allSubThemes = selectedThemeObjects.flatMap(t => t.subThemes || []);
+  const activeSubThemes = allSubThemes.filter(st => !excludedSubThemes.includes(st));
 
   // Calculate where breaks would be placed
   const breakPreview = useMemo(() => {
@@ -74,7 +75,7 @@ export const CreateQuiz: React.FC = () => {
       console.log('🎨 Starting quiz generation...');
 
       // Build theme string with active sub-themes for AI diversity
-      const themeLabel = currentTheme?.label || selectedTheme;
+      const themeLabel = selectedThemeObjects.map(t => t.label).join(' + ');
       const modeLabel = THEME_MODES[selectedMode].label;
       const subThemesStr = activeSubThemes.length > 0 ? ` (focus: ${activeSubThemes.join(', ')})` : '';
 
@@ -167,27 +168,56 @@ export const CreateQuiz: React.FC = () => {
                 <Sparkles className="w-5 h-5 text-qb-magenta" />
                 {t('create.chooseTheme')} *
               </label>
+              <p className="text-sm text-white/60 mb-3">{t('create.multiThemeHint', 'Select one or more themes')}</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {THEMES.map((theme) => (
-                  <button
-                    key={theme.id}
-                    type="button"
-                    onClick={() => { setSelectedTheme(theme.category); setExcludedSubThemes([]); }}
-                    disabled={isLoading}
-                    className={`p-6 rounded-xl border-2 transition-all ${
-                      selectedTheme === theme.category
-                        ? 'bg-qb-cyan border-qb-cyan scale-105 shadow-lg shadow-qb-cyan/50'
-                        : 'bg-qb-darker border-white/20 hover:border-qb-cyan hover:scale-105'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    <div className="text-5xl mb-3">{theme.emoji}</div>
-                    <div className="text-white font-bold text-lg mb-1">{theme.label}</div>
-                    <div className="text-xs text-white/60">{theme.description}</div>
-                  </button>
-                ))}
+                {THEMES.map((theme) => {
+                  const isSelected = selectedThemes.includes(theme.category);
+                  return (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          // Don't allow deselecting the last theme
+                          if (selectedThemes.length > 1) {
+                            setSelectedThemes(selectedThemes.filter(t => t !== theme.category));
+                            // Remove excluded sub-themes that belong to this theme
+                            const themeObj = THEMES.find(t => t.category === theme.category);
+                            if (themeObj?.subThemes) {
+                              setExcludedSubThemes(excludedSubThemes.filter(st => !themeObj.subThemes!.includes(st)));
+                            }
+                          }
+                        } else {
+                          setSelectedThemes([...selectedThemes, theme.category]);
+                        }
+                      }}
+                      disabled={isLoading}
+                      className={`p-6 rounded-xl border-2 transition-all relative ${
+                        isSelected
+                          ? 'bg-qb-cyan border-qb-cyan scale-105 shadow-lg shadow-qb-cyan/50'
+                          : 'bg-qb-darker border-white/20 hover:border-qb-cyan hover:scale-105'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {isSelected && selectedThemes.length > 1 && (
+                        <div className="absolute top-2 right-2 w-6 h-6 bg-white/30 rounded-full flex items-center justify-center">
+                          <X className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                      <div className="text-5xl mb-3">{theme.emoji}</div>
+                      <div className="text-white font-bold text-lg mb-1">{theme.label}</div>
+                      <div className="text-xs text-white/60">{theme.description}</div>
+                    </button>
+                  );
+                })}
               </div>
+              {selectedThemes.length > 1 && (
+                <div className="mt-3 flex items-center gap-2 text-sm text-qb-cyan">
+                  <Sparkles className="w-4 h-4" />
+                  <span>{t('create.multiThemeSelected', { count: selectedThemes.length, themes: selectedThemeObjects.map(t => t.label).join(' + ') })}</span>
+                </div>
+              )}
 
-              {currentTheme && currentTheme.subThemes && (
+              {allSubThemes.length > 0 && (
                 <div className="mt-4 p-4 bg-qb-darker rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm text-white/70">This quiz will include:</div>
@@ -202,32 +232,35 @@ export const CreateQuiz: React.FC = () => {
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {currentTheme.subThemes.map((subTheme) => {
-                      const isExcluded = excludedSubThemes.includes(subTheme);
-                      return (
-                        <button
-                          key={subTheme}
-                          type="button"
-                          onClick={() => {
-                            if (isExcluded) {
-                              setExcludedSubThemes(excludedSubThemes.filter(s => s !== subTheme));
-                            } else if (activeSubThemes.length > 1) {
-                              setExcludedSubThemes([...excludedSubThemes, subTheme]);
-                            }
-                          }}
-                          className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-all ${
-                            isExcluded
-                              ? 'bg-white/5 border border-white/10 text-white/40 line-through'
-                              : 'bg-qb-purple/30 border border-qb-purple text-white hover:bg-qb-purple/50'
-                          }`}
-                        >
-                          {subTheme}
-                          {!isExcluded && activeSubThemes.length > 1 && (
-                            <X className="w-3 h-3 ml-1" />
-                          )}
-                        </button>
-                      );
-                    })}
+                    {selectedThemeObjects.map((themeObj) => (
+                      themeObj.subThemes?.map((subTheme) => {
+                        const isExcluded = excludedSubThemes.includes(subTheme);
+                        return (
+                          <button
+                            key={`${themeObj.id}-${subTheme}`}
+                            type="button"
+                            onClick={() => {
+                              if (isExcluded) {
+                                setExcludedSubThemes(excludedSubThemes.filter(s => s !== subTheme));
+                              } else if (activeSubThemes.length > 1) {
+                                setExcludedSubThemes([...excludedSubThemes, subTheme]);
+                              }
+                            }}
+                            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-all ${
+                              isExcluded
+                                ? 'bg-white/5 border border-white/10 text-white/40 line-through'
+                                : 'bg-qb-purple/30 border border-qb-purple text-white hover:bg-qb-purple/50'
+                            }`}
+                          >
+                            {selectedThemes.length > 1 && <span className="opacity-60">{themeObj.emoji}</span>}
+                            {subTheme}
+                            {!isExcluded && activeSubThemes.length > 1 && (
+                              <X className="w-3 h-3 ml-1" />
+                            )}
+                          </button>
+                        );
+                      })
+                    ))}
                   </div>
                   {excludedSubThemes.length > 0 && (
                     <div className="text-xs text-white/50 mt-2">
@@ -532,9 +565,9 @@ export const CreateQuiz: React.FC = () => {
             <h3 className="text-lg font-bold text-white mb-3">{t('create.preview')}</h3>
             <div className="space-y-2 text-sm text-white/80">
               <div className="flex items-center gap-2">
-                <span className="text-3xl">{currentTheme?.emoji}</span>
+                <span className="text-3xl">{selectedThemeObjects.map(t => t.emoji).join(' ')}</span>
                 <div>
-                  <div className="font-bold text-white">{currentTheme?.label}</div>
+                  <div className="font-bold text-white">{selectedThemeObjects.map(t => t.label).join(' + ')}</div>
                   <div className="text-white/60">{THEME_MODES[selectedMode].label}</div>
                 </div>
               </div>

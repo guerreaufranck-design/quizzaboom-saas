@@ -112,7 +112,9 @@
   "create": {
     "title": "Erstelle dein Quiz",
     "subtitle": "KI-gestutzte Quiz-Erstellung in Sekunden",
-    "chooseTheme": "Quiz-Thema wahlen",
+    "chooseTheme": "Quiz-Thema(en) wahlen",
+    "multiThemeHint": "Wahle ein oder mehrere Themen",
+    "multiThemeSelected": "{{count}} Themen ausgewahlt: {{themes}}",
     "quizMode": "Quiz-Modus",
     "questionCount": "Anzahl der Fragen",
     "questions25": "25 Fragen",
@@ -200,7 +202,8 @@
     "sendResultsEmails": "Ergebnis-E-Mails senden",
     "sent": "Gesendet!",
     "playing": "Lauft",
-    "paused": "Pausiert"
+    "paused": "Pausiert",
+    "backToDashboard": "Zuruck zum Dashboard"
   },
   "proDashboard": {
     "noAccount": "Kein Geschaftskonto",

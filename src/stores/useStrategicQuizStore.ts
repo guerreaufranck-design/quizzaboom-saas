@@ -34,6 +34,10 @@ interface StrategicQuizState {
   currentQuestion: Question | null;
   currentThemeTitle: string | null;
   allQuestions: Question[];
+  // Commercial break data
+  breakPromoMessage: string;
+  breakNumber: number;
+  totalBreaks: number;
   
   playerInventory: {
     protection: number;
@@ -80,6 +84,9 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   currentQuestion: null,
   currentThemeTitle: null,
   allQuestions: [],
+  breakPromoMessage: '',
+  breakNumber: 0,
+  totalBreaks: 0,
   playerInventory: INITIAL_JOKER_INVENTORY,
   activeEffects: {
     protections: {},
@@ -116,9 +123,9 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   setPhaseData: (data) => {
     const { allQuestions } = get();
     const question = allQuestions[data.questionIndex] || null;
-    
+
     console.log('📍 Phase data received:', data.phase, data);
-    
+
     set({
       currentPhase: data.phase,
       phaseTimeRemaining: data.timeRemaining,
@@ -126,6 +133,10 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       currentStage: data.stageNumber,
       currentQuestion: question,
       currentThemeTitle: data.themeTitle || null,
+      // Store commercial break data
+      breakPromoMessage: data.promoMessage || '',
+      breakNumber: data.breakNumber || 0,
+      totalBreaks: data.totalBreaks || 0,
     });
 
     if (data.phase === 'theme_announcement') {

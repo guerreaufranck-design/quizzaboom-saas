@@ -42,6 +42,9 @@ export const TVDisplay: React.FC = () => {
     allQuestions,
     listenToPhaseChanges,
     loadQuestions,
+    breakPromoMessage,
+    breakNumber,
+    totalBreaks,
   } = useStrategicQuizStore();
   const { stopAll, onPhaseChange } = useQuizAudio();
 
@@ -49,9 +52,6 @@ export const TVDisplay: React.FC = () => {
   const [topPlayers, setTopPlayers] = useState<Player[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
-  const [breakPromoMessage, setBreakPromoMessage] = useState<string>('');
-  const [breakNumber, setBreakNumber] = useState(0);
-  const [totalBreaks, setTotalBreaks] = useState(0);
 
   useEffect(() => {
     const initTVDisplay = async () => {
@@ -107,29 +107,6 @@ export const TVDisplay: React.FC = () => {
 
     initTVDisplay();
   }, []);
-
-  // Listen for commercial break data from phase broadcasts
-  useEffect(() => {
-    if (!sessionCode) return;
-
-    const channelName = `quiz_session_${sessionCode}`;
-    const breakChannel = supabase.channel(`${channelName}_break_listener`);
-
-    breakChannel
-      .on('broadcast', { event: 'phase_change' }, (payload: { payload: { phase: string; promoMessage?: string; breakNumber?: number; totalBreaks?: number } }) => {
-        const data = payload.payload;
-        if (data.phase === 'commercial_break') {
-          setBreakPromoMessage(data.promoMessage || '');
-          setBreakNumber(data.breakNumber || 0);
-          setTotalBreaks(data.totalBreaks || 0);
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(breakChannel);
-    };
-  }, [sessionCode]);
 
   useEffect(() => {
     // Hide instructions when timer starts (theme_announcement duration is 11s)
@@ -198,24 +175,23 @@ export const TVDisplay: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════
   if (showInstructions || !isReady || allQuestions.length === 0) {
     return (
-      <div className="h-screen bg-gradient-to-br from-qb-purple via-qb-dark to-qb-cyan p-4 overflow-hidden">
+      <div className="h-screen bg-gradient-to-br from-qb-purple via-qb-dark to-qb-cyan p-3 overflow-hidden">
         <div className="max-w-5xl mx-auto h-full flex flex-col">
-          {/* Header */}
-          <div className="text-center mb-2">
-            <AnimatedLogo size="md" className="mx-auto mb-1" />
-            <h1 className="text-4xl font-bold text-white mb-1">HOW TO PLAY</h1>
-            <p className="text-xl text-yellow-300 font-bold">Follow these 4 steps!</p>
+          {/* Header — no logo, saves ~120px */}
+          <div className="text-center mb-1">
+            <h1 className="text-3xl font-bold text-white">HOW TO PLAY</h1>
+            <p className="text-lg text-yellow-300 font-bold">Follow these 4 steps!</p>
           </div>
 
-          {/* Steps - Compact */}
-          <div className="space-y-2 flex-1 min-h-0">
+          {/* Steps - Ultra compact for 720p */}
+          <div className="space-y-1.5 flex-1 min-h-0">
             {/* Step 1: Join */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-3 border-2 border-white/30">
+            <div className="bg-white/10 backdrop-blur-xl rounded-xl p-2.5 border border-white/30">
               <div className="flex items-center gap-3">
-                <div className="text-3xl">📱</div>
+                <div className="text-2xl">📱</div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-white">1. JOIN THE GAME</h2>
-                  <p className="text-lg text-white/90">
+                  <h2 className="text-lg font-bold text-white">1. JOIN THE GAME</h2>
+                  <p className="text-base text-white/90">
                     Scan the <span className="text-yellow-300 font-bold">QR code</span> or enter session code
                   </p>
                 </div>
@@ -223,48 +199,48 @@ export const TVDisplay: React.FC = () => {
             </div>
 
             {/* Step 2: Email */}
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-3 border-2 border-yellow-300 shadow-2xl shadow-yellow-500/50 animate-pulse">
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-2.5 border border-yellow-300 shadow-lg shadow-yellow-500/50 animate-pulse">
               <div className="flex items-center gap-3">
-                <div className="text-3xl animate-bounce">📧</div>
+                <div className="text-2xl animate-bounce">📧</div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900">2. ENTER YOUR EMAIL!</h2>
-                  <p className="text-lg text-gray-900 font-bold">
-                    🎁 Receive your PERSONALIZED RESULTS
+                  <h2 className="text-lg font-bold text-gray-900">2. ENTER YOUR EMAIL!</h2>
+                  <p className="text-base text-gray-900 font-bold">
+                    🎁 Receive your PERSONALIZED RESULTS:
+                    <span className="ml-2">✅ Ranking</span>
+                    <span className="ml-2">✅ Statistics</span>
+                    <span className="ml-2">✅ Certificate</span>
                   </p>
-                  <div className="flex gap-4 text-base text-gray-900">
-                    <span>✅ Ranking</span>
-                    <span>✅ Statistics</span>
-                    <span>✅ Certificate</span>
-                  </div>
                 </div>
               </div>
             </div>
 
             {/* Step 3: Jokers */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-3 border-2 border-purple-400">
+            <div className="bg-white/10 backdrop-blur-xl rounded-xl p-2.5 border border-purple-400">
               <div className="flex items-center gap-3">
-                <div className="text-3xl">🎯</div>
+                <div className="text-2xl">🎯</div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-white">3. USE JOKERS</h2>
-                  <p className="text-lg text-white/90 mb-1">
-                    Activate during <span className="text-purple-300 font-bold">THEME phase</span> (11s):
-                  </p>
-                  <div className="flex gap-2">
-                    <div className="bg-blue-500/30 rounded-lg px-2 py-0.5 text-center">
-                      <div className="text-xl">🛡️</div>
-                      <div className="text-xs text-white">Protection</div>
-                    </div>
-                    <div className="bg-red-500/30 rounded-lg px-2 py-0.5 text-center">
-                      <div className="text-xl">🚫</div>
-                      <div className="text-xs text-white">Block</div>
-                    </div>
-                    <div className="bg-yellow-500/30 rounded-lg px-2 py-0.5 text-center">
-                      <div className="text-xl">💰</div>
-                      <div className="text-xs text-white">Steal</div>
-                    </div>
-                    <div className="bg-green-500/30 rounded-lg px-2 py-0.5 text-center">
-                      <div className="text-xl">⭐</div>
-                      <div className="text-xs text-white">Double</div>
+                  <h2 className="text-lg font-bold text-white">3. USE JOKERS</h2>
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm text-white/90">
+                      During <span className="text-purple-300 font-bold">THEME</span> (11s):
+                    </p>
+                    <div className="flex gap-1.5">
+                      <div className="bg-blue-500/30 rounded px-1.5 py-0.5 text-center">
+                        <span className="text-base">🛡️</span>
+                        <span className="text-xs text-white ml-1">Protection</span>
+                      </div>
+                      <div className="bg-red-500/30 rounded px-1.5 py-0.5 text-center">
+                        <span className="text-base">🚫</span>
+                        <span className="text-xs text-white ml-1">Block</span>
+                      </div>
+                      <div className="bg-yellow-500/30 rounded px-1.5 py-0.5 text-center">
+                        <span className="text-base">💰</span>
+                        <span className="text-xs text-white ml-1">Steal</span>
+                      </div>
+                      <div className="bg-green-500/30 rounded px-1.5 py-0.5 text-center">
+                        <span className="text-base">⭐</span>
+                        <span className="text-xs text-white ml-1">Double</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -272,16 +248,16 @@ export const TVDisplay: React.FC = () => {
             </div>
 
             {/* Step 4: Phases */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-3 border-2 border-cyan-400">
+            <div className="bg-white/10 backdrop-blur-xl rounded-xl p-2.5 border border-cyan-400">
               <div className="flex items-center gap-3">
-                <div className="text-3xl">⏱️</div>
+                <div className="text-2xl">⏱️</div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-white">4. GAME FLOW</h2>
-                  <div className="grid grid-cols-2 gap-1.5 text-base text-white/90">
-                    <div className="bg-purple-500/20 p-1 rounded">🎯 Theme (11s) → Jokers</div>
-                    <div className="bg-blue-500/20 p-1 rounded">📖 Question (15s) → Read</div>
-                    <div className="bg-cyan-500/20 p-1 rounded">✍️ Answer (24s) → Choose</div>
-                    <div className="bg-green-500/20 p-1 rounded">📊 Results (10s) → Score</div>
+                  <h2 className="text-lg font-bold text-white">4. GAME FLOW</h2>
+                  <div className="grid grid-cols-2 gap-1 text-sm text-white/90">
+                    <div className="bg-purple-500/20 px-2 py-0.5 rounded">🎯 Theme (11s) → Jokers</div>
+                    <div className="bg-blue-500/20 px-2 py-0.5 rounded">📖 Question (15s) → Read</div>
+                    <div className="bg-cyan-500/20 px-2 py-0.5 rounded">✍️ Answer (24s) → Choose</div>
+                    <div className="bg-green-500/20 px-2 py-0.5 rounded">📊 Results (10s) → Score</div>
                   </div>
                 </div>
               </div>
@@ -289,12 +265,12 @@ export const TVDisplay: React.FC = () => {
           </div>
 
           {/* Bottom */}
-          <div className="text-center mt-2">
-            <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-3">
-              <p className="text-2xl font-bold text-white mb-1">
+          <div className="text-center mt-1.5">
+            <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-2.5">
+              <p className="text-xl font-bold text-white">
                 🚀 Waiting for host to start...
               </p>
-              <p className="text-lg text-white/90 font-mono">
+              <p className="text-base text-white/90 font-mono">
                 Session: <span className="font-bold">{sessionCode}</span>
               </p>
             </div>
@@ -317,7 +293,7 @@ export const TVDisplay: React.FC = () => {
       : '';
 
     return (
-      <div className="h-screen bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 p-6 overflow-hidden relative">
+      <div className="h-screen bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 p-4 overflow-hidden relative">
         {/* Animated background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-yellow-300/20 rounded-full blur-3xl animate-pulse" />
@@ -325,13 +301,13 @@ export const TVDisplay: React.FC = () => {
         </div>
 
         <div className="max-w-5xl mx-auto flex flex-col items-center justify-between h-full relative z-10">
-          {/* Top: Logo — constrained height */}
-          <div className="text-center w-full max-h-24 overflow-hidden mb-4">
+          {/* Top: Logo — constrained */}
+          <div className="text-center w-full max-h-20 overflow-hidden">
             <AnimatedLogo banner className="mx-auto max-w-3xl" />
           </div>
 
           {/* Middle: Promo + countdown */}
-          <div className="flex-1 flex flex-col items-center justify-center w-full space-y-6 min-h-0">
+          <div className="flex-1 flex flex-col items-center justify-center w-full space-y-4 min-h-0">
             {breakNumber > 0 && totalBreaks > 0 && (
               <div className="bg-black/30 backdrop-blur-xl rounded-2xl px-6 py-2 border border-white/20">
                 <p className="text-2xl text-white font-bold uppercase tracking-wider">
@@ -341,24 +317,24 @@ export const TVDisplay: React.FC = () => {
             )}
 
             {breakPromoMessage ? (
-              <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-8 border-4 border-yellow-300/60 shadow-2xl shadow-yellow-500/20 w-full max-w-4xl">
+              <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-6 border-4 border-yellow-300/60 shadow-2xl shadow-yellow-500/20 w-full max-w-4xl">
                 <p className={`font-bold text-yellow-300 text-center leading-tight ${promoTextClass}`}>
                   {breakPromoMessage}
                 </p>
               </div>
             ) : (
-              <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-8 border-2 border-white/20 w-full max-w-4xl">
+              <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-6 border-2 border-white/20 w-full max-w-4xl">
                 <p className="text-5xl font-bold text-white text-center">
                   ☕ PAUSE
                 </p>
-                <p className="text-2xl text-white/70 text-center mt-3">
+                <p className="text-2xl text-white/70 text-center mt-2">
                   The quiz will resume shortly!
                 </p>
               </div>
             )}
 
             {/* Countdown */}
-            <div className="bg-black/40 backdrop-blur-xl rounded-3xl px-12 py-6 border-2 border-white/20">
+            <div className="bg-black/40 backdrop-blur-xl rounded-3xl px-10 py-4 border-2 border-white/20">
               <div className="flex items-center gap-4">
                 <Clock className="w-10 h-10 text-white animate-pulse" />
                 <span className="text-7xl font-mono font-bold text-white">{breakTimeDisplay}</span>
@@ -367,13 +343,10 @@ export const TVDisplay: React.FC = () => {
           </div>
 
           {/* Bottom: Branding */}
-          <div className="text-center w-full mt-4">
-            <div className="inline-block bg-black/40 backdrop-blur-xl rounded-2xl px-8 py-3 border border-white/20">
-              <p className="text-xl text-white font-bold">
-                Powered by <span className="text-yellow-300">QuizzaBoom</span>
-              </p>
-              <p className="text-lg text-white/80 mt-1 font-medium">
-                contact@quizzaboom.app
+          <div className="text-center w-full">
+            <div className="inline-block bg-black/40 backdrop-blur-xl rounded-2xl px-8 py-2 border border-white/20">
+              <p className="text-lg text-white font-bold">
+                Powered by <span className="text-yellow-300">QuizzaBoom</span> · contact@quizzaboom.app
               </p>
             </div>
           </div>
@@ -387,7 +360,7 @@ export const TVDisplay: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'quiz_complete') {
     return (
-      <div className="h-screen bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 p-6 overflow-hidden relative">
+      <div className="h-screen bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 p-4 overflow-hidden relative">
         {/* Animated background glow */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-yellow-300/20 rounded-full blur-3xl animate-pulse" />
@@ -395,54 +368,53 @@ export const TVDisplay: React.FC = () => {
         </div>
 
         <div className="max-w-6xl mx-auto h-full flex flex-col relative z-10">
-          {/* Thank you header */}
-          <div className="text-center mb-4">
-            <div className="text-6xl mb-2 animate-bounce">🎉</div>
-            <h1 className="text-6xl font-bold text-white mb-2 uppercase tracking-wider">
-              THANK YOU!
+          {/* Thank you header — compact */}
+          <div className="text-center mb-2">
+            <h1 className="text-5xl font-bold text-white uppercase tracking-wider">
+              🎉 THANK YOU! 🎉
             </h1>
-            <p className="text-2xl text-white/90 font-medium">
+            <p className="text-xl text-white/90 font-medium">
               Thank you so much for your participation!
             </p>
           </div>
 
           {/* Final Leaderboard — top 5 only */}
           {topPlayers.length > 0 && (
-            <div className="bg-black/30 backdrop-blur-xl rounded-3xl p-6 border-2 border-yellow-400/50 flex-1 min-h-0">
-              <h2 className="text-3xl font-bold text-white mb-4 flex items-center justify-center gap-3">
-                <Trophy className="w-8 h-8 text-yellow-300" />
+            <div className="bg-black/30 backdrop-blur-xl rounded-2xl p-4 border-2 border-yellow-400/50 flex-1 min-h-0">
+              <h2 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-3">
+                <Trophy className="w-7 h-7 text-yellow-300" />
                 FINAL RANKING
-                <Trophy className="w-8 h-8 text-yellow-300" />
+                <Trophy className="w-7 h-7 text-yellow-300" />
               </h2>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {topPlayers.slice(0, 5).map((player, index) => (
                   <div
                     key={player.id}
-                    className={`flex items-center gap-4 p-3 rounded-2xl transition-all ${
+                    className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${
                       index === 0
-                        ? 'bg-yellow-500/40 border-4 border-yellow-300 scale-105 shadow-lg shadow-yellow-500/30'
+                        ? 'bg-yellow-500/40 border-2 border-yellow-300 scale-[1.02] shadow-lg shadow-yellow-500/30'
                         : index === 1
-                        ? 'bg-gray-400/20 border-2 border-gray-300'
+                        ? 'bg-gray-400/20 border border-gray-300'
                         : index === 2
-                        ? 'bg-orange-700/30 border-2 border-orange-500'
+                        ? 'bg-orange-700/30 border border-orange-500'
                         : 'bg-white/10 border border-white/20'
                     }`}
                   >
-                    <div className="text-3xl font-bold text-white/80 w-16 text-center">
+                    <div className="text-2xl font-bold text-white/80 w-12 text-center">
                       {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                     </div>
-                    <div className="text-3xl">{player.avatar_emoji}</div>
+                    <div className="text-2xl">{player.avatar_emoji}</div>
                     <div className="flex-1">
-                      <div className="text-2xl font-bold text-white">
+                      <div className="text-xl font-bold text-white">
                         {player.player_name}
                       </div>
-                      <div className="text-base text-white/70">
+                      <div className="text-sm text-white/70">
                         {player.correct_answers}/{player.questions_answered} correct
                       </div>
                     </div>
-                    <div className="text-2xl font-bold text-yellow-300">
+                    <div className="text-xl font-bold text-yellow-300">
                       {player.total_score}
-                      {index === 0 && <Star className="inline w-8 h-8 ml-2 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />}
+                      {index === 0 && <Star className="inline w-6 h-6 ml-2 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />}
                     </div>
                   </div>
                 ))}
@@ -450,15 +422,12 @@ export const TVDisplay: React.FC = () => {
             </div>
           )}
 
-          {/* Footer */}
-          <div className="text-center mt-4">
-            <div className="inline-block bg-black/30 backdrop-blur-xl rounded-2xl px-8 py-3 border border-white/20">
-              <AnimatedLogo size="sm" className="mx-auto mb-1" />
-              <p className="text-xl text-white font-bold">
-                Powered by <span className="text-yellow-300">QuizzaBoom</span>
+          {/* Footer — compact */}
+          <div className="text-center mt-2">
+            <div className="inline-block bg-black/30 backdrop-blur-xl rounded-xl px-6 py-2 border border-white/20">
+              <p className="text-lg text-white font-bold">
+                Powered by <span className="text-yellow-300">QuizzaBoom</span> · quizzaboom.app
               </p>
-              <p className="text-base text-white/60">quizzaboom.app</p>
-              <p className="text-base text-white/50">contact@quizzaboom.app</p>
             </div>
           </div>
         </div>

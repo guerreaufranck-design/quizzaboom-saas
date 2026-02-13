@@ -112,7 +112,9 @@
   "create": {
     "title": "Crea tu Quiz",
     "subtitle": "Generacion de quiz con IA en segundos",
-    "chooseTheme": "Elige el tema del Quiz",
+    "chooseTheme": "Elige el/los tema(s) del Quiz",
+    "multiThemeHint": "Selecciona uno o varios temas",
+    "multiThemeSelected": "{{count}} temas seleccionados: {{themes}}",
     "quizMode": "Modo Quiz",
     "questionCount": "Numero de preguntas",
     "questions25": "25 Preguntas",
@@ -200,7 +202,8 @@
     "sendResultsEmails": "Enviar emails de resultados",
     "sent": "Enviado!",
     "playing": "En juego",
-    "paused": "En pausa"
+    "paused": "En pausa",
+    "backToDashboard": "Volver al panel"
   },
   "proDashboard": {
     "noAccount": "Sin cuenta de empresa",

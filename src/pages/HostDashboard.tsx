@@ -20,8 +20,10 @@ import {
   Volume2,
   VolumeX,
   Coffee,
+  Home,
 } from 'lucide-react';
 import { useQuizAudio } from '../hooks/useQuizAudio';
+import { useAppNavigate } from '../hooks/useAppNavigate';
 import type { GamePhase } from '../types/gamePhases';
 import { PHASE_DURATIONS, PHASE_ORDER } from '../types/gamePhases';
 import type { Question, CommercialBreakSchedule } from '../types/quiz';
@@ -40,8 +42,20 @@ export const HostDashboard: React.FC = () => {
   const [emailsSending, setEmailsSending] = useState(false);
   const [emailsSent, setEmailsSent] = useState(false);
   const { stopAll, onPhaseChange, toggleMute, isMuted } = useQuizAudio();
+  const navigate = useAppNavigate();
 
   const currentQuestion: Question | null = allQuestions[currentQuestionIndex] || null;
+
+  // Auto-send result emails when quiz completes
+  useEffect(() => {
+    if (quizCompleted && !emailsSent && !emailsSending && currentSession && currentQuiz) {
+      const playersWithEmailList = players.filter(p => p.email);
+      if (playersWithEmailList.length > 0) {
+        console.log('📧 Auto-sending results to', playersWithEmailList.length, 'players');
+        handleSendResults();
+      }
+    }
+  }, [quizCompleted]);
 
   // Get break schedule from session settings
   const sessionSettings = (currentSession?.settings as Record<string, unknown>) || {};
@@ -406,35 +420,44 @@ export const HostDashboard: React.FC = () => {
             </div>
           </Card>
 
-          <Card gradient className="p-8">
+          {/* Auto email status */}
+          <Card gradient className="p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Mail className="w-5 h-5" />
-                  {t('host.sendResults')}
-                </h3>
-                <p className="text-white/60 mt-1">
+              <div className="flex items-center gap-3">
+                <Mail className="w-5 h-5 text-white/70" />
+                <span className="text-white/70">
                   {t('host.playersWithEmail', { count: playersWithEmail.length })}
-                </p>
+                </span>
               </div>
               {emailsSent ? (
                 <div className="flex items-center gap-2 text-green-400">
                   <CheckCircle className="w-5 h-5" />
                   <span className="font-bold">{t('host.sent')}</span>
                 </div>
+              ) : emailsSending ? (
+                <div className="flex items-center gap-2 text-yellow-400">
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  <span className="font-bold">{t('common.loading')}</span>
+                </div>
               ) : (
-                <Button
-                  gradient
-                  icon={<Mail />}
-                  onClick={handleSendResults}
-                  loading={emailsSending}
-                  disabled={playersWithEmail.length === 0 || emailsSending}
-                >
-                  {t('host.sendResultsEmails')}
-                </Button>
+                <span className="text-white/50 text-sm">
+                  {playersWithEmail.length === 0 ? 'No emails to send' : 'Pending...'}
+                </span>
               )}
             </div>
           </Card>
+
+          {/* Return to Dashboard */}
+          <div className="text-center">
+            <Button
+              gradient
+              size="xl"
+              icon={<Home />}
+              onClick={() => navigate('dashboard')}
+            >
+              {t('host.backToDashboard', 'Return to Dashboard')}
+            </Button>
+          </div>
         </div>
       </div>
     );
