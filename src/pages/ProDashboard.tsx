@@ -247,7 +247,7 @@ export const ProDashboard: React.FC = () => {
                 fullWidth
                 size="lg"
                 variant="ghost"
-                onClick={() => navigate('/guide')}
+                onClick={() => navigate('/')}
                 icon={<BookOpen />}
               >
                 {t('dashboard.viewGuide')}

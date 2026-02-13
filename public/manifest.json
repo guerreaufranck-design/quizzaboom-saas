@@ -1,0 +1,19 @@
+{
+  "name": "QuizzaBoom",
+  "short_name": "QuizzaBoom",
+  "description": "AI-powered quiz platform for bars, restaurants, and events. Generate unique questions, players join via QR code, 100% automatic.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a1a",
+  "theme_color": "#0a0a1a",
+  "orientation": "portrait-primary",
+  "categories": ["entertainment", "games", "education"],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

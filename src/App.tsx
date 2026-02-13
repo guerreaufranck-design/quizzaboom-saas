@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Routes, Route, useNavigate, useSearchParams } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from './stores/useAuthStore';
 import { useQuizStore, setNavigateCallback } from './stores/useQuizStore';
 import { HomePage } from './pages/HomePage';
@@ -14,7 +14,6 @@ import { HostDashboard } from './pages/HostDashboard';
 import { TVDisplay } from './pages/TVDisplay';
 import { ProSignup } from './pages/ProSignup';
 import { ProDashboard } from './pages/ProDashboard';
-import { Guide } from './pages/Guide';
 import { SpecialOffer } from './pages/SpecialOffer';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -68,7 +67,7 @@ function App() {
       <Route path="/tv" element={<TVDisplay />} />
       <Route path="/pro-signup" element={<ProtectedRoute><ProSignup /></ProtectedRoute>} />
       <Route path="/pro-dashboard" element={<ProtectedRoute><ProDashboard /></ProtectedRoute>} />
-      <Route path="/guide" element={<Guide />} />
+      <Route path="/guide" element={<Navigate to="/" replace />} />
       <Route path="/offer" element={<SpecialOffer />} />
       <Route path="*" element={<HomePage />} />
     </Routes>

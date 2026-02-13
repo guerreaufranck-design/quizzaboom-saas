@@ -209,7 +209,7 @@ export const Dashboard: React.FC = () => {
                   <p className="text-white/60 text-sm">{t('dashboard.guideDesc')}</p>
                 </div>
               </div>
-              <Button variant="secondary" onClick={() => navigate('guide')}>
+              <Button variant="secondary" onClick={() => navigate('home')}>
                 {t('dashboard.viewGuide')}
               </Button>
             </div>

@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /create
+Disallow: /lobby
+Disallow: /play
+Disallow: /tv
+Disallow: /pro-dashboard
+
+Sitemap: https://quizzaboom.app/sitemap.xml
