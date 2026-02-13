@@ -143,11 +143,22 @@ export const useQuizStore = create<QuizState>((set, get) => ({
           .select('*')
           .eq('id', sessionData.playerId)
           .single();
-        
+
         if (player) set({ currentPlayer: player as Player });
       }
 
-      const restoredView = sessionData.currentView || 'playing';
+      // Determine correct view: if session is playing, force 'playing' view
+      // (handles case where player refreshed during lobby→playing transition)
+      let restoredView = sessionData.currentView || 'playing';
+      const currentSessionState = get().currentSession;
+      if (!sessionData.isHost && currentSessionState) {
+        const sessionStatus = (currentSessionState as unknown as Record<string, unknown>).status as string;
+        if (sessionStatus === 'playing' && restoredView === 'lobby') {
+          console.log('🔄 Session is playing but saved view was lobby — forcing playing view');
+          restoredView = 'playing';
+        }
+      }
+
       set({
         isHost: sessionData.isHost,
         currentView: restoredView,

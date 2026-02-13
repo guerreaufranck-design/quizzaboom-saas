@@ -8,6 +8,7 @@ import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { QRCodeDisplay } from '../components/ui/QRCodeDisplay';
 import { ArrowLeft, Users, Play, Copy, Check, Share2, Clock, AlertTriangle, Loader2, Monitor } from 'lucide-react';
+import { supabase } from '../services/supabase/client';
 
 export const QuizLobby: React.FC = () => {
   const { t } = useTranslation();
@@ -23,6 +24,7 @@ export const QuizLobby: React.FC = () => {
     setupRealtimeSubscription,
     cleanupRealtime,
     loadPlayers,
+    setCurrentView,
   } = useQuizStore();
 
   const [copied, setCopied] = useState(false);
@@ -49,8 +51,31 @@ export const QuizLobby: React.FC = () => {
       }
     }, 500);
 
+    // Safety net for players: poll DB every 2s to detect quiz started
+    // In case Realtime misses the quiz_started event
+    let statusPollInterval: NodeJS.Timeout | undefined;
+    if (!isHost && currentSession?.id) {
+      statusPollInterval = setInterval(async () => {
+        try {
+          const { data } = await supabase
+            .from('quiz_sessions')
+            .select('status')
+            .eq('id', currentSession.id)
+            .single();
+          if (data?.status === 'playing') {
+            console.log('🔄 Poll detected quiz started — redirecting to playing view');
+            clearInterval(statusPollInterval);
+            setCurrentView('playing');
+          }
+        } catch (err) {
+          // Ignore poll errors
+        }
+      }, 2000);
+    }
+
     return () => {
       clearInterval(refreshInterval);
+      if (statusPollInterval) clearInterval(statusPollInterval);
       cleanupRealtime();
     };
   }, [sessionCode, currentSession?.id]);

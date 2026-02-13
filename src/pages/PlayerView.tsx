@@ -169,6 +169,8 @@ export const PlayerView: React.FC = () => {
   useEffect(() => {
     if (currentQuiz?.id) loadQuestions(currentQuiz.id);
     if (sessionCode) listenToPhaseChanges(sessionCode);
+    // Fetch current phase from DB immediately on mount (don't wait for first 3s poll)
+    pollPhaseFromDB();
   }, [currentQuiz?.id, sessionCode]);
 
   useEffect(() => {
