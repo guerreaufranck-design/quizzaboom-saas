@@ -253,101 +253,116 @@
     "mistakeContact": "Vous pensez que c'est une erreur ? Contactez-nous a",
     "verificationNote": "La verification est instantanee et automatisee. Votre numero est verifie aupres des registres officiels.",
     "backToPricing": "Retour aux tarifs",
-    "businessId": "Identifiant entreprise"
+    "businessId": "Identifiant entreprise",
+    "supportTitle": "Impossible d'inscrire votre entreprise ?",
+    "supportDesc": "Notre equipe peut verifier manuellement votre entreprise. Contactez-nous et nous vous configurerons sous 24 heures.",
+    "supportEmail": "support@quizzaboom.app"
   },
   "guide": {
-    "title": "Comment utiliser QuizzaBoom",
-    "subtitle": "Tout ce que vous devez savoir pour creer et animer des quiz inoubliables",
     "back": "Retour",
-    "readyTitle": "Pret a jouer ?",
-    "readyDesc": "Creez votre premier quiz ou rejoignez une partie maintenant !",
-    "createQuiz": "Creer un Quiz",
-    "joinQuiz": "Rejoindre un Quiz",
-    "gettingStarted": {
-      "title": "Demarrage rapide",
-      "description": "Creer un quiz avec QuizzaBoom est rapide et propulse par l'IA. Voici comment demarrer en quelques minutes.",
-      "step1": "Connectez-vous avec Google ou Magic Link depuis la page d'accueil.",
-      "step2": "Cliquez sur 'Creer un Quiz' et choisissez votre theme (Culture generale, Sport, Science, Histoire, etc.).",
-      "step3": "Selectionnez le mode : Standard (quiz classique) ou Strategique (avec jokers et sabotage !).",
-      "step4": "Definissez la duree (5 a 60 minutes), la difficulte (Facile, Moyen, Difficile) et la langue.",
-      "step5": "L'IA genere des questions uniques en quelques secondes. Chaque quiz est different !",
-      "step6": "Partagez le code de session ou le QR code avec vos joueurs. C'est parti !",
-      "tip": "Chaque quiz coute 1 credit. Achetez des credits depuis la page Tarifs ou utilisez votre allocation B2B."
+    "hero": {
+      "badge": "Premier mois GRATUIT + 5 quiz - Sans carte bancaire",
+      "title": "Transformez votre etablissement en destination quiz",
+      "subtitle": "Boostez votre chiffre d'affaires, attirez de nouveaux clients et creez des soirees inoubliables avec des quiz propulses par l'IA",
+      "ctaPrimary": "JE TESTE MAINTENANT - GRATUIT",
+      "ctaSecondary": "Plans individuels",
+      "trustNoCard": "Sans carte bancaire",
+      "trust30Days": "Essai gratuit 30 jours",
+      "trust250Players": "Jusqu'a 250 joueurs"
     },
-    "gamePhases": {
-      "title": "Phases de jeu",
-      "description": "Chaque question passe par 5 phases. Comprendre le timing aide a mieux jouer.",
-      "step1": "Annonce du theme (5 secondes) - Le theme en cours s'affiche (ex: 'Geographie', 'Cinema').",
-      "step2": "Affichage de la question (8 secondes) - La question apparait a l'ecran. Lisez bien !",
-      "step3": "Selection de la reponse (15 secondes) - Les joueurs choisissent leur reponse. En mode Strategique, les jokers s'activent ici.",
-      "step4": "Resultats (5 secondes) - La bonne reponse est revelee et les scores mis a jour en temps reel.",
-      "step5": "Intermission (5 secondes) - Courte pause avant la question suivante. Consultez le classement !",
-      "tip": "Temps total par question : ~38 secondes. Un quiz de 20 questions dure environ 12-13 minutes."
+    "roi": {
+      "title": "Pourquoi les soirees quiz ?",
+      "subtitle": "Les soirees quiz sont un levier de revenus prouve pour les bars, restaurants et salles d'evenements",
+      "stat1Value": "+30%",
+      "stat1Label": "d'augmentation des ventes de boissons pendant les soirees quiz",
+      "stat2Value": "2x",
+      "stat2Label": "plus de visites de retour des joueurs de quiz",
+      "stat3Value": "$0",
+      "stat3Label": "d'investissement materiel - juste une TV ou un projecteur",
+      "compareTitle": "QuizzaBoom vs. Salles de quiz traditionnelles",
+      "quizRoomCon1": "Location couteuse de la salle",
+      "quizRoomCon2": "Horaires fixes, flexibilite limitee",
+      "quizRoomCon3": "Limite a un seul lieu",
+      "quizRoomCon4": "Preparation manuelle des questions",
+      "qbPro1": "Gratuit pour commencer, payez selon votre croissance",
+      "qbPro2": "Jouez quand vous voulez, a votre rythme",
+      "qbPro3": "Competitions multi-sites entre etablissements",
+      "qbPro4": "L'IA genere des questions uniques a chaque fois"
     },
-    "jokers": {
-      "title": "Jokers strategiques",
-      "description": "En mode Strategique, chaque joueur dispose de jokers speciaux qui peuvent changer la donne ! Utilisez-les avec sagesse.",
-      "step1": "Protection (icone bouclier) - Bloque toutes les attaques contre vous ce tour. Utilisez-le quand vous sentez le sabotage arriver.",
-      "step2": "Blocage (icone interdiction) - Empeche un adversaire choisi de repondre. Il marque zero !",
-      "step3": "Vol (icone piece) - Vole 100% des points d'un adversaire choisi pour cette question. Risque eleve, recompense elevee !",
-      "step4": "Double Points (icone etoile) - Double votre score pour cette question. Combinez avec une bonne reponse pour un impact maximum !",
-      "step5": "Chaque joker ne peut etre utilise qu'une seule fois par partie. Le timing est crucial !",
-      "step6": "La Protection bloque le Blocage et le Vol. Si quelqu'un vous bloque mais que votre Protection est active, vous pouvez quand meme repondre.",
-      "tip": "Astuce : Gardez votre Protection pour les derniers tours quand les adversaires sont plus susceptibles d'attaquer le leader."
+    "howItWorks": {
+      "title": "Comment ca marche",
+      "subtitle": "De l'inscription a la soiree quiz en moins de 5 minutes",
+      "step1Title": "Inscrivez votre entreprise",
+      "step1Desc": "L'IA verifie votre entreprise en quelques secondes. Acces immediat a votre essai gratuit.",
+      "step2Title": "Lancez un quiz",
+      "step2Desc": "Choisissez un theme ou laissez l'IA vous surprendre. Questions uniques generees a la volee.",
+      "step3Title": "Les clients jouent sur smartphone",
+      "step3Desc": "Aucun telechargement. Les joueurs scannent un QR code et jouent instantanement.",
+      "step4Title": "Servez les boissons, tout est automatique",
+      "step4Desc": "Tout est entierement automatique : questions, chronometre, classement, meme les messages promo pendant les pauses.",
+      "autoMessage": "100% automatique apres le lancement - messages pendant les pauses, classement en direct, resultats par email !"
     },
-    "hosting": {
-      "title": "Animer un quiz",
-      "description": "En tant qu'animateur, vous controlez toute l'experience du quiz. Voici comment organiser une soiree quiz parfaite.",
-      "step1": "Apres avoir cree un quiz, vous obtenez un code de session unique de 6 caracteres et un QR code.",
-      "step2": "Partagez le code ou le QR avec les joueurs. Ils le scannent ou entrent le code sur la page de connexion.",
-      "step3": "Attendez que tous les joueurs rejoignent le lobby. Vous voyez qui se connecte en temps reel.",
-      "step4": "Appuyez sur 'Demarrer le Quiz' quand tout le monde est pret. Le jeu commence avec le premier theme.",
-      "step5": "Utilisez les controles : Pause, passer une phase, ou surveillez le classement en direct.",
-      "step6": "A la fin, consultez le classement final et envoyez optionnellement les resultats par email.",
-      "tip": "L'animateur n'a PAS besoin d'une TV. Le tableau de bord fonctionne sur tout appareil (telephone, tablette, PC)."
+    "features": {
+      "title": "Tout ce dont vous avez besoin",
+      "subtitle": "Des fonctionnalites puissantes concues pour les professionnels",
+      "ai": {
+        "title": "Themes generes par IA",
+        "desc": "Des questions uniques a chaque fois. Jamais le meme quiz deux fois."
+      },
+      "tv": {
+        "title": "Affichage TV / Projecteur",
+        "desc": "Diffusez sur n'importe quel ecran. Aucun equipement special requis."
+      },
+      "mobile": {
+        "title": "Jeu sur smartphone",
+        "desc": "Aucune application a telecharger. Les joueurs rejoignent via QR code en secondes."
+      },
+      "multiSite": {
+        "title": "Competitions multi-sites",
+        "desc": "Concours inter-etablissements. Competez entre bars, restaurants ou bureaux."
+      },
+      "auto": {
+        "title": "Entierement automatique",
+        "desc": "Lancez et oubliez. Questions, chronometre, scores - tout est gere."
+      },
+      "analytics": {
+        "title": "Resultats & Statistiques",
+        "desc": "Envoyez les resultats personnalises par email a chaque joueur automatiquement."
+      },
+      "strategic": {
+        "title": "Mode strategique",
+        "desc": "Jokers, sabotage et boucliers pour un maximum d'excitation."
+      },
+      "breaks": {
+        "title": "Pauses commerciales",
+        "desc": "Affichez vos promotions et messages pendant les pauses du quiz."
+      }
     },
-    "tvDisplay": {
-      "title": "Ecran TV",
-      "description": "Diffusez le quiz sur grand ecran pour une experience ultime ! Parfait pour les bars, soirees et evenements.",
-      "step1": "Ouvrez l'URL TV Display : votre-domaine/tv?code=CODE_SESSION (remplacez par votre code de quiz).",
-      "step2": "Diffusez cet onglet sur votre TV via Chromecast, AirPlay ou cable HDMI.",
-      "step3": "L'ecran TV se synchronise automatiquement avec le quiz en temps reel via WebSocket.",
-      "step4": "Il affiche : la question en cours, les options, le compte a rebours, le theme et le classement en direct.",
-      "step5": "L'ecran TV est en lecture seule. Aucune interaction necessaire une fois charge !",
-      "tip": "Plusieurs TV peuvent afficher le meme quiz simultanement. Parfait pour les grands espaces avec plusieurs ecrans !"
+    "pricing": {
+      "title": "Tarifs simples et transparents",
+      "perMonth": "/mois",
+      "freeTrial": "ESSAI GRATUIT",
+      "starterTrial": "Premier mois entierement GRATUIT",
+      "starterFeature1": "5 quiz par mois",
+      "starterFeature2": "Jusqu'a 250 joueurs par session",
+      "starterFeature3": "Mode strategique inclus",
+      "starterFeature4": "Resultats par email & statistiques",
+      "starterFeature5": "Support standard",
+      "startTrial": "Commencer mon essai gratuit",
+      "proFeature1": "Quiz illimites",
+      "proFeature2": "Jusqu'a 250 joueurs par session",
+      "proFeature3": "2 places equipe",
+      "proFeature4": "Marque blanche (sous-domaine personnalise)",
+      "proFeature5": "Support prioritaire",
+      "proFeature6": "Statistiques avancees",
+      "getPro": "Plan Pro",
+      "individualLink": "Vous cherchez des plans individuels ?"
     },
-    "remotePlay": {
-      "title": "Jeu a distance & Competitions inter-sites",
-      "description": "QuizzaBoom supporte le jeu a distance ! Organisez des competitions entre differents lieux ou chaque equipe joue depuis sa propre location.",
-      "step1": "L'animateur cree un quiz et partage le code de session avec tous les sites.",
-      "step2": "Chaque site ouvre l'URL TV Display (votre-domaine/tv?code=CODE) et le diffuse sur sa TV locale.",
-      "step3": "Les joueurs de chaque site rejoignent avec le meme code de session sur leurs smartphones.",
-      "step4": "Tous les joueurs et TVs sont synchronises en temps reel via Supabase Realtime (WebSocket).",
-      "step5": "Le classement se met a jour en direct sur TOUS les sites. Tout le monde voit les memes scores instantanement !",
-      "step6": "Un seul animateur controle tout. Les joueurs partout repondent en meme temps, aux memes questions.",
-      "step7": "Parfait pour : soirees quiz familiales entre villes, team building entre bureaux, ligues de quiz entre bars.",
-      "tip": "Pas de limite sur le nombre d'ecrans TV. 1 animateur, TVs illimitees, jusqu'a 250 joueurs !"
-    },
-    "playerExperience": {
-      "title": "Experience joueur",
-      "description": "Rejoindre un quiz est simple et fonctionne sur tout appareil avec un navigateur. Aucun telechargement !",
-      "step1": "Ouvrez la page de connexion et entrez le code de session a 6 caracteres (ou scannez le QR code).",
-      "step2": "Choisissez un pseudo et selectionnez votre avatar parmi 16 emojis amusants.",
-      "step3": "Entrez optionnellement votre email pour recevoir vos resultats apres le quiz.",
-      "step4": "Attendez dans le lobby que l'animateur lance la partie.",
-      "step5": "Quand une question apparait, touchez votre reponse avant la fin du compte a rebours !",
-      "step6": "En mode Strategique, activez les jokers en les touchant avant de selectionner votre reponse.",
-      "step7": "Consultez le classement en direct entre les questions pour voir votre position.",
-      "tip": "Connexion perdue ? Pas de panique ! QuizzaBoom vous reconnecte automatiquement a la partie."
-    },
-    "emailResults": {
-      "title": "Resultats par email",
-      "description": "Apres le quiz, envoyez les resultats personnalises a tous les joueurs qui ont fourni leur email.",
-      "step1": "Les joueurs peuvent entrer leur email en option en rejoignant le quiz.",
-      "step2": "Apres la fin du quiz, l'animateur peut declencher 'Envoyer les resultats' depuis son tableau de bord.",
-      "step3": "Chaque joueur recoit un email personnalise avec son score, son classement et ses statistiques.",
-      "step4": "Les resultats incluent : score total, nombre de bonnes reponses, position au classement et utilisation des jokers.",
-      "tip": "Les emails sont envoyes via SendGrid et respectent le consentement RGPD. Les joueurs choisissent de partager leur email."
+    "cta": {
+      "title": "Pret a transformer votre etablissement ?",
+      "subtitle": "Rejoignez les etablissements qui utilisent deja QuizzaBoom pour booster leur activite",
+      "button": "Commencer mon essai gratuit",
+      "support": "Questions ? Contactez-nous a"
     }
   },
   "dashboard": {

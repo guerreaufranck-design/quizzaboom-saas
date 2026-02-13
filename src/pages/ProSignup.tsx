@@ -6,7 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
-import { ArrowLeft, Building2, Search, CheckCircle, XCircle, AlertCircle, Shield } from 'lucide-react';
+import { ArrowLeft, Building2, Search, CheckCircle, XCircle, AlertCircle, Shield, Mail } from 'lucide-react';
 import type { VerificationResult, Organization } from '../types/organization';
 import { useOrganizationStore } from '../stores/useOrganizationStore';
 
@@ -207,12 +207,29 @@ export const ProSignup: React.FC = () => {
             >
               {t('proSignup.viewPersonalPlans')}
             </Button>
-            <p className="text-white/50 text-xs mt-4">
-              {t('proSignup.mistakeContact')}{' '}
-              <a href="mailto:support@quizzaboom.app" className="text-qb-cyan">
-                support@quizzaboom.app
-              </a>
-            </p>
+            {/* Prominent Support Contact Card */}
+            <Card className="mt-6 p-6 bg-qb-cyan/10 border-2 border-qb-cyan/30">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-qb-cyan/20 rounded-2xl flex items-center justify-center shrink-0">
+                  <Mail className="w-7 h-7 text-qb-cyan" />
+                </div>
+                <div className="text-left">
+                  <h4 className="text-lg font-bold text-white mb-1">
+                    {t('proSignup.supportTitle')}
+                  </h4>
+                  <p className="text-white/70 text-sm mb-2">
+                    {t('proSignup.supportDesc')}
+                  </p>
+                  <a
+                    href="mailto:support@quizzaboom.app"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-qb-cyan/20 hover:bg-qb-cyan/30 rounded-lg transition-colors"
+                  >
+                    <Mail className="w-4 h-4 text-qb-cyan" />
+                    <span className="text-qb-cyan font-bold">support@quizzaboom.app</span>
+                  </a>
+                </div>
+              </div>
+            </Card>
           </div>
         </Card>
       </div>
