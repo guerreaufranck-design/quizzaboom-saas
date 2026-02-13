@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useQuizAudio } from '../hooks/useQuizAudio';
 import { useAppNavigate } from '../hooks/useAppNavigate';
+import { useCountdown } from '../hooks/useCountdown';
 import type { GamePhase } from '../types/gamePhases';
 import { PHASE_DURATIONS, PHASE_ORDER } from '../types/gamePhases';
 import type { Question, CommercialBreakSchedule } from '../types/quiz';
@@ -37,12 +38,17 @@ export const HostDashboard: React.FC = () => {
   const [currentPhaseState, setCurrentPhaseState] = useState<GamePhase>('theme_announcement');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [phaseTimeRemaining, setPhaseTimeRemaining] = useState(8);
+  const [phaseEndTime, setPhaseEndTime] = useState<number | null>(null);
+  const [pausedRemaining, setPausedRemaining] = useState<number | null>(null);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [emailsSending, setEmailsSending] = useState(false);
   const [emailsSent, setEmailsSent] = useState(false);
   const { stopAll, onPhaseChange, toggleMute, isMuted } = useQuizAudio();
   const navigate = useAppNavigate();
+
+  const displaySeconds = useCountdown(phaseEndTime, () => {
+    if (isPlaying) handlePhaseComplete();
+  });
 
   const currentQuestion: Question | null = allQuestions[currentQuestionIndex] || null;
 
@@ -78,33 +84,7 @@ export const HostDashboard: React.FC = () => {
     }
   }, [currentSession?.id]);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setPhaseTimeRemaining((prev) => {
-          if (prev <= 1) {
-            handlePhaseComplete();
-            return 0;
-          }
-          const newTime = prev - 1;
-
-          if (sessionCode) {
-            supabase.channel(`quiz_session_${sessionCode}`).send({
-              type: 'broadcast',
-              event: 'timer_update',
-              payload: { timeRemaining: newTime }
-            });
-          }
-
-          return newTime;
-        });
-      }, 1000);
-    }
-
-    return () => clearInterval(interval);
-  }, [isPlaying, currentPhaseState, currentQuestionIndex, sessionCode]);
+  // Timer is now handled by useCountdown hook above (timestamp-based)
 
   // Check if a commercial break should happen after the given question index
   const getBreakAfterQuestion = (questionIndex: number) => {
@@ -158,6 +138,7 @@ export const HostDashboard: React.FC = () => {
         questionIndex: currentQuestionIndex,
         stageNumber: Math.floor(currentQuestionIndex / 5),
         timeRemaining: 0,
+        phaseEndTime: 0,
         currentQuestion: null,
         themeTitle: 'Quiz Complete',
         topPlayers: sortedPlayers.slice(0, 10).map((p, idx) => ({
@@ -169,20 +150,25 @@ export const HostDashboard: React.FC = () => {
         })),
       });
     }
+    setPhaseEndTime(null);
     setIsPlaying(false);
     setQuizCompleted(true);
     stopAll();
   };
 
   const changePhaseWithBreak = (durationSeconds: number, breakPromoMessage: string | undefined, breakNumber: number, totalBreaks: number) => {
+    const endTime = Date.now() + durationSeconds * 1000;
+
     setCurrentPhaseState('commercial_break');
-    setPhaseTimeRemaining(durationSeconds);
+    setPhaseEndTime(endTime);
+    setPausedRemaining(null);
 
     const phaseData = {
       phase: 'commercial_break' as GamePhase,
       questionIndex: currentQuestionIndex,
       stageNumber: Math.floor(currentQuestionIndex / 5),
       timeRemaining: durationSeconds,
+      phaseEndTime: endTime,
       currentQuestion: null,
       themeTitle: 'Commercial Break',
       promoMessage: breakPromoMessage || promoMessage,
@@ -216,15 +202,18 @@ export const HostDashboard: React.FC = () => {
     const question = allQuestions[questionIndex];
 
     const phaseDuration = PHASE_DURATIONS[newPhase];
+    const endTime = Date.now() + phaseDuration * 1000;
 
     setCurrentPhaseState(newPhase);
-    setPhaseTimeRemaining(phaseDuration);
+    setPhaseEndTime(endTime);
+    setPausedRemaining(null);
 
     const phaseData = {
       phase: newPhase,
       questionIndex: questionIndex,
       stageNumber,
       timeRemaining: phaseDuration,
+      phaseEndTime: endTime,
       currentQuestion: question || null,
       themeTitle: question?.stage_id || t('host.defaultTheme'),
     };
@@ -258,14 +247,49 @@ export const HostDashboard: React.FC = () => {
   };
 
   const handleStartPause = () => {
-    setIsPlaying(!isPlaying);
-    if (!isPlaying && currentPhaseState === 'theme_announcement' && currentQuestionIndex === 0) {
-      changePhase('theme_announcement', 0);
+    if (isPlaying) {
+      // === PAUSE ===
+      // Snapshot remaining ms, null-out phaseEndTime so useCountdown stops
+      const remaining = phaseEndTime ? Math.max(0, phaseEndTime - Date.now()) : 0;
+      setPausedRemaining(remaining);
+      setPhaseEndTime(null);
+      setIsPlaying(false);
+    } else {
+      // === RESUME / START ===
+      if (currentPhaseState === 'theme_announcement' && currentQuestionIndex === 0 && pausedRemaining === null) {
+        // First start of the quiz
+        setIsPlaying(true);
+        changePhase('theme_announcement', 0);
+      } else if (pausedRemaining !== null && pausedRemaining > 0) {
+        // Resume from pause
+        const newEndTime = Date.now() + pausedRemaining;
+        setPhaseEndTime(newEndTime);
+        setPausedRemaining(null);
+        setIsPlaying(true);
+
+        // Re-broadcast the phase with new phaseEndTime so TV/players resync
+        if (sessionCode) {
+          const question = allQuestions[currentQuestionIndex];
+          broadcastPhaseChange(sessionCode, {
+            phase: currentPhaseState,
+            questionIndex: currentQuestionIndex,
+            stageNumber: Math.floor(currentQuestionIndex / 5),
+            timeRemaining: Math.ceil(pausedRemaining / 1000),
+            phaseEndTime: newEndTime,
+            currentQuestion: question || null,
+            themeTitle: question?.stage_id || t('host.defaultTheme'),
+          });
+        }
+      } else {
+        // Edge case: resume but nothing paused — just unpause
+        setIsPlaying(true);
+      }
     }
   };
 
   const handleSkipPhase = () => {
-    setPhaseTimeRemaining(1);
+    // Set phaseEndTime to now → useCountdown will reach 0 → handlePhaseComplete fires
+    setPhaseEndTime(Date.now());
   };
 
   const handleManualPhaseChange = (phase: GamePhase) => {
@@ -516,10 +540,12 @@ export const HostDashboard: React.FC = () => {
                   {getPhaseLabel(currentPhaseState)}
                 </h2>
                 <div className="text-7xl font-mono font-bold text-white">
-                  {currentPhaseState === 'commercial_break'
-                    ? formatBreakTime(phaseTimeRemaining)
-                    : `${phaseTimeRemaining}s`
-                  }
+                  {(() => {
+                    const seconds = pausedRemaining !== null ? Math.ceil(pausedRemaining / 1000) : displaySeconds;
+                    return currentPhaseState === 'commercial_break'
+                      ? formatBreakTime(seconds)
+                      : `${seconds}s`;
+                  })()}
                 </div>
                 <div className="text-xl text-white/90">
                   {t('host.questionProgress', { current: currentQuestionIndex + 1, total: allQuestions.length })}

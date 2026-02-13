@@ -6,6 +6,7 @@ import { Card } from '../components/ui/Card';
 import { Clock, Trophy, Star } from 'lucide-react';
 import type { Player } from '../types/quiz';
 import { useQuizAudio } from '../hooks/useQuizAudio';
+import { useCountdown } from '../hooks/useCountdown';
 import { AnimatedLogo } from '../components/AnimatedLogo';
 
 /**
@@ -39,6 +40,7 @@ export const TVDisplay: React.FC = () => {
   const {
     currentPhase,
     phaseTimeRemaining,
+    phaseEndTime,
     currentQuestion,
     currentThemeTitle,
     allQuestions,
@@ -49,6 +51,7 @@ export const TVDisplay: React.FC = () => {
     totalBreaks,
   } = useStrategicQuizStore();
   const { stopAll, onPhaseChange } = useQuizAudio();
+  const displaySeconds = useCountdown(phaseEndTime);
 
   const [sessionCode, setSessionCode] = useState<string>('');
   const [topPlayers, setTopPlayers] = useState<Player[]>([]);
@@ -111,11 +114,11 @@ export const TVDisplay: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Hide instructions when timer starts (theme_announcement duration is 11s)
-    if (currentPhase === 'theme_announcement' && phaseTimeRemaining < 11 && showInstructions) {
+    // Hide instructions when timer starts (phaseEndTime is set by the host)
+    if (currentPhase === 'theme_announcement' && phaseEndTime && showInstructions) {
       setShowInstructions(false);
     }
-  }, [currentPhase, phaseTimeRemaining]);
+  }, [currentPhase, phaseEndTime]);
 
   // Trigger tick-tock audio per phase
   useEffect(() => {
@@ -286,8 +289,8 @@ export const TVDisplay: React.FC = () => {
   // COMMERCIAL BREAK: Promo screen — constrained for viewport
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'commercial_break') {
-    const breakMinutes = Math.floor(phaseTimeRemaining / 60);
-    const breakSeconds = phaseTimeRemaining % 60;
+    const breakMinutes = Math.floor(displaySeconds / 60);
+    const breakSeconds = displaySeconds % 60;
     const breakTimeDisplay = `${breakMinutes}:${breakSeconds.toString().padStart(2, '0')}`;
 
     const promoTextClass = breakPromoMessage
@@ -461,7 +464,7 @@ export const TVDisplay: React.FC = () => {
           </div>
           <div className="flex items-center justify-center gap-4 text-white">
             <Clock className="w-12 h-12 animate-pulse" />
-            <span className="text-7xl font-mono font-bold">{phaseTimeRemaining}</span>
+            <span className="text-7xl font-mono font-bold">{displaySeconds}</span>
           </div>
         </div>
       </div>
@@ -486,7 +489,7 @@ export const TVDisplay: React.FC = () => {
           </div>
           <div className="flex items-center justify-center gap-4 text-white">
             <Clock className="w-12 h-12 animate-pulse" />
-            <span className="text-7xl font-mono font-bold">{phaseTimeRemaining}</span>
+            <span className="text-7xl font-mono font-bold">{displaySeconds}</span>
           </div>
         </div>
       </div>
@@ -511,7 +514,7 @@ export const TVDisplay: React.FC = () => {
             <div className="inline-flex items-center gap-4 px-8 py-3 bg-qb-cyan/20 rounded-3xl">
               <Clock className="w-10 h-10 text-qb-cyan animate-pulse" />
               <span className="text-6xl font-mono font-bold text-white">
-                {phaseTimeRemaining}
+                {displaySeconds}
               </span>
             </div>
           </div>
@@ -565,7 +568,7 @@ export const TVDisplay: React.FC = () => {
           <div className="inline-flex items-center gap-4 px-8 py-4 bg-white/10 rounded-3xl">
             <Clock className="w-10 h-10 text-white" />
             <span className="text-5xl font-mono font-bold text-white">
-              {phaseTimeRemaining}
+              {displaySeconds}
             </span>
           </div>
         </div>
@@ -632,7 +635,7 @@ export const TVDisplay: React.FC = () => {
             <div className="inline-flex items-center gap-3 px-6 py-3 bg-qb-cyan/20 rounded-2xl">
               <p className="text-2xl text-white/80">{t('tv.nextQuestionIn')}</p>
               <span className="text-4xl font-mono font-bold text-qb-cyan">
-                {phaseTimeRemaining}
+                {displaySeconds}
               </span>
             </div>
           </div>

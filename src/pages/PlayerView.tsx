@@ -5,6 +5,7 @@ import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Shield, Ban, Coins, Star, Clock, X, Trophy } from 'lucide-react';
+import { useCountdown } from '../hooks/useCountdown';
 import { supabase } from '../services/supabase/client';
 
 export const PlayerView: React.FC = () => {
@@ -12,7 +13,7 @@ export const PlayerView: React.FC = () => {
   const { currentPlayer, sessionCode, currentQuiz, players, loadPlayers, currentSession } = useQuizStore();
   const {
     currentPhase,
-    phaseTimeRemaining,
+    phaseEndTime,
     currentQuestion,
     playerInventory,
     activeEffects,
@@ -29,6 +30,7 @@ export const PlayerView: React.FC = () => {
     pendingJokerType,
     closeTargetSelector,
   } = useStrategicQuizStore();
+  const displaySeconds = useCountdown(phaseEndTime);
 
   const wakeLockRef = useRef<any>(null);
   const [playerRank, setPlayerRank] = useState(0);
@@ -55,7 +57,7 @@ export const PlayerView: React.FC = () => {
       if (session.status === 'finished' || session.status === 'completed') return;
 
       const settings = session.settings as Record<string, unknown>;
-      const dbPhase = settings?.currentPhase as { phase: string; questionIndex: number; stageNumber: number; timeRemaining: number; currentQuestion: unknown; themeTitle?: string } | undefined;
+      const dbPhase = settings?.currentPhase as { phase: string; questionIndex: number; stageNumber: number; timeRemaining: number; phaseEndTime?: number; currentQuestion: unknown; themeTitle?: string } | undefined;
 
       if (dbPhase) {
         const { currentPhase: localPhase, currentQuestionIndex: localQIdx } = useStrategicQuizStore.getState();
@@ -317,7 +319,7 @@ export const PlayerView: React.FC = () => {
             <div className="flex items-center justify-center gap-2">
               <Clock className="w-6 h-6 text-white animate-pulse" />
               <span className="text-5xl font-mono font-bold text-white">
-                {Math.floor(phaseTimeRemaining / 60)}:{(phaseTimeRemaining % 60).toString().padStart(2, '0')}
+                {Math.floor(displaySeconds / 60)}:{(displaySeconds % 60).toString().padStart(2, '0')}
               </span>
             </div>
             <p className="text-sm text-white/80 mt-2">{t('player.quizResumeShortly')}</p>
@@ -332,7 +334,7 @@ export const PlayerView: React.FC = () => {
             </div>
             <div className="flex items-center justify-center gap-2">
               <Clock className="w-6 h-6 text-white animate-pulse" />
-              <span className="text-5xl font-mono font-bold text-white">{phaseTimeRemaining}s</span>
+              <span className="text-5xl font-mono font-bold text-white">{displaySeconds}s</span>
             </div>
           </Card>
         )}

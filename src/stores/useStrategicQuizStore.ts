@@ -11,6 +11,7 @@ interface PhaseData {
   questionIndex: number;
   stageNumber: number;
   timeRemaining: number;
+  phaseEndTime?: number;   // Unix ms timestamp when phase expires
   currentQuestion: Question | null;
   themeTitle?: string;
   topPlayers?: Array<{
@@ -29,6 +30,7 @@ interface PhaseData {
 interface StrategicQuizState {
   currentPhase: GamePhase;
   phaseTimeRemaining: number;
+  phaseEndTime: number | null;
   currentStage: number;
   currentQuestionIndex: number;
   currentQuestion: Question | null;
@@ -79,6 +81,7 @@ let globalRealtimeChannel: ReturnType<typeof supabase.channel> | null = null;
 export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   currentPhase: 'theme_announcement',
   phaseTimeRemaining: 25,
+  phaseEndTime: null,
   currentStage: 0,
   currentQuestionIndex: 0,
   currentQuestion: null,
@@ -129,6 +132,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     set({
       currentPhase: data.phase,
       phaseTimeRemaining: data.timeRemaining,
+      phaseEndTime: data.phaseEndTime || null,
       currentQuestionIndex: data.questionIndex,
       currentStage: data.stageNumber,
       currentQuestion: question,
@@ -404,9 +408,6 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       .on('broadcast', { event: 'phase_change' }, (payload: { payload: PhaseData }) => {
         console.log('📢 Phase change received:', payload.payload.phase);
         get().setPhaseData(payload.payload);
-      })
-      .on('broadcast', { event: 'timer_update' }, (payload: { payload: { timeRemaining: number } }) => {
-        set({ phaseTimeRemaining: payload.payload.timeRemaining });
       })
       .on('broadcast', { event: 'score_updated' }, () => {
         const sessionId = useQuizStore.getState().currentSession?.id;
