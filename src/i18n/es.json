@@ -359,5 +359,14 @@
     "viewGuide": "Ver guia",
     "proDashboard": "Dashboard Pro",
     "proDashboardDesc": "Accede a tu panel profesional y gestiona tu suscripcion B2B."
+  },
+  "lobby": {
+    "startWarningTitle": "Advertencia",
+    "startWarningMessage": "Una vez iniciado el quiz, se considerara como usado y se deducira un credito de su cuenta.",
+    "confirmStart": "Iniciar Quiz",
+    "cancelStart": "Cancelar",
+    "noPlayers": "Espera a que al menos un jugador se una!",
+    "noCreditsError": "No hay creditos disponibles. Compre creditos para iniciar el quiz.",
+    "startError": "No se pudo iniciar el quiz. Intentelo de nuevo."
   }
 }

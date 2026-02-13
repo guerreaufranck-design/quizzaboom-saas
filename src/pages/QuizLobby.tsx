@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuizStore } from '../stores/useQuizStore';
 import { useAppNavigate } from '../hooks/useAppNavigate';
+import { useUserEntitlement } from '../hooks/useUserEntitlement';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { Modal } from '../components/ui/Modal';
 import { QRCodeDisplay } from '../components/ui/QRCodeDisplay';
-import { ArrowLeft, Users, Play, Copy, Check, Share2, Clock } from 'lucide-react';
+import { ArrowLeft, Users, Play, Copy, Check, Share2, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 
 export const QuizLobby: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useAppNavigate();
+  const { consumeCredit } = useUserEntitlement();
   const {
     currentSession,
     currentQuiz,
@@ -21,6 +26,9 @@ export const QuizLobby: React.FC = () => {
   } = useQuizStore();
 
   const [copied, setCopied] = useState(false);
+  const [showStartWarning, setShowStartWarning] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
   useEffect(() => {
     // Load players immediately
@@ -60,12 +68,34 @@ export const QuizLobby: React.FC = () => {
     alert('Link copied to clipboard!');
   };
 
-  const handleStartQuiz = async () => {
+  const handleStartQuiz = () => {
     if (players.length === 0) {
-      alert('Wait for at least one player to join!');
+      alert(t('lobby.noPlayers'));
       return;
     }
-    await startSession();
+    setStartError(null);
+    setShowStartWarning(true);
+  };
+
+  const handleConfirmStart = async () => {
+    setIsStarting(true);
+    setStartError(null);
+    try {
+      await consumeCredit();
+      console.log('✅ Credit consumed successfully');
+      await startSession();
+      setShowStartWarning(false);
+    } catch (error) {
+      console.error('❌ Failed to start quiz:', error);
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('No available credits') || message.includes('credits')) {
+        setStartError(t('lobby.noCreditsError'));
+      } else {
+        setStartError(t('lobby.startError'));
+      }
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   if (!currentSession || !currentQuiz) {
@@ -350,6 +380,47 @@ export const QuizLobby: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Start Quiz Confirmation Modal */}
+      <Modal
+        isOpen={showStartWarning}
+        onClose={() => !isStarting && setShowStartWarning(false)}
+        title={t('lobby.startWarningTitle')}
+        size="sm"
+      >
+        <div className="text-center">
+          <div className="w-16 h-16 bg-qb-yellow/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-qb-yellow" />
+          </div>
+          <p className="text-white/80 text-lg mb-6">
+            {t('lobby.startWarningMessage')}
+          </p>
+          {startError && (
+            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
+              {startError}
+            </div>
+          )}
+          <div className="flex gap-3">
+            <Button
+              fullWidth
+              variant="ghost"
+              onClick={() => setShowStartWarning(false)}
+              disabled={isStarting}
+            >
+              {t('lobby.cancelStart')}
+            </Button>
+            <Button
+              fullWidth
+              gradient
+              onClick={handleConfirmStart}
+              disabled={isStarting}
+              icon={isStarting ? <Loader2 className="animate-spin" /> : <Play />}
+            >
+              {isStarting ? t('common.loading') : t('lobby.confirmStart')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

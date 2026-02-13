@@ -359,5 +359,14 @@
     "viewGuide": "Anleitung ansehen",
     "proDashboard": "Pro-Dashboard",
     "proDashboardDesc": "Zugriff auf Ihr professionelles Dashboard und Verwaltung Ihres B2B-Abonnements."
+  },
+  "lobby": {
+    "startWarningTitle": "Achtung",
+    "startWarningMessage": "Sobald das Quiz gestartet wird, gilt es als verwendet und ein Credit wird von Ihrem Konto abgezogen.",
+    "confirmStart": "Quiz starten",
+    "cancelStart": "Abbrechen",
+    "noPlayers": "Warte, bis mindestens ein Spieler beigetreten ist!",
+    "noCreditsError": "Keine Credits verfugbar. Bitte kaufen Sie Credits, um das Quiz zu starten.",
+    "startError": "Quiz konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
   }
 }

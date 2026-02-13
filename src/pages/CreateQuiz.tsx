@@ -9,7 +9,7 @@ import { ArrowLeft, Sparkles, Hash, Target, Globe, Zap, Loader2, X, Shield, Ban,
 import { calculateQuizStructureFromCount } from '../services/gemini';
 import { THEMES, THEME_MODES, type ThemeCategory, type ThemeMode } from '../types/themes';
 import type { QuizGenRequest, CommercialBreakConfig } from '../types/quiz';
-import { useUserEntitlement } from '../hooks/useUserEntitlement';
+
 
 const QUESTION_COUNT_OPTIONS = [
   { value: 25 as const, emoji: '⚡', labelKey: 'create.questions25', descKey: 'create.questions25Desc' },
@@ -29,8 +29,6 @@ export const CreateQuiz: React.FC = () => {
   const { t } = useTranslation();
   const { generateQuiz, createSession, isLoading } = useQuizStore();
   const navigate = useAppNavigate();
-  const { consumeCredit } = useUserEntitlement();
-
   const [selectedTheme, setSelectedTheme] = useState<ThemeCategory>('general');
   const [selectedMode, setSelectedMode] = useState<ThemeMode>('standard');
   const [excludedSubThemes, setExcludedSubThemes] = useState<string[]>([]);
@@ -99,15 +97,6 @@ export const CreateQuiz: React.FC = () => {
         formData.includeJokers ? enabledJokers : undefined,
         commercialBreaks.enabled ? commercialBreaks : undefined,
       );
-
-      // Consume one credit (mark oldest unused purchase as used)
-      try {
-        await consumeCredit();
-        console.log('✅ Credit consumed successfully');
-      } catch (creditError) {
-        console.error('⚠️ Failed to consume credit:', creditError);
-        // Don't block quiz — session already created
-      }
 
       setGenerationStep(t('create.generationSteps.ready'));
       setTimeout(() => {
