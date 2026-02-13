@@ -7,7 +7,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { QRCodeDisplay } from '../components/ui/QRCodeDisplay';
-import { ArrowLeft, Users, Play, Copy, Check, Share2, Clock, AlertTriangle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Users, Play, Copy, Check, Share2, Clock, AlertTriangle, Loader2, Monitor } from 'lucide-react';
 
 export const QuizLobby: React.FC = () => {
   const { t } = useTranslation();
@@ -26,6 +26,7 @@ export const QuizLobby: React.FC = () => {
   } = useQuizStore();
 
   const [copied, setCopied] = useState(false);
+  const [copiedTV, setCopiedTV] = useState(false);
   const [showStartWarning, setShowStartWarning] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
@@ -66,6 +67,14 @@ export const QuizLobby: React.FC = () => {
     const url = `${window.location.origin}?code=${sessionCode}&view=join`;
     navigator.clipboard.writeText(url);
     alert(t('lobby.linkCopied'));
+  };
+
+  const tvLink = `${window.location.origin}/tv?code=${sessionCode}`;
+
+  const copyTVLink = () => {
+    navigator.clipboard.writeText(tvLink);
+    setCopiedTV(true);
+    setTimeout(() => setCopiedTV(false), 2000);
   };
 
   const handleStartQuiz = () => {
@@ -257,6 +266,26 @@ export const QuizLobby: React.FC = () => {
                     {t('lobby.shareLink')}
                   </Button>
                 </div>
+              </Card>
+
+              {/* TV Display Link */}
+              <Card className="p-6 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-400/30">
+                <div className="flex items-center gap-3 mb-3">
+                  <Monitor className="w-6 h-6 text-indigo-400" />
+                  <h2 className="text-lg font-bold text-white">{t('lobby.tvDisplayLink')}</h2>
+                </div>
+                <div className="bg-qb-darker rounded-lg p-3 mb-3 flex items-center gap-3">
+                  <code className="text-sm text-qb-cyan font-mono flex-1 truncate">{tvLink}</code>
+                  <Button
+                    size="sm"
+                    variant={copiedTV ? 'primary' : 'secondary'}
+                    onClick={copyTVLink}
+                    icon={copiedTV ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  >
+                    {copiedTV ? t('lobby.copiedTVLink') : t('lobby.copyCode')}
+                  </Button>
+                </div>
+                <p className="text-sm text-white/60">{t('lobby.tvDisplayHint')}</p>
               </Card>
 
               {/* QR Code */}
