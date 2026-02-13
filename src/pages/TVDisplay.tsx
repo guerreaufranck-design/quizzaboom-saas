@@ -132,8 +132,8 @@ export const TVDisplay: React.FC = () => {
   }, [sessionCode]);
 
   useEffect(() => {
-    // Hide instructions when timer starts (theme_announcement duration is 7s)
-    if (currentPhase === 'theme_announcement' && phaseTimeRemaining < 7 && showInstructions) {
+    // Hide instructions when timer starts (theme_announcement duration is 11s)
+    if (currentPhase === 'theme_announcement' && phaseTimeRemaining < 11 && showInstructions) {
       setShowInstructions(false);
     }
   }, [currentPhase, phaseTimeRemaining]);
@@ -198,24 +198,24 @@ export const TVDisplay: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════
   if (showInstructions || !isReady || allQuestions.length === 0) {
     return (
-      <div className="h-screen bg-gradient-to-br from-qb-purple via-qb-dark to-qb-cyan p-6 overflow-hidden">
+      <div className="h-screen bg-gradient-to-br from-qb-purple via-qb-dark to-qb-cyan p-4 overflow-hidden">
         <div className="max-w-5xl mx-auto h-full flex flex-col">
           {/* Header */}
-          <div className="text-center mb-3">
-            <AnimatedLogo size="md" className="mx-auto mb-2" />
-            <h1 className="text-5xl font-bold text-white mb-1">HOW TO PLAY</h1>
-            <p className="text-2xl text-yellow-300 font-bold">Follow these 4 steps!</p>
+          <div className="text-center mb-2">
+            <AnimatedLogo size="md" className="mx-auto mb-1" />
+            <h1 className="text-4xl font-bold text-white mb-1">HOW TO PLAY</h1>
+            <p className="text-xl text-yellow-300 font-bold">Follow these 4 steps!</p>
           </div>
 
           {/* Steps - Compact */}
-          <div className="space-y-3 flex-1 min-h-0">
+          <div className="space-y-2 flex-1 min-h-0">
             {/* Step 1: Join */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-white/30">
-              <div className="flex items-center gap-4">
-                <div className="text-4xl">📱</div>
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-3 border-2 border-white/30">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">📱</div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-white">1. JOIN THE GAME</h2>
-                  <p className="text-xl text-white/90">
+                  <h2 className="text-xl font-bold text-white">1. JOIN THE GAME</h2>
+                  <p className="text-lg text-white/90">
                     Scan the <span className="text-yellow-300 font-bold">QR code</span> or enter session code
                   </p>
                 </div>
@@ -223,15 +223,15 @@ export const TVDisplay: React.FC = () => {
             </div>
 
             {/* Step 2: Email */}
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-4 border-4 border-yellow-300 shadow-2xl shadow-yellow-500/50 animate-pulse">
-              <div className="flex items-center gap-4">
-                <div className="text-4xl animate-bounce">📧</div>
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-3 border-2 border-yellow-300 shadow-2xl shadow-yellow-500/50 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl animate-bounce">📧</div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-900">2. ENTER YOUR EMAIL!</h2>
-                  <p className="text-xl text-gray-900 font-bold">
+                  <h2 className="text-xl font-bold text-gray-900">2. ENTER YOUR EMAIL!</h2>
+                  <p className="text-lg text-gray-900 font-bold">
                     🎁 Receive your PERSONALIZED RESULTS
                   </p>
-                  <div className="flex gap-4 text-lg text-gray-900">
+                  <div className="flex gap-4 text-base text-gray-900">
                     <span>✅ Ranking</span>
                     <span>✅ Statistics</span>
                     <span>✅ Certificate</span>
@@ -241,29 +241,29 @@ export const TVDisplay: React.FC = () => {
             </div>
 
             {/* Step 3: Jokers */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-purple-400">
-              <div className="flex items-center gap-4">
-                <div className="text-4xl">🎯</div>
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-3 border-2 border-purple-400">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">🎯</div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-white">3. USE JOKERS</h2>
-                  <p className="text-xl text-white/90 mb-1">
-                    Activate during <span className="text-purple-300 font-bold">THEME phase</span> (7s):
+                  <h2 className="text-xl font-bold text-white">3. USE JOKERS</h2>
+                  <p className="text-lg text-white/90 mb-1">
+                    Activate during <span className="text-purple-300 font-bold">THEME phase</span> (11s):
                   </p>
                   <div className="flex gap-2">
-                    <div className="bg-blue-500/30 rounded-lg px-2 py-1 text-center">
-                      <div className="text-2xl">🛡️</div>
+                    <div className="bg-blue-500/30 rounded-lg px-2 py-0.5 text-center">
+                      <div className="text-xl">🛡️</div>
                       <div className="text-xs text-white">Protection</div>
                     </div>
-                    <div className="bg-red-500/30 rounded-lg px-2 py-1 text-center">
-                      <div className="text-2xl">🚫</div>
+                    <div className="bg-red-500/30 rounded-lg px-2 py-0.5 text-center">
+                      <div className="text-xl">🚫</div>
                       <div className="text-xs text-white">Block</div>
                     </div>
-                    <div className="bg-yellow-500/30 rounded-lg px-2 py-1 text-center">
-                      <div className="text-2xl">💰</div>
+                    <div className="bg-yellow-500/30 rounded-lg px-2 py-0.5 text-center">
+                      <div className="text-xl">💰</div>
                       <div className="text-xs text-white">Steal</div>
                     </div>
-                    <div className="bg-green-500/30 rounded-lg px-2 py-1 text-center">
-                      <div className="text-2xl">⭐</div>
+                    <div className="bg-green-500/30 rounded-lg px-2 py-0.5 text-center">
+                      <div className="text-xl">⭐</div>
                       <div className="text-xs text-white">Double</div>
                     </div>
                   </div>
@@ -272,16 +272,16 @@ export const TVDisplay: React.FC = () => {
             </div>
 
             {/* Step 4: Phases */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-cyan-400">
-              <div className="flex items-center gap-4">
-                <div className="text-4xl">⏱️</div>
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-3 border-2 border-cyan-400">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">⏱️</div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-white">4. GAME FLOW</h2>
-                  <div className="grid grid-cols-2 gap-2 text-lg text-white/90">
-                    <div className="bg-purple-500/20 p-1.5 rounded">🎯 Theme (7s) → Jokers</div>
-                    <div className="bg-blue-500/20 p-1.5 rounded">📖 Question (10s) → Read</div>
-                    <div className="bg-cyan-500/20 p-1.5 rounded">✍️ Answer (17s) → Choose</div>
-                    <div className="bg-green-500/20 p-1.5 rounded">📊 Results (10s) → Score</div>
+                  <h2 className="text-xl font-bold text-white">4. GAME FLOW</h2>
+                  <div className="grid grid-cols-2 gap-1.5 text-base text-white/90">
+                    <div className="bg-purple-500/20 p-1 rounded">🎯 Theme (11s) → Jokers</div>
+                    <div className="bg-blue-500/20 p-1 rounded">📖 Question (15s) → Read</div>
+                    <div className="bg-cyan-500/20 p-1 rounded">✍️ Answer (24s) → Choose</div>
+                    <div className="bg-green-500/20 p-1 rounded">📊 Results (10s) → Score</div>
                   </div>
                 </div>
               </div>
@@ -289,12 +289,12 @@ export const TVDisplay: React.FC = () => {
           </div>
 
           {/* Bottom */}
-          <div className="text-center mt-3">
-            <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-4">
-              <p className="text-3xl font-bold text-white mb-1">
+          <div className="text-center mt-2">
+            <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-3">
+              <p className="text-2xl font-bold text-white mb-1">
                 🚀 Waiting for host to start...
               </p>
-              <p className="text-xl text-white/90 font-mono">
+              <p className="text-lg text-white/90 font-mono">
                 Session: <span className="font-bold">{sessionCode}</span>
               </p>
             </div>
