@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Quiz, QuizSession, Player, Question, QuizGenRequest } from '../types/quiz';
+import type { Quiz, QuizSession, Player, Question, QuizGenRequest, CommercialBreakConfig, CommercialBreakSchedule } from '../types/quiz';
 import { supabase } from '../services/supabase/client';
 import { generateMultiStageQuiz } from '../services/gemini';
 import { v4 as uuidv4 } from 'uuid';
@@ -51,7 +51,7 @@ interface QuizState {
   setCurrentView: (view: string) => void;
   setError: (error: string | null) => void;
   generateQuiz: (request: QuizGenRequest) => Promise<Quiz>;
-  createSession: (quizId: string, enabledJokers?: { protection: boolean; block: boolean; steal: boolean; double_points: boolean }) => Promise<string>;
+  createSession: (quizId: string, enabledJokers?: { protection: boolean; block: boolean; steal: boolean; double_points: boolean }, commercialBreaks?: CommercialBreakConfig) => Promise<string>;
   joinSession: (code: string, playerName: string, email?: string, avatarEmoji?: string) => Promise<void>;
   loadPlayers: (sessionId: string) => Promise<void>;
   startSession: () => Promise<void>;
@@ -251,7 +251,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
     }
   },
 
-  createSession: async (quizId, enabledJokers) => {
+  createSession: async (quizId, enabledJokers, commercialBreaks) => {
     set({ isLoading: true, error: null });
     try {
       console.log('📝 Creating session for quiz:', quizId);
@@ -262,6 +262,31 @@ export const useQuizStore = create<QuizState>((set, get) => ({
 
       const sessionId = uuidv4();
 
+      // Calculate break schedule if commercial breaks are configured
+      let breakSchedule: CommercialBreakSchedule | undefined;
+      if (commercialBreaks?.enabled && commercialBreaks.numberOfPauses > 0) {
+        // Need to know total questions — fetch from the quiz
+        const { data: questions } = await supabase
+          .from('ai_questions')
+          .select('id')
+          .eq('quiz_id', quizId);
+        const totalQuestions = questions?.length || 25;
+        const interval = totalQuestions / (commercialBreaks.numberOfPauses + 1);
+        breakSchedule = {
+          breaks: Array.from({ length: commercialBreaks.numberOfPauses }, (_, i) => ({
+            afterQuestionIndex: Math.round(interval * (i + 1)) - 1, // 0-based
+            durationSeconds: commercialBreaks.breakDurationSeconds,
+            promoMessage: commercialBreaks.promoMessage || undefined,
+          })),
+        };
+        console.log('📋 Break schedule:', breakSchedule);
+      }
+
+      const settings: Record<string, unknown> = {};
+      if (enabledJokers) settings.enabledJokers = enabledJokers;
+      if (breakSchedule) settings.breakSchedule = breakSchedule;
+      if (commercialBreaks?.promoMessage) settings.promoMessage = commercialBreaks.promoMessage;
+
       const session: Partial<QuizSession> = {
         id: sessionId,
         quiz_id: quizId,
@@ -271,7 +296,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         current_stage: 0,
         current_question: 0,
         unlimited_players: true,
-        settings: enabledJokers ? { enabledJokers } : {},
+        settings,
         party_mode: false,
         total_players: 0,
         active_players: 0,

@@ -1,15 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuizStore } from '../stores/useQuizStore';
 import { useAppNavigate } from '../hooks/useAppNavigate';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Select } from '../components/ui/Select';
-import { ArrowLeft, Sparkles, Clock, Target, Globe, Zap, Loader2, X, Shield, Ban, Repeat, Gem } from 'lucide-react';
-import { calculateQuizStructure } from '../services/gemini';
+import { ArrowLeft, Sparkles, Hash, Target, Globe, Zap, Loader2, X, Shield, Ban, Repeat, Gem, Coffee, MessageSquare } from 'lucide-react';
+import { calculateQuizStructureFromCount } from '../services/gemini';
 import { THEMES, THEME_MODES, type ThemeCategory, type ThemeMode } from '../types/themes';
-import type { QuizGenRequest } from '../types/quiz';
+import type { QuizGenRequest, CommercialBreakConfig } from '../types/quiz';
 import { useUserEntitlement } from '../hooks/useUserEntitlement';
+
+const QUESTION_COUNT_OPTIONS = [
+  { value: 25 as const, emoji: '⚡', labelKey: 'create.questions25', descKey: 'create.questions25Desc' },
+  { value: 50 as const, emoji: '🎯', labelKey: 'create.questions50', descKey: 'create.questions50Desc' },
+  { value: 100 as const, emoji: '🏆', labelKey: 'create.questions100', descKey: 'create.questions100Desc' },
+];
+
+const BREAK_DURATION_OPTIONS = [
+  { value: 180, label: '3 min' },
+  { value: 300, label: '5 min' },
+  { value: 600, label: '10 min' },
+  { value: 900, label: '15 min' },
+  { value: 1200, label: '20 min' },
+];
 
 export const CreateQuiz: React.FC = () => {
   const { t } = useTranslation();
@@ -27,17 +41,32 @@ export const CreateQuiz: React.FC = () => {
     double_points: true,
   });
   const [formData, setFormData] = useState({
-    duration: 30,
+    questionCount: 25 as 25 | 50 | 100,
     difficulty: 'medium' as 'easy' | 'medium' | 'hard',
     language: 'fr' as QuizGenRequest['language'],
     includeJokers: true,
   });
+  const [commercialBreaks, setCommercialBreaks] = useState<CommercialBreakConfig>({
+    enabled: false,
+    numberOfPauses: 2,
+    breakDurationSeconds: 300,
+    promoMessage: '',
+  });
 
   const [generationStep, setGenerationStep] = useState<string>('');
 
-  const quizStructure = calculateQuizStructure(formData.duration);
+  const quizStructure = calculateQuizStructureFromCount(formData.questionCount);
   const currentTheme = THEMES.find(t => t.category === selectedTheme);
   const activeSubThemes = currentTheme?.subThemes?.filter(st => !excludedSubThemes.includes(st)) || [];
+
+  // Calculate where breaks would be placed
+  const breakPreview = useMemo(() => {
+    if (!commercialBreaks.enabled || commercialBreaks.numberOfPauses === 0) return [];
+    const interval = formData.questionCount / (commercialBreaks.numberOfPauses + 1);
+    return Array.from({ length: commercialBreaks.numberOfPauses }, (_, i) =>
+      Math.round(interval * (i + 1))
+    );
+  }, [commercialBreaks.enabled, commercialBreaks.numberOfPauses, formData.questionCount]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,18 +82,23 @@ export const CreateQuiz: React.FC = () => {
 
       const request: QuizGenRequest = {
         theme: `${themeLabel} - ${modeLabel}${subThemesStr}`,
-        duration: formData.duration,
+        questionCount: formData.questionCount,
         difficulty: formData.difficulty,
         language: formData.language,
         includeJokers: formData.includeJokers,
         enabledJokers: formData.includeJokers ? enabledJokers : undefined,
+        commercialBreaks: commercialBreaks.enabled ? commercialBreaks : undefined,
       };
 
       setGenerationStep(t('create.generationSteps.generating', { count: quizStructure.totalQuestions }));
       const quiz = await generateQuiz(request);
 
       setGenerationStep(t('create.generationSteps.creating'));
-      await createSession(quiz.id, formData.includeJokers ? enabledJokers : undefined);
+      await createSession(
+        quiz.id,
+        formData.includeJokers ? enabledJokers : undefined,
+        commercialBreaks.enabled ? commercialBreaks : undefined,
+      );
 
       // Consume one credit (mark oldest unused purchase as used)
       try {
@@ -127,7 +161,7 @@ export const CreateQuiz: React.FC = () => {
                 {generationStep || t('create.generating')}
               </h2>
               <p className="text-white/80">
-                This may take up to 30 seconds. Please wait...
+                {t('create.generationWait')}
               </p>
               <div className="mt-4 flex items-center justify-center gap-2">
                 <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -241,23 +275,36 @@ export const CreateQuiz: React.FC = () => {
               </div>
             </Card>
 
-            {/* Duration */}
+            {/* Question Count (replaces Duration) */}
             <Card gradient className="p-6">
-              <label className="block text-white font-bold mb-2 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-qb-cyan" />
-                {t('create.duration')}
+              <label className="block text-white font-bold mb-4 flex items-center gap-2">
+                <Hash className="w-5 h-5 text-qb-cyan" />
+                {t('create.questionCount')}
               </label>
-              <Select
-                value={formData.duration.toString()}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-                disabled={isLoading}
-              >
-                <option value="15">15 minutes (~21 questions)</option>
-                <option value="30">30 minutes (~43 questions)</option>
-                <option value="45">45 minutes (~65 questions)</option>
-                <option value="60">60 minutes (~87 questions)</option>
-                <option value="90">90 minutes (~131 questions)</option>
-              </Select>
+              <div className="grid grid-cols-3 gap-4">
+                {QUESTION_COUNT_OPTIONS.map((option) => {
+                  const structure = calculateQuizStructureFromCount(option.value);
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, questionCount: option.value })}
+                      disabled={isLoading}
+                      className={`p-6 rounded-xl border-2 transition-all ${
+                        formData.questionCount === option.value
+                          ? 'bg-qb-cyan border-qb-cyan scale-105 shadow-lg shadow-qb-cyan/50'
+                          : 'bg-qb-darker border-white/20 hover:border-qb-cyan hover:scale-105'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <div className="text-4xl mb-2">{option.emoji}</div>
+                      <div className="text-3xl font-bold text-white mb-1">{option.value}</div>
+                      <div className="text-sm text-white/80 font-medium">{t('create.questions')}</div>
+                      <div className="text-xs text-white/50 mt-2">~{structure.estimatedDurationMinutes} min</div>
+                      <div className="text-xs text-white/50">{t(option.descKey)}</div>
+                    </button>
+                  );
+                })}
+              </div>
 
               <div className="mt-4 p-4 bg-qb-darker rounded-lg">
                 <div className="text-sm text-white/70 mb-2">{t('create.quizStructure')}</div>
@@ -271,11 +318,111 @@ export const CreateQuiz: React.FC = () => {
                     <div className="text-xs text-white/60">{t('create.stages')}</div>
                   </div>
                   <div>
-                    <div className="text-3xl font-bold text-qb-magenta">{quizStructure.questionsPerStage}</div>
-                    <div className="text-xs text-white/60">{t('create.perStage')}</div>
+                    <div className="text-3xl font-bold text-qb-magenta">~{quizStructure.estimatedDurationMinutes}</div>
+                    <div className="text-xs text-white/60">{t('create.estimatedMinutes')}</div>
                   </div>
                 </div>
               </div>
+            </Card>
+
+            {/* Commercial Breaks */}
+            <Card gradient className="p-6">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={commercialBreaks.enabled}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCommercialBreaks({ ...commercialBreaks, enabled: e.target.checked })}
+                  disabled={isLoading}
+                  className="w-6 h-6 rounded accent-qb-yellow"
+                />
+                <div className="flex-1">
+                  <div className="text-white font-bold flex items-center gap-2">
+                    <Coffee className="w-5 h-5 text-qb-yellow" />
+                    {t('create.commercialBreaks')}
+                  </div>
+                  <p className="text-sm text-white/70 mt-1">
+                    {t('create.commercialBreaksDesc')}
+                  </p>
+                </div>
+              </label>
+
+              {commercialBreaks.enabled && (
+                <div className="mt-4 space-y-4">
+                  {/* Number of pauses */}
+                  <div>
+                    <label className="block text-sm text-white/80 mb-2">{t('create.numberOfPauses')}</label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setCommercialBreaks({ ...commercialBreaks, numberOfPauses: n })}
+                          disabled={isLoading}
+                          className={`w-12 h-12 rounded-lg border-2 font-bold text-lg transition-all ${
+                            commercialBreaks.numberOfPauses === n
+                              ? 'bg-qb-yellow border-qb-yellow text-qb-dark'
+                              : 'bg-qb-darker border-white/20 text-white hover:border-qb-yellow'
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Break duration */}
+                  <div>
+                    <label className="block text-sm text-white/80 mb-2">{t('create.breakDuration')}</label>
+                    <div className="flex flex-wrap gap-2">
+                      {BREAK_DURATION_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setCommercialBreaks({ ...commercialBreaks, breakDurationSeconds: opt.value })}
+                          disabled={isLoading}
+                          className={`px-4 py-2 rounded-lg border-2 font-medium transition-all ${
+                            commercialBreaks.breakDurationSeconds === opt.value
+                              ? 'bg-qb-yellow border-qb-yellow text-qb-dark'
+                              : 'bg-qb-darker border-white/20 text-white hover:border-qb-yellow'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Promo message */}
+                  <div>
+                    <label className="block text-sm text-white/80 mb-2 flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" />
+                      {t('create.promoMessage')}
+                    </label>
+                    <input
+                      type="text"
+                      value={commercialBreaks.promoMessage || ''}
+                      onChange={(e) => setCommercialBreaks({ ...commercialBreaks, promoMessage: e.target.value })}
+                      placeholder={t('create.promoMessagePlaceholder')}
+                      disabled={isLoading}
+                      maxLength={200}
+                      className="w-full px-4 py-3 bg-qb-darker border border-white/20 rounded-lg text-white placeholder:text-white/40 focus:border-qb-yellow focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Break preview */}
+                  {breakPreview.length > 0 && (
+                    <div className="p-3 bg-qb-darker rounded-lg border border-qb-yellow/30">
+                      <div className="text-sm text-qb-yellow font-medium mb-1">{t('create.breakPreview')}</div>
+                      <div className="text-xs text-white/70">
+                        {t('create.pauseAfterQuestions')}: {breakPreview.map(q => `Q${q}`).join(', ')}
+                      </div>
+                      <div className="text-xs text-white/50 mt-1">
+                        {commercialBreaks.numberOfPauses} {t('create.pausesOf')} {Math.floor(commercialBreaks.breakDurationSeconds / 60)} min
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </Card>
 
             {/* Difficulty */}
@@ -321,8 +468,8 @@ export const CreateQuiz: React.FC = () => {
                 disabled={isLoading}
               >
                 <option value="en">English</option>
-                <option value="fr">Français</option>
-                <option value="es">Español</option>
+                <option value="fr">Fran\u00e7ais</option>
+                <option value="es">Espa\u00f1ol</option>
                 <option value="de">Deutsch</option>
               </Select>
             </Card>
@@ -405,8 +552,11 @@ export const CreateQuiz: React.FC = () => {
               <div className="border-t border-white/10 my-3" />
               <p><strong>{t('create.aiGenerates')}</strong> {quizStructure.totalQuestions} {t('create.uniqueQuestions')}</p>
               <p><strong>{t('create.organizedIn')}</strong> {quizStructure.totalStages} {t('create.stages')}</p>
-              <p><strong>{t('create.phasesPerQuestion')}</strong> Theme (25s) → Question (15s) → Answers (20s) → Results (20s) → Break (6s)</p>
+              <p><strong>{t('create.estimatedDuration')}:</strong> ~{quizStructure.estimatedDurationMinutes} min</p>
               <p><strong>{t('create.strategicGameplay')}</strong> {formData.includeJokers ? t('create.enabled') : t('create.disabled')}</p>
+              {commercialBreaks.enabled && breakPreview.length > 0 && (
+                <p><strong>{t('create.commercialBreaks')}:</strong> {commercialBreaks.numberOfPauses}x {Math.floor(commercialBreaks.breakDurationSeconds / 60)} min</p>
+              )}
             </div>
           </Card>
         </div>

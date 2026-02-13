@@ -26,10 +26,28 @@ export interface Question {
   created_at: string;
 }
 
+// Commercial break configuration
+export interface CommercialBreakConfig {
+  enabled: boolean;
+  numberOfPauses: number;           // 0-5
+  breakDurationSeconds: number;     // 180, 300, 600, 900, 1200
+  promoMessage?: string;            // e.g. "Bières -15% !"
+}
+
+// Calculated break schedule (stored in session settings)
+export interface CommercialBreakSchedule {
+  breaks: Array<{
+    afterQuestionIndex: number;     // 0-based: pause after this question
+    durationSeconds: number;
+    promoMessage?: string;
+  }>;
+}
+
 // Quiz generation request
 export interface QuizGenRequest {
   theme: string;
-  duration: number;
+  questionCount: 25 | 50 | 100;    // NEW: fixed question counts
+  duration?: number;                // DEPRECATED: kept for backward compatibility
   difficulty: DifficultyLevel;
   language: LanguageCode;
   includeJokers: boolean;
@@ -39,6 +57,7 @@ export interface QuizGenRequest {
     steal: boolean;
     double_points: boolean;
   };
+  commercialBreaks?: CommercialBreakConfig;
 }
 
 // AI Quiz Response
