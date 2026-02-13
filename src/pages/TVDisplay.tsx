@@ -23,6 +23,9 @@ export const TVDisplay: React.FC = () => {
   const [topPlayers, setTopPlayers] = useState<Player[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
+  const [breakPromoMessage, setBreakPromoMessage] = useState<string>('');
+  const [breakNumber, setBreakNumber] = useState(0);
+  const [totalBreaks, setTotalBreaks] = useState(0);
 
   useEffect(() => {
     const initTVDisplay = async () => {
@@ -79,6 +82,29 @@ export const TVDisplay: React.FC = () => {
     initTVDisplay();
   }, []);
 
+  // Listen for commercial break data from phase broadcasts
+  useEffect(() => {
+    if (!sessionCode) return;
+
+    const channelName = `quiz_session_${sessionCode}`;
+    const breakChannel = supabase.channel(`${channelName}_break_listener`);
+
+    breakChannel
+      .on('broadcast', { event: 'phase_change' }, (payload: { payload: { phase: string; promoMessage?: string; breakNumber?: number; totalBreaks?: number } }) => {
+        const data = payload.payload;
+        if (data.phase === 'commercial_break') {
+          setBreakPromoMessage(data.promoMessage || '');
+          setBreakNumber(data.breakNumber || 0);
+          setTotalBreaks(data.totalBreaks || 0);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(breakChannel);
+    };
+  }, [sessionCode]);
+
   useEffect(() => {
     // Hide instructions only when timer actually starts counting down
     if (currentPhase === 'theme_announcement' && phaseTimeRemaining < 5 && showInstructions) {
@@ -113,9 +139,9 @@ export const TVDisplay: React.FC = () => {
     }
   };
 
-  // Refresh leaderboard during results, intermission, and quiz_complete phases
+  // Refresh leaderboard during results, intermission, commercial_break, and quiz_complete phases
   useEffect(() => {
-    if ((currentPhase === 'results' || currentPhase === 'intermission' || currentPhase === 'quiz_complete') && sessionCode) {
+    if ((currentPhase === 'results' || currentPhase === 'intermission' || currentPhase === 'commercial_break' || currentPhase === 'quiz_complete') && sessionCode) {
       // Fetch immediately on phase entry
       (async () => {
         const { data: session } = await supabase
@@ -242,6 +268,80 @@ export const TVDisplay: React.FC = () => {
               </p>
               <p className="text-2xl text-white/90 font-mono">
                 Session: <span className="font-bold">{sessionCode}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // COMMERCIAL BREAK: Promo screen with countdown
+  if (currentPhase === 'commercial_break') {
+    const breakMinutes = Math.floor(phaseTimeRemaining / 60);
+    const breakSeconds = phaseTimeRemaining % 60;
+    const breakTimeDisplay = `${breakMinutes}:${breakSeconds.toString().padStart(2, '0')}`;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 p-12 overflow-hidden relative">
+        {/* Animated background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-yellow-300/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-red-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }} />
+        </div>
+
+        <div className="max-w-5xl mx-auto flex flex-col items-center justify-between h-full min-h-[calc(100vh-6rem)] relative z-10">
+          {/* Top: Animated logo banner */}
+          <div className="text-center w-full mb-8">
+            <AnimatedLogo banner className="mx-auto max-w-3xl" />
+          </div>
+
+          {/* Middle: Promo message + countdown */}
+          <div className="flex-1 flex flex-col items-center justify-center w-full space-y-10">
+            {/* Break indicator */}
+            {breakNumber > 0 && totalBreaks > 0 && (
+              <div className="bg-black/30 backdrop-blur-xl rounded-2xl px-8 py-3 border border-white/20">
+                <p className="text-3xl text-white font-bold uppercase tracking-wider">
+                  ☕ PAUSE {breakNumber}/{totalBreaks}
+                </p>
+              </div>
+            )}
+
+            {/* Promo message — big and yellow */}
+            {breakPromoMessage ? (
+              <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-12 border-4 border-yellow-300/60 shadow-2xl shadow-yellow-500/20 w-full max-w-4xl">
+                <p className="text-6xl font-bold text-yellow-300 text-center leading-tight">
+                  {breakPromoMessage}
+                </p>
+              </div>
+            ) : (
+              <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-12 border-2 border-white/20 w-full max-w-4xl">
+                <p className="text-7xl font-bold text-white text-center">
+                  ☕ PAUSE
+                </p>
+                <p className="text-3xl text-white/70 text-center mt-4">
+                  The quiz will resume shortly!
+                </p>
+              </div>
+            )}
+
+            {/* Countdown */}
+            <div className="bg-black/40 backdrop-blur-xl rounded-3xl px-16 py-8 border-2 border-white/20">
+              <div className="flex items-center gap-6">
+                <Clock className="w-14 h-14 text-white animate-pulse" />
+                <span className="text-9xl font-mono font-bold text-white">{breakTimeDisplay}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom: QuizzaBoom branding + contact */}
+          <div className="text-center w-full mt-8">
+            <div className="inline-block bg-black/40 backdrop-blur-xl rounded-2xl px-12 py-6 border border-white/20">
+              <p className="text-2xl text-white font-bold">
+                Powered by <span className="text-yellow-300">QuizzaBoom</span>
+              </p>
+              <p className="text-xl text-white/80 mt-2 font-medium">
+                contact@quizzaboom.app
               </p>
             </div>
           </div>

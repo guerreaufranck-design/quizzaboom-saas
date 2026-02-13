@@ -19,11 +19,12 @@ import {
   Square,
   Volume2,
   VolumeX,
+  Coffee,
 } from 'lucide-react';
 import { useQuizAudio } from '../hooks/useQuizAudio';
 import type { GamePhase } from '../types/gamePhases';
 import { PHASE_DURATIONS, PHASE_ORDER } from '../types/gamePhases';
-import type { Question } from '../types/quiz';
+import type { Question, CommercialBreakSchedule } from '../types/quiz';
 import { supabase } from '../services/supabase/client';
 
 export const HostDashboard: React.FC = () => {
@@ -41,6 +42,11 @@ export const HostDashboard: React.FC = () => {
   const { stopAll, onPhaseChange, toggleMute, isMuted } = useQuizAudio();
 
   const currentQuestion: Question | null = allQuestions[currentQuestionIndex] || null;
+
+  // Get break schedule from session settings
+  const sessionSettings = (currentSession?.settings as Record<string, unknown>) || {};
+  const breakSchedule = sessionSettings.breakSchedule as CommercialBreakSchedule | undefined;
+  const promoMessage = sessionSettings.promoMessage as string | undefined;
 
   useEffect(() => {
     if (currentQuiz?.id) {
@@ -86,41 +92,108 @@ export const HostDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, [isPlaying, phaseTimeRemaining, currentPhaseState, currentQuestionIndex, sessionCode]);
 
+  // Check if a commercial break should happen after the given question index
+  const getBreakAfterQuestion = (questionIndex: number) => {
+    if (!breakSchedule?.breaks) return null;
+    return breakSchedule.breaks.find(b => b.afterQuestionIndex === questionIndex) || null;
+  };
+
   const handlePhaseComplete = () => {
+    // If we're currently in a commercial break, move to next question
+    if (currentPhaseState === 'commercial_break') {
+      if (currentQuestionIndex < allQuestions.length - 1) {
+        const nextIndex = currentQuestionIndex + 1;
+        setCurrentQuestionIndex(nextIndex);
+        changePhase('theme_announcement', nextIndex);
+      } else {
+        broadcastQuizComplete();
+      }
+      return;
+    }
+
     const currentIndex = PHASE_ORDER.indexOf(currentPhaseState);
 
     if (currentIndex < PHASE_ORDER.length - 1) {
       const nextPhase = PHASE_ORDER[currentIndex + 1];
       changePhase(nextPhase, currentQuestionIndex);
     } else {
+      // End of phase cycle (after intermission)
+      // Check if a commercial break should be inserted
+      const scheduledBreak = getBreakAfterQuestion(currentQuestionIndex);
+      if (scheduledBreak) {
+        const breakIndex = breakSchedule!.breaks.indexOf(scheduledBreak);
+        changePhaseWithBreak(scheduledBreak.durationSeconds, scheduledBreak.promoMessage, breakIndex + 1, breakSchedule!.breaks.length);
+        return;
+      }
+
       if (currentQuestionIndex < allQuestions.length - 1) {
         const nextIndex = currentQuestionIndex + 1;
         setCurrentQuestionIndex(nextIndex);
         changePhase('theme_announcement', nextIndex);
       } else {
-        // Quiz finished — broadcast quiz_complete phase for TV display
-        if (sessionCode) {
-          const sortedPlayers = [...players].sort((a, b) => b.total_score - a.total_score);
-          broadcastPhaseChange(sessionCode, {
-            phase: 'quiz_complete' as GamePhase,
-            questionIndex: currentQuestionIndex,
-            stageNumber: Math.floor(currentQuestionIndex / 5),
-            timeRemaining: 0,
-            currentQuestion: null,
-            themeTitle: 'Quiz Complete',
-            topPlayers: sortedPlayers.slice(0, 10).map((p, idx) => ({
-              player_name: p.player_name,
-              avatar_emoji: p.avatar_emoji,
-              total_score: p.total_score,
-              correct_answers: p.correct_answers,
-              rank: idx + 1,
-            })),
-          });
-        }
-        setIsPlaying(false);
-        setQuizCompleted(true);
-        stopAll(); // Stop all audio when quiz ends
+        broadcastQuizComplete();
       }
+    }
+  };
+
+  const broadcastQuizComplete = () => {
+    if (sessionCode) {
+      const sortedPlayers = [...players].sort((a, b) => b.total_score - a.total_score);
+      broadcastPhaseChange(sessionCode, {
+        phase: 'quiz_complete' as GamePhase,
+        questionIndex: currentQuestionIndex,
+        stageNumber: Math.floor(currentQuestionIndex / 5),
+        timeRemaining: 0,
+        currentQuestion: null,
+        themeTitle: 'Quiz Complete',
+        topPlayers: sortedPlayers.slice(0, 10).map((p, idx) => ({
+          player_name: p.player_name,
+          avatar_emoji: p.avatar_emoji,
+          total_score: p.total_score,
+          correct_answers: p.correct_answers,
+          rank: idx + 1,
+        })),
+      });
+    }
+    setIsPlaying(false);
+    setQuizCompleted(true);
+    stopAll();
+  };
+
+  const changePhaseWithBreak = (durationSeconds: number, breakPromoMessage: string | undefined, breakNumber: number, totalBreaks: number) => {
+    setCurrentPhaseState('commercial_break');
+    setPhaseTimeRemaining(durationSeconds);
+
+    const phaseData = {
+      phase: 'commercial_break' as GamePhase,
+      questionIndex: currentQuestionIndex,
+      stageNumber: Math.floor(currentQuestionIndex / 5),
+      timeRemaining: durationSeconds,
+      currentQuestion: null,
+      themeTitle: 'Commercial Break',
+      promoMessage: breakPromoMessage || promoMessage,
+      breakNumber,
+      totalBreaks,
+    };
+
+    console.log(`📺 Commercial Break ${breakNumber}/${totalBreaks} — ${durationSeconds}s`);
+
+    if (sessionCode) {
+      broadcastPhaseChange(sessionCode, phaseData);
+    }
+
+    if (currentSession?.id) {
+      supabase.from('quiz_sessions')
+        .update({
+          settings: {
+            ...(typeof currentSession.settings === 'object' && currentSession.settings ? currentSession.settings : {}),
+            currentPhase: phaseData,
+          },
+        })
+        .eq('id', currentSession.id)
+        .then(({ error }) => {
+          if (error) console.error('Failed to persist break phase to DB:', error);
+        });
     }
   };
 
@@ -152,10 +225,8 @@ export const HostDashboard: React.FC = () => {
       broadcastPhaseChange(sessionCode, phaseData);
     }
 
-    // Trigger audio for this phase
     onPhaseChange(newPhase, phaseDuration);
 
-    // Persist current phase to DB so disconnected players can resync
     if (currentSession?.id) {
       supabase.from('quiz_sessions')
         .update({
@@ -198,6 +269,7 @@ export const HostDashboard: React.FC = () => {
       case 'answer_selection': return 'from-cyan-500 to-teal-500';
       case 'results': return 'from-green-500 to-emerald-500';
       case 'intermission': return 'from-gray-600 to-gray-800';
+      case 'commercial_break': return 'from-yellow-500 to-orange-500';
       case 'quiz_complete': return 'from-yellow-500 to-orange-500';
     }
   };
@@ -209,6 +281,7 @@ export const HostDashboard: React.FC = () => {
       case 'answer_selection': return '✍️';
       case 'results': return '📊';
       case 'intermission': return '⏸️';
+      case 'commercial_break': return '☕';
       case 'quiz_complete': return '🏆';
     }
   };
@@ -220,6 +293,7 @@ export const HostDashboard: React.FC = () => {
       case 'answer_selection': return 'Answers';
       case 'results': return 'Results';
       case 'intermission': return 'Leaderboard';
+      case 'commercial_break': return 'Break';
       case 'quiz_complete': return 'Complete';
     }
   };
@@ -300,7 +374,6 @@ export const HostDashboard: React.FC = () => {
             <p className="text-2xl text-white/70">{currentQuiz.title}</p>
           </Card>
 
-          {/* Final Leaderboard */}
           <Card gradient className="p-8">
             <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
               <Trophy className="w-8 h-8 text-yellow-400" />
@@ -333,7 +406,6 @@ export const HostDashboard: React.FC = () => {
             </div>
           </Card>
 
-          {/* Send Results Emails */}
           <Card gradient className="p-8">
             <div className="flex items-center justify-between">
               <div>
@@ -367,6 +439,12 @@ export const HostDashboard: React.FC = () => {
       </div>
     );
   }
+
+  const formatBreakTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="min-h-screen bg-qb-dark p-6">
@@ -415,14 +493,22 @@ export const HostDashboard: React.FC = () => {
                   {getPhaseLabel(currentPhaseState)}
                 </h2>
                 <div className="text-7xl font-mono font-bold text-white">
-                  {phaseTimeRemaining}s
+                  {currentPhaseState === 'commercial_break'
+                    ? formatBreakTime(phaseTimeRemaining)
+                    : `${phaseTimeRemaining}s`
+                  }
                 </div>
                 <div className="text-xl text-white/90">
                   Question {currentQuestionIndex + 1} / {allQuestions.length}
                 </div>
-                {currentQuestion && (
+                {currentQuestion && currentPhaseState !== 'commercial_break' && (
                   <div className="text-2xl text-yellow-300 font-bold">
                     Theme: {currentQuestion.stage_id}
+                  </div>
+                )}
+                {currentPhaseState === 'commercial_break' && promoMessage && (
+                  <div className="text-xl text-yellow-300 font-bold mt-2">
+                    {promoMessage}
                   </div>
                 )}
                 <div className="inline-flex px-4 py-2 bg-white/20 rounded-full text-white font-bold">
@@ -445,11 +531,14 @@ export const HostDashboard: React.FC = () => {
                 <Button
                   size="xl"
                   onClick={handleSkipPhase}
-                  icon={<SkipForward />}
+                  icon={currentPhaseState === 'commercial_break' ? <Coffee /> : <SkipForward />}
                   variant="ghost"
                   disabled={!isPlaying}
                 >
-                  {t('host.skipPhase')}
+                  {currentPhaseState === 'commercial_break'
+                    ? t('create.endBreakEarly')
+                    : t('host.skipPhase')
+                  }
                 </Button>
                 <Button
                   size="xl"
@@ -475,6 +564,37 @@ export const HostDashboard: React.FC = () => {
                 ))}
               </div>
             </Card>
+
+            {breakSchedule && breakSchedule.breaks.length > 0 && (
+              <Card className="p-4 bg-yellow-500/10 border border-yellow-500/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <Coffee className="w-5 h-5 text-yellow-400" />
+                  <span className="text-sm font-bold text-yellow-400">
+                    {t('create.commercialBreaks')} ({breakSchedule.breaks.length})
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {breakSchedule.breaks.map((brk, idx) => {
+                    const isCompleted = currentQuestionIndex > brk.afterQuestionIndex;
+                    const isCurrent = currentPhaseState === 'commercial_break' && currentQuestionIndex === brk.afterQuestionIndex;
+                    return (
+                      <div
+                        key={idx}
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          isCurrent
+                            ? 'bg-yellow-500 text-yellow-900 animate-pulse'
+                            : isCompleted
+                            ? 'bg-yellow-500/20 text-yellow-400/50 line-through'
+                            : 'bg-yellow-500/20 text-yellow-400'
+                        }`}
+                      >
+                        After Q{brk.afterQuestionIndex + 1} ({Math.floor(brk.durationSeconds / 60)} min)
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            )}
 
             <Card gradient className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -527,7 +647,7 @@ export const HostDashboard: React.FC = () => {
                   {currentQuestion.fun_fact && (
                     <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                       <p className="text-sm text-white/80">
-                        <strong className="text-yellow-400">💡 Fun Fact:</strong> {currentQuestion.fun_fact}
+                        <strong className="text-yellow-400">Fun Fact:</strong> {currentQuestion.fun_fact}
                       </p>
                     </div>
                   )}

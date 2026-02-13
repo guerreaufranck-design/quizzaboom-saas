@@ -20,6 +20,10 @@ interface PhaseData {
     correct_answers: number;
     rank: number;
   }>;
+  // Commercial break data
+  promoMessage?: string;
+  breakNumber?: number;    // e.g. 1
+  totalBreaks?: number;    // e.g. 3
 }
 
 interface StrategicQuizState {

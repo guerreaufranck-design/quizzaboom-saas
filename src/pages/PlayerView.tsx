@@ -308,18 +308,32 @@ export const PlayerView: React.FC = () => {
           </div>
         </Card>
 
-        <Card className="p-3 text-center bg-gradient-to-br from-qb-dark to-qb-darker border border-white/20">
-          <div className="text-xs text-white/70 mb-1 uppercase tracking-wider">
-            {currentPhase === 'theme_announcement' && '🃏 Use Your Jokers!'}
-            {currentPhase === 'question_display' && '📖 Read Question'}
-            {currentPhase === 'answer_selection' && '✍️ Answer Now!'}
-            {currentPhase === 'results' && '📊 Results'}
-          </div>
-          <div className="flex items-center justify-center gap-2">
-            <Clock className="w-6 h-6 text-white animate-pulse" />
-            <span className="text-5xl font-mono font-bold text-white">{phaseTimeRemaining}s</span>
-          </div>
-        </Card>
+        {currentPhase === 'commercial_break' ? (
+          <Card className="p-6 text-center bg-gradient-to-br from-yellow-500 to-orange-500 border-2 border-yellow-300">
+            <div className="text-4xl mb-2">☕</div>
+            <div className="text-xl font-bold text-white mb-1">PAUSE</div>
+            <div className="flex items-center justify-center gap-2">
+              <Clock className="w-6 h-6 text-white animate-pulse" />
+              <span className="text-5xl font-mono font-bold text-white">
+                {Math.floor(phaseTimeRemaining / 60)}:{(phaseTimeRemaining % 60).toString().padStart(2, '0')}
+              </span>
+            </div>
+            <p className="text-sm text-white/80 mt-2">The quiz will resume shortly!</p>
+          </Card>
+        ) : (
+          <Card className="p-3 text-center bg-gradient-to-br from-qb-dark to-qb-darker border border-white/20">
+            <div className="text-xs text-white/70 mb-1 uppercase tracking-wider">
+              {currentPhase === 'theme_announcement' && '🃏 Use Your Jokers!'}
+              {currentPhase === 'question_display' && '📖 Read Question'}
+              {currentPhase === 'answer_selection' && '✍️ Answer Now!'}
+              {currentPhase === 'results' && '📊 Results'}
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <Clock className="w-6 h-6 text-white animate-pulse" />
+              <span className="text-5xl font-mono font-bold text-white">{phaseTimeRemaining}s</span>
+            </div>
+          </Card>
+        )}
 
         {(isProtected || hasDoublePoints || isBlocked) && (
           <Card className="p-3 bg-white/10">
