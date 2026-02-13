@@ -39,14 +39,14 @@ export const SpecialOffer: React.FC = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session');
+        throw new Error(data.error || t('pricing.error.checkoutFailed'));
       }
 
       window.location.href = data.url;
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Unknown error';
+      const msg = error instanceof Error ? error.message : t('common.errorUnknown');
       console.error('Checkout error:', msg);
-      alert(`Payment failed: ${msg}`);
+      alert(t('pricing.error.paymentFailed', { message: msg }));
       setLoading(null);
     }
   };

@@ -133,15 +133,15 @@ export const CreateQuiz: React.FC = () => {
       console.error('Failed to create quiz:', error);
       setGenerationStep('');
 
-      let errorMessage = 'Failed to generate quiz. ';
       const msg = error instanceof Error ? error.message : '';
+      let errorMessage = '';
 
       if (msg.includes('API key')) {
-        errorMessage += 'API key not configured properly.';
+        errorMessage = t('create.error.apiKey');
       } else if (msg.includes('attempts')) {
-        errorMessage += 'The AI service is taking too long. Please try again.';
+        errorMessage = t('create.error.timeout');
       } else {
-        errorMessage += 'Please try again.';
+        errorMessage = t('create.error.tryAgain');
       }
 
       alert(errorMessage);
@@ -231,14 +231,14 @@ export const CreateQuiz: React.FC = () => {
               {allSubThemes.length > 0 && (
                 <div className="mt-4 p-4 bg-qb-darker rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm text-white/70">This quiz will include:</div>
+                    <div className="text-sm text-white/70">{t('create.quizWillInclude')}</div>
                     {excludedSubThemes.length > 0 && (
                       <button
                         type="button"
                         onClick={() => setExcludedSubThemes([])}
                         className="text-xs text-qb-cyan hover:text-qb-cyan/80 underline"
                       >
-                        Reset all
+                        {t('create.resetAll')}
                       </button>
                     )}
                   </div>
@@ -275,7 +275,7 @@ export const CreateQuiz: React.FC = () => {
                   </div>
                   {excludedSubThemes.length > 0 && (
                     <div className="text-xs text-white/50 mt-2">
-                      {activeSubThemes.length} sub-theme{activeSubThemes.length > 1 ? 's' : ''} active
+                      {t('create.subThemesActive', { count: activeSubThemes.length })}
                     </div>
                   )}
                 </div>
@@ -587,10 +587,10 @@ export const CreateQuiz: React.FC = () => {
               {formData.includeJokers && (
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   {[
-                    { key: 'protection' as const, icon: <Shield className="w-4 h-4" />, label: 'Protection', color: 'bg-blue-500' },
-                    { key: 'block' as const, icon: <Ban className="w-4 h-4" />, label: 'Block', color: 'bg-red-500' },
-                    { key: 'steal' as const, icon: <Repeat className="w-4 h-4" />, label: 'Steal', color: 'bg-orange-500' },
-                    { key: 'double_points' as const, icon: <Gem className="w-4 h-4" />, label: 'Double Points', color: 'bg-yellow-500' },
+                    { key: 'protection' as const, icon: <Shield className="w-4 h-4" />, label: t('create.jokerProtection'), color: 'bg-blue-500' },
+                    { key: 'block' as const, icon: <Ban className="w-4 h-4" />, label: t('create.jokerBlock'), color: 'bg-red-500' },
+                    { key: 'steal' as const, icon: <Repeat className="w-4 h-4" />, label: t('create.jokerSteal'), color: 'bg-orange-500' },
+                    { key: 'double_points' as const, icon: <Gem className="w-4 h-4" />, label: t('create.jokerDoublePoints'), color: 'bg-yellow-500' },
                   ].map((joker) => (
                     <button
                       key={joker.key}
@@ -606,7 +606,7 @@ export const CreateQuiz: React.FC = () => {
                       {joker.icon}
                       <span className="text-sm font-medium">{joker.label}</span>
                       <span className="ml-auto text-xs">
-                        {enabledJokers[joker.key] ? 'ON' : 'OFF'}
+                        {enabledJokers[joker.key] ? t('common.on') : t('common.off')}
                       </span>
                     </button>
                   ))}

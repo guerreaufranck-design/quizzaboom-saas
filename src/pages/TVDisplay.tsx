@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { supabase } from '../services/supabase/client';
 import { Card } from '../components/ui/Card';
@@ -34,6 +35,7 @@ const getAdaptiveOptionSize = (options: string[]): string => {
 };
 
 export const TVDisplay: React.FC = () => {
+  const { t } = useTranslation();
   const {
     currentPhase,
     phaseTimeRemaining,
@@ -179,8 +181,8 @@ export const TVDisplay: React.FC = () => {
         <div className="max-w-5xl mx-auto h-full flex flex-col">
           {/* Header — no logo, saves ~120px */}
           <div className="text-center mb-1">
-            <h1 className="text-3xl font-bold text-white">HOW TO PLAY</h1>
-            <p className="text-lg text-yellow-300 font-bold">Follow these 4 steps!</p>
+            <h1 className="text-3xl font-bold text-white">{t('tv.howToPlay')}</h1>
+            <p className="text-lg text-yellow-300 font-bold">{t('tv.followSteps')}</p>
           </div>
 
           {/* Steps - Ultra compact for 720p */}
@@ -190,9 +192,9 @@ export const TVDisplay: React.FC = () => {
               <div className="flex items-center gap-3">
                 <div className="text-2xl">📱</div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-bold text-white">1. JOIN THE GAME</h2>
+                  <h2 className="text-lg font-bold text-white">{t('tv.step1Title')}</h2>
                   <p className="text-base text-white/90">
-                    Scan the <span className="text-yellow-300 font-bold">QR code</span> or enter session code
+                    {t('tv.step1DescQR')} <span className="text-yellow-300 font-bold">{t('tv.step1DescCode')}</span>
                   </p>
                 </div>
               </div>
@@ -203,12 +205,12 @@ export const TVDisplay: React.FC = () => {
               <div className="flex items-center gap-3">
                 <div className="text-2xl animate-bounce">📧</div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-bold text-gray-900">2. ENTER YOUR EMAIL!</h2>
+                  <h2 className="text-lg font-bold text-gray-900">{t('tv.step2Title')}</h2>
                   <p className="text-base text-gray-900 font-bold">
-                    🎁 Receive your PERSONALIZED RESULTS:
-                    <span className="ml-2">✅ Ranking</span>
-                    <span className="ml-2">✅ Statistics</span>
-                    <span className="ml-2">✅ Certificate</span>
+                    {t('tv.step2Desc')}
+                    <span className="ml-2">{t('tv.step2Ranking')}</span>
+                    <span className="ml-2">{t('tv.step2Statistics')}</span>
+                    <span className="ml-2">{t('tv.step2Certificate')}</span>
                   </p>
                 </div>
               </div>
@@ -219,27 +221,27 @@ export const TVDisplay: React.FC = () => {
               <div className="flex items-center gap-3">
                 <div className="text-2xl">🎯</div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-bold text-white">3. USE JOKERS</h2>
+                  <h2 className="text-lg font-bold text-white">{t('tv.step3Title')}</h2>
                   <div className="flex items-center gap-3">
                     <p className="text-sm text-white/90">
-                      During <span className="text-purple-300 font-bold">THEME</span> (11s):
+                      {t('tv.step3During')}
                     </p>
                     <div className="flex gap-1.5">
                       <div className="bg-blue-500/30 rounded px-1.5 py-0.5 text-center">
                         <span className="text-base">🛡️</span>
-                        <span className="text-xs text-white ml-1">Protection</span>
+                        <span className="text-xs text-white ml-1">{t('tv.jokerProtection')}</span>
                       </div>
                       <div className="bg-red-500/30 rounded px-1.5 py-0.5 text-center">
                         <span className="text-base">🚫</span>
-                        <span className="text-xs text-white ml-1">Block</span>
+                        <span className="text-xs text-white ml-1">{t('tv.jokerBlock')}</span>
                       </div>
                       <div className="bg-yellow-500/30 rounded px-1.5 py-0.5 text-center">
                         <span className="text-base">💰</span>
-                        <span className="text-xs text-white ml-1">Steal</span>
+                        <span className="text-xs text-white ml-1">{t('tv.jokerSteal')}</span>
                       </div>
                       <div className="bg-green-500/30 rounded px-1.5 py-0.5 text-center">
                         <span className="text-base">⭐</span>
-                        <span className="text-xs text-white ml-1">Double</span>
+                        <span className="text-xs text-white ml-1">{t('tv.jokerDouble')}</span>
                       </div>
                     </div>
                   </div>
@@ -252,12 +254,12 @@ export const TVDisplay: React.FC = () => {
               <div className="flex items-center gap-3">
                 <div className="text-2xl">⏱️</div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-bold text-white">4. GAME FLOW</h2>
+                  <h2 className="text-lg font-bold text-white">{t('tv.step4Title')}</h2>
                   <div className="grid grid-cols-2 gap-1 text-sm text-white/90">
-                    <div className="bg-purple-500/20 px-2 py-0.5 rounded">🎯 Theme (11s) → Jokers</div>
-                    <div className="bg-blue-500/20 px-2 py-0.5 rounded">📖 Question (15s) → Read</div>
-                    <div className="bg-cyan-500/20 px-2 py-0.5 rounded">✍️ Answer (24s) → Choose</div>
-                    <div className="bg-green-500/20 px-2 py-0.5 rounded">📊 Results (10s) → Score</div>
+                    <div className="bg-purple-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseTheme')}</div>
+                    <div className="bg-blue-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseQuestion')}</div>
+                    <div className="bg-cyan-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseAnswer')}</div>
+                    <div className="bg-green-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseResults')}</div>
                   </div>
                 </div>
               </div>
@@ -268,10 +270,10 @@ export const TVDisplay: React.FC = () => {
           <div className="text-center mt-1.5">
             <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-2.5">
               <p className="text-xl font-bold text-white">
-                🚀 Waiting for host to start...
+                {t('tv.waitingForHost')}
               </p>
               <p className="text-base text-white/90 font-mono">
-                Session: <span className="font-bold">{sessionCode}</span>
+                {t('tv.sessionLabel')} <span className="font-bold">{sessionCode}</span>
               </p>
             </div>
           </div>
@@ -311,7 +313,7 @@ export const TVDisplay: React.FC = () => {
             {breakNumber > 0 && totalBreaks > 0 && (
               <div className="bg-black/30 backdrop-blur-xl rounded-2xl px-6 py-2 border border-white/20">
                 <p className="text-2xl text-white font-bold uppercase tracking-wider">
-                  ☕ PAUSE {breakNumber}/{totalBreaks}
+                  {t('tv.breakPauseNumber', { current: breakNumber, total: totalBreaks })}
                 </p>
               </div>
             )}
@@ -325,10 +327,10 @@ export const TVDisplay: React.FC = () => {
             ) : (
               <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-6 border-2 border-white/20 w-full max-w-4xl">
                 <p className="text-5xl font-bold text-white text-center">
-                  ☕ PAUSE
+                  {t('tv.breakPause')}
                 </p>
                 <p className="text-2xl text-white/70 text-center mt-2">
-                  The quiz will resume shortly!
+                  {t('tv.quizResumeShortly')}
                 </p>
               </div>
             )}
@@ -346,7 +348,7 @@ export const TVDisplay: React.FC = () => {
           <div className="text-center w-full">
             <div className="inline-block bg-black/40 backdrop-blur-xl rounded-2xl px-8 py-2 border border-white/20">
               <p className="text-lg text-white font-bold">
-                Powered by <span className="text-yellow-300">QuizzaBoom</span> · contact@quizzaboom.app
+                {t('tv.poweredBy')} <span className="text-yellow-300">QuizzaBoom</span> · contact@quizzaboom.app
               </p>
             </div>
           </div>
@@ -371,10 +373,10 @@ export const TVDisplay: React.FC = () => {
           {/* Thank you header — compact */}
           <div className="text-center mb-2">
             <h1 className="text-5xl font-bold text-white uppercase tracking-wider">
-              🎉 THANK YOU! 🎉
+              {t('tv.thankYou')}
             </h1>
             <p className="text-xl text-white/90 font-medium">
-              Thank you so much for your participation!
+              {t('tv.thankYouMessage')}
             </p>
           </div>
 
@@ -383,7 +385,7 @@ export const TVDisplay: React.FC = () => {
             <div className="bg-black/30 backdrop-blur-xl rounded-2xl p-4 border-2 border-yellow-400/50 flex-1 min-h-0">
               <h2 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-3">
                 <Trophy className="w-7 h-7 text-yellow-300" />
-                FINAL RANKING
+                {t('tv.finalRanking')}
                 <Trophy className="w-7 h-7 text-yellow-300" />
               </h2>
               <div className="space-y-1.5">
@@ -409,7 +411,7 @@ export const TVDisplay: React.FC = () => {
                         {player.player_name}
                       </div>
                       <div className="text-sm text-white/70">
-                        {player.correct_answers}/{player.questions_answered} correct
+                        {t('tv.playerStats', { correct: player.correct_answers, total: player.questions_answered })}
                       </div>
                     </div>
                     <div className="text-xl font-bold text-yellow-300">
@@ -426,7 +428,7 @@ export const TVDisplay: React.FC = () => {
           <div className="text-center mt-2">
             <div className="inline-block bg-black/30 backdrop-blur-xl rounded-xl px-6 py-2 border border-white/20">
               <p className="text-lg text-white font-bold">
-                Powered by <span className="text-yellow-300">QuizzaBoom</span> · quizzaboom.app
+                {t('tv.poweredBy')} <span className="text-yellow-300">QuizzaBoom</span> · quizzaboom.app
               </p>
             </div>
           </div>
@@ -439,7 +441,7 @@ export const TVDisplay: React.FC = () => {
   // PHASE 1: Theme Announcement — adaptive theme name
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'theme_announcement') {
-    const themeName = currentThemeTitle || currentQuestion?.stage_id || 'General Knowledge';
+    const themeName = currentThemeTitle || currentQuestion?.stage_id || t('tv.defaultTheme');
     const themeTextClass = getAdaptiveTextSize(themeName, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
 
     return (
@@ -447,7 +449,7 @@ export const TVDisplay: React.FC = () => {
         <div className="text-center max-w-6xl w-full flex flex-col items-center justify-center h-full">
           <div className="text-7xl mb-4 animate-bounce">🎯</div>
           <h1 className="text-6xl font-bold text-white mb-4 uppercase tracking-wider">
-            NEXT THEME
+            {t('tv.nextTheme')}
           </h1>
           <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-8 mb-6 w-full">
             <p className={`font-bold text-yellow-300 ${themeTextClass}`}>
@@ -455,7 +457,7 @@ export const TVDisplay: React.FC = () => {
             </p>
           </div>
           <div className="mb-4 text-3xl text-white/90 bg-white/10 rounded-2xl p-4 inline-block">
-            ⚡ Use your JOKERS now! ⚡
+            {t('tv.useJokersNow')}
           </div>
           <div className="flex items-center justify-center gap-4 text-white">
             <Clock className="w-12 h-12 animate-pulse" />
@@ -470,7 +472,7 @@ export const TVDisplay: React.FC = () => {
   // PHASE 2: Question Display — adaptive question text
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'question_display') {
-    const questionText = currentQuestion?.question_text || 'Loading...';
+    const questionText = currentQuestion?.question_text || t('common.loading');
     const questionTextClass = getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
 
     return (
@@ -553,7 +555,7 @@ export const TVDisplay: React.FC = () => {
       <div className="h-screen bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 p-8 overflow-hidden">
         <div className="max-w-7xl mx-auto h-full flex flex-col items-center justify-center">
           <div className="text-6xl mb-3 animate-bounce">✅</div>
-          <h1 className="text-5xl font-bold text-white mb-6">CORRECT ANSWER</h1>
+          <h1 className="text-5xl font-bold text-white mb-6">{t('tv.correctAnswer')}</h1>
           <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-8 mb-6">
             <p className={`${correctAnswerClass} font-bold text-white`}>
               {correctAnswer}
@@ -581,7 +583,7 @@ export const TVDisplay: React.FC = () => {
           <div className="text-center">
             <h1 className="text-5xl font-bold text-white mb-2 flex items-center justify-center gap-4">
               <Trophy className="w-10 h-10 text-yellow-300" />
-              LEADERBOARD
+              {t('tv.leaderboard')}
               <Trophy className="w-10 h-10 text-yellow-300" />
             </h1>
           </div>
@@ -608,7 +610,7 @@ export const TVDisplay: React.FC = () => {
                       {player.player_name}
                     </div>
                     <div className="text-lg text-white/70">
-                      {player.correct_answers}/{player.questions_answered} correct
+                      {t('tv.playerStats', { correct: player.correct_answers, total: player.questions_answered })}
                     </div>
                   </div>
                   <div className="text-3xl font-bold text-yellow-300">
@@ -621,14 +623,14 @@ export const TVDisplay: React.FC = () => {
           ) : (
             <div className="text-center flex-1 flex flex-col items-center justify-center">
               <div className="text-6xl mb-4 animate-pulse">⏸️</div>
-              <p className="text-4xl text-white/70">GET READY!</p>
+              <p className="text-4xl text-white/70">{t('tv.getReady')}</p>
             </div>
           )}
 
           <div className="text-center flex items-center justify-center gap-4">
             <AnimatedLogo size="sm" />
             <div className="inline-flex items-center gap-3 px-6 py-3 bg-qb-cyan/20 rounded-2xl">
-              <p className="text-2xl text-white/80">Next question in</p>
+              <p className="text-2xl text-white/80">{t('tv.nextQuestionIn')}</p>
               <span className="text-4xl font-mono font-bold text-qb-cyan">
                 {phaseTimeRemaining}
               </span>
@@ -646,9 +648,9 @@ export const TVDisplay: React.FC = () => {
     <div className="h-screen bg-qb-dark flex items-center justify-center overflow-hidden">
       <div className="text-center">
         <div className="text-7xl mb-6">📺</div>
-        <h1 className="text-5xl font-bold text-white mb-4">TV Display Mode</h1>
-        <p className="text-2xl text-white/70 mb-6">Session: {sessionCode}</p>
-        <p className="text-xl text-white/50">Waiting for quiz to start...</p>
+        <h1 className="text-5xl font-bold text-white mb-4">{t('tv.displayMode')}</h1>
+        <p className="text-2xl text-white/70 mb-6">{t('tv.sessionLabel')} {sessionCode}</p>
+        <p className="text-xl text-white/50">{t('tv.displayModeWaiting')}</p>
       </div>
     </div>
   );

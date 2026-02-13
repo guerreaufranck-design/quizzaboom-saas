@@ -41,7 +41,7 @@ export const Pricing: React.FC = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session');
+        throw new Error(data.error || t('pricing.error.checkoutFailed'));
       }
 
       const { url } = data;
@@ -49,9 +49,9 @@ export const Pricing: React.FC = () => {
       // Redirection directe vers Stripe
       window.location.href = url;
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Unknown error';
+      const msg = error instanceof Error ? error.message : t('pricing.error.unknown');
       console.error('Checkout error:', msg);
-      alert(`Payment failed: ${msg}`);
+      alert(t('pricing.error.paymentFailed', { message: msg }));
       setLoading(null);
     }
   };
@@ -116,12 +116,12 @@ export const Pricing: React.FC = () => {
       icon: '🎮',
       popular: false,
       features: [
-        '1 Quiz Session',
-        'Up to 5 Players',
-        'All Game Modes',
-        'Strategic Jokers',
-        'Real-time Leaderboard',
-        'Email Results',
+        t('pricing.oneQuizSession'),
+        t('pricing.upTo5Players'),
+        t('pricing.allGameModes'),
+        t('pricing.strategicJokers'),
+        t('pricing.realtimeLeaderboard'),
+        t('pricing.emailResults'),
       ],
     },
     {
@@ -132,13 +132,13 @@ export const Pricing: React.FC = () => {
       icon: '🎉',
       popular: true,
       features: [
-        '1 Quiz Session',
-        'Up to 15 Players',
-        'All Game Modes',
-        'Strategic Jokers',
-        'Real-time Leaderboard',
-        'Email Results',
-        'Perfect for parties!',
+        t('pricing.oneQuizSession'),
+        t('pricing.upTo15Players'),
+        t('pricing.allGameModes'),
+        t('pricing.strategicJokers'),
+        t('pricing.realtimeLeaderboard'),
+        t('pricing.emailResults'),
+        t('pricing.perfectForParties'),
       ],
     },
     {
@@ -149,13 +149,13 @@ export const Pricing: React.FC = () => {
       icon: '🔥',
       popular: false,
       features: [
-        '1 Quiz Session',
-        'Up to 50 Players',
-        'All Game Modes',
-        'Strategic Jokers',
-        'Real-time Leaderboard',
-        'Email Results',
-        'Perfect for parties!',
+        t('pricing.oneQuizSession'),
+        t('pricing.upTo50Players'),
+        t('pricing.allGameModes'),
+        t('pricing.strategicJokers'),
+        t('pricing.realtimeLeaderboard'),
+        t('pricing.emailResults'),
+        t('pricing.perfectForParties'),
       ],
     },
     {
@@ -166,13 +166,13 @@ export const Pricing: React.FC = () => {
       icon: '👑',
       popular: false,
       features: [
-        '1 Quiz Session',
-        'Up to 100+ Players',
-        'All Game Modes',
-        'Strategic Jokers',
-        'Real-time Leaderboard',
-        'Email Results',
-        'Maximum capacity!',
+        t('pricing.oneQuizSession'),
+        t('pricing.upTo100Players'),
+        t('pricing.allGameModes'),
+        t('pricing.strategicJokers'),
+        t('pricing.realtimeLeaderboard'),
+        t('pricing.emailResults'),
+        t('pricing.maximumCapacity'),
       ],
     },
   ];
@@ -185,17 +185,17 @@ export const Pricing: React.FC = () => {
       icon: <Building2 className="w-8 h-8" />,
       trial: true,
       features: [
-        '5 Quiz per month',
-        'Up to 250 players per session',
-        'Strategic mode included',
-        'Email results & analytics',
-        'Standard support',
-        '30-day free trial',
+        t('pricing.b2b.quizPerMonth'),
+        t('pricing.b2b.playersPerSession'),
+        t('pricing.b2b.strategicIncluded'),
+        t('pricing.b2b.emailAnalytics'),
+        t('pricing.b2b.standardSupport'),
+        t('pricing.b2b.freeTrialDays'),
       ],
       warnings: [
-        'Business registration number required (SIRET/VAT)',
-        'AI-powered instant verification',
-        'Hospitality & entertainment businesses only',
+        t('pricing.b2b.warningRegistration'),
+        t('pricing.b2b.warningAiVerification'),
+        t('pricing.b2b.warningEligible'),
       ],
     },
     {
@@ -205,18 +205,18 @@ export const Pricing: React.FC = () => {
       icon: <Crown className="w-8 h-8" />,
       trial: false,
       features: [
-        'Unlimited Quiz',
-        'Up to 250 players per session',
-        '2 Team Seats',
-        'White Label (custom subdomain)',
-        'Strategic mode included',
-        'Priority support',
-        'Advanced analytics',
+        t('pricing.b2b.unlimitedQuiz'),
+        t('pricing.b2b.playersPerSession'),
+        t('pricing.b2b.teamSeats'),
+        t('pricing.b2b.whiteLabel'),
+        t('pricing.b2b.strategicIncluded'),
+        t('pricing.b2b.prioritySupport'),
+        t('pricing.b2b.advancedAnalytics'),
       ],
       warnings: [
-        'Business registration number required (SIRET/VAT)',
-        'AI-powered instant verification',
-        'No free trial - Paid immediately',
+        t('pricing.b2b.warningRegistration'),
+        t('pricing.b2b.warningAiVerification'),
+        t('pricing.b2b.warningNoTrial'),
       ],
     },
   ];
@@ -401,10 +401,10 @@ export const Pricing: React.FC = () => {
                           <span className="text-white/70">/month</span>
                         </div>
                         {plan.trial && (
-                          <p className="text-qb-cyan font-bold mt-2">30-day free trial</p>
+                          <p className="text-qb-cyan font-bold mt-2">{t('pricing.b2b.trialBadge')}</p>
                         )}
                         {!plan.trial && (
-                          <p className="text-red-400 font-bold mt-2">⚠️ No trial - Paid immediately</p>
+                          <p className="text-red-400 font-bold mt-2">{t('pricing.b2b.noTrialWarning')}</p>
                         )}
                       </div>
 

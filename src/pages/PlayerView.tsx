@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
@@ -7,6 +8,7 @@ import { Shield, Ban, Coins, Star, Clock, X, Trophy } from 'lucide-react';
 import { supabase } from '../services/supabase/client';
 
 export const PlayerView: React.FC = () => {
+  const { t } = useTranslation();
   const { currentPlayer, sessionCode, currentQuiz, players, loadPlayers, currentSession } = useQuizStore();
   const {
     currentPhase,
@@ -208,9 +210,9 @@ export const PlayerView: React.FC = () => {
   const handleJokerAction = async (jokerType: 'protection' | 'block' | 'steal' | 'double_points') => {
     try {
       await executeJokerAction(jokerType);
-      alert(`✅ ${jokerType.toUpperCase()} activated!`);
+      alert(t('player.jokerActivated', { type: jokerType }));
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Action failed');
+      alert(error instanceof Error ? error.message : t('player.actionFailed'));
     }
   };
 
@@ -232,7 +234,7 @@ export const PlayerView: React.FC = () => {
         <Card className="max-w-lg w-full p-6 bg-qb-darker border-2 border-qb-cyan">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-2xl font-bold text-white">
-              {pendingJokerType === 'block' ? '🚫 Block Player' : '💰 Steal from Player'}
+              {pendingJokerType === 'block' ? t('player.blockPlayer') : t('player.stealFromPlayer')}
             </h3>
             <button onClick={closeTargetSelector} className="text-white/70 hover:text-white">
               <X className="w-6 h-6" />
@@ -277,7 +279,7 @@ export const PlayerView: React.FC = () => {
       <div className="min-h-screen bg-qb-dark flex items-center justify-center">
         <div className="text-center">
           <div className="text-8xl mb-6 animate-pulse">⏳</div>
-          <h2 className="text-3xl font-bold text-white mb-4">Loading...</h2>
+          <h2 className="text-3xl font-bold text-white mb-4">{t('common.loading')}</h2>
         </div>
       </div>
     );
@@ -294,7 +296,7 @@ export const PlayerView: React.FC = () => {
               <div className="text-4xl">{currentPlayer.avatar_emoji}</div>
               <div>
                 <div className="text-white font-bold text-xl">{currentPlayer.player_name}</div>
-                <div className="text-qb-cyan text-xs">Session: {sessionCode}</div>
+                <div className="text-qb-cyan text-xs">{t('player.sessionLabel', { code: sessionCode })}</div>
               </div>
             </div>
             <div className="text-right">
@@ -303,7 +305,7 @@ export const PlayerView: React.FC = () => {
                 <span className="text-3xl font-bold text-yellow-400">#{playerRank || '-'}</span>
               </div>
               <div className="text-4xl font-bold text-white">{frozenScore}</div>
-              <div className="text-xs text-white/60">points</div>
+              <div className="text-xs text-white/60">{t('player.points')}</div>
             </div>
           </div>
         </Card>
@@ -311,22 +313,22 @@ export const PlayerView: React.FC = () => {
         {currentPhase === 'commercial_break' ? (
           <Card className="p-6 text-center bg-gradient-to-br from-yellow-500 to-orange-500 border-2 border-yellow-300">
             <div className="text-4xl mb-2">☕</div>
-            <div className="text-xl font-bold text-white mb-1">PAUSE</div>
+            <div className="text-xl font-bold text-white mb-1">{t('player.pause')}</div>
             <div className="flex items-center justify-center gap-2">
               <Clock className="w-6 h-6 text-white animate-pulse" />
               <span className="text-5xl font-mono font-bold text-white">
                 {Math.floor(phaseTimeRemaining / 60)}:{(phaseTimeRemaining % 60).toString().padStart(2, '0')}
               </span>
             </div>
-            <p className="text-sm text-white/80 mt-2">The quiz will resume shortly!</p>
+            <p className="text-sm text-white/80 mt-2">{t('player.quizResumeShortly')}</p>
           </Card>
         ) : (
           <Card className="p-3 text-center bg-gradient-to-br from-qb-dark to-qb-darker border border-white/20">
             <div className="text-xs text-white/70 mb-1 uppercase tracking-wider">
-              {currentPhase === 'theme_announcement' && '🃏 Use Your Jokers!'}
-              {currentPhase === 'question_display' && '📖 Read Question'}
-              {currentPhase === 'answer_selection' && '✍️ Answer Now!'}
-              {currentPhase === 'results' && '📊 Results'}
+              {currentPhase === 'theme_announcement' && t('player.phaseUseJokers')}
+              {currentPhase === 'question_display' && t('player.phaseReadQuestion')}
+              {currentPhase === 'answer_selection' && t('player.phaseAnswerNow')}
+              {currentPhase === 'results' && t('player.phaseResults')}
             </div>
             <div className="flex items-center justify-center gap-2">
               <Clock className="w-6 h-6 text-white animate-pulse" />
@@ -341,19 +343,19 @@ export const PlayerView: React.FC = () => {
               {isProtected && (
                 <div className="px-3 py-1 bg-blue-500/40 rounded-lg flex items-center gap-2 text-sm">
                   <Shield className="w-4 h-4" />
-                  <span className="font-bold">Protected</span>
+                  <span className="font-bold">{t('player.effectProtected')}</span>
                 </div>
               )}
               {hasDoublePoints && (
                 <div className="px-3 py-1 bg-purple-500/40 rounded-lg flex items-center gap-2 text-sm">
                   <Star className="w-4 h-4" />
-                  <span className="font-bold">×2 Points</span>
+                  <span className="font-bold">{t('player.effectDoublePoints')}</span>
                 </div>
               )}
               {isBlocked && (
                 <div className="px-3 py-1 bg-red-500/40 rounded-lg flex items-center gap-2 text-sm">
                   <Ban className="w-4 h-4" />
-                  <span className="font-bold">Blocked</span>
+                  <span className="font-bold">{t('player.effectBlocked')}</span>
                 </div>
               )}
             </div>
@@ -362,7 +364,7 @@ export const PlayerView: React.FC = () => {
 
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
-            Jokers {jokersEnabled ? '✅ Choose Now!' : '🔒 Wait for joker phase'}
+            {t('player.jokersTitle')} {jokersEnabled ? t('player.jokerChooseNow') : t('player.jokerWaitPhase')}
           </h3>
           <div className="grid grid-cols-2 gap-3">
             {sessionEnabledJokers.protection && (
@@ -373,8 +375,8 @@ export const PlayerView: React.FC = () => {
                 className="h-24 flex-col bg-blue-600 hover:bg-blue-700 disabled:opacity-30"
               >
                 <Shield className="w-8 h-8 mb-1" />
-                <span className="font-bold text-sm">Protection</span>
-                <span className="text-xs">{playerInventory.protection === 0 ? 'Used' : 'Ready'}</span>
+                <span className="font-bold text-sm">{t('player.jokerProtection')}</span>
+                <span className="text-xs">{playerInventory.protection === 0 ? t('player.jokerUsed') : t('player.jokerReady')}</span>
               </Button>
             )}
 
@@ -386,8 +388,8 @@ export const PlayerView: React.FC = () => {
                 className="h-24 flex-col bg-purple-600 hover:bg-purple-700 disabled:opacity-30"
               >
                 <Star className="w-8 h-8 mb-1" />
-                <span className="font-bold text-sm">Double</span>
-                <span className="text-xs">{playerInventory.double_points === 0 ? 'Used' : 'Ready'}</span>
+                <span className="font-bold text-sm">{t('player.jokerDouble')}</span>
+                <span className="text-xs">{playerInventory.double_points === 0 ? t('player.jokerUsed') : t('player.jokerReady')}</span>
               </Button>
             )}
 
@@ -399,8 +401,8 @@ export const PlayerView: React.FC = () => {
                 className="h-24 flex-col bg-red-600 hover:bg-red-700 disabled:opacity-30"
               >
                 <Ban className="w-8 h-8 mb-1" />
-                <span className="font-bold text-sm">Block</span>
-                <span className="text-xs">{playerInventory.block === 0 ? 'Used' : 'Ready'}</span>
+                <span className="font-bold text-sm">{t('player.jokerBlock')}</span>
+                <span className="text-xs">{playerInventory.block === 0 ? t('player.jokerUsed') : t('player.jokerReady')}</span>
               </Button>
             )}
 
@@ -412,8 +414,8 @@ export const PlayerView: React.FC = () => {
                 className="h-24 flex-col bg-yellow-600 hover:bg-yellow-700 disabled:opacity-30"
               >
                 <Coins className="w-8 h-8 mb-1" />
-                <span className="font-bold text-sm">Steal</span>
-                <span className="text-xs">{playerInventory.steal === 0 ? 'Used' : 'Ready'}</span>
+                <span className="font-bold text-sm">{t('player.jokerSteal')}</span>
+                <span className="text-xs">{playerInventory.steal === 0 ? t('player.jokerUsed') : t('player.jokerReady')}</span>
               </Button>
             )}
           </div>
@@ -421,7 +423,7 @@ export const PlayerView: React.FC = () => {
 
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
-            Answers {answersEnabled ? '✅ Select Now!' : '🔒 Wait for answer time'}
+            {t('player.answersTitle')} {answersEnabled ? t('player.answersSelectNow') : t('player.answersWaitTime')}
           </h3>
           <div className="grid grid-cols-2 gap-3">
             {['A', 'B', 'C', 'D'].map((letter) => (
@@ -444,7 +446,7 @@ export const PlayerView: React.FC = () => {
           {hasAnswered && (
             <div className="mt-4 p-3 bg-blue-500/20 border-2 border-blue-500 rounded-lg text-center">
               <div className="text-4xl mb-2">✅</div>
-              <p className="text-lg font-bold text-blue-400">Answer Submitted!</p>
+              <p className="text-lg font-bold text-blue-400">{t('player.answerSubmitted')}</p>
             </div>
           )}
         </Card>

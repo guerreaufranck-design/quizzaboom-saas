@@ -262,7 +262,7 @@ export const Dashboard: React.FC = () => {
                     <div>
                       <div className="text-lg font-bold text-white">{purchase.plan_name}</div>
                       <div className="text-sm text-white/60">
-                        Up to {purchase.max_players} players • {new Date(purchase.created_at).toLocaleDateString()}
+                        {t('dashboard.upToPlayers', { count: purchase.max_players })} • {new Date(purchase.created_at).toLocaleDateString()}
                       </div>
                     </div>
                     <div>

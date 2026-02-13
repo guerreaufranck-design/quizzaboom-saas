@@ -226,7 +226,7 @@ export const HostDashboard: React.FC = () => {
       stageNumber,
       timeRemaining: phaseDuration,
       currentQuestion: question || null,
-      themeTitle: question?.stage_id || 'General Knowledge',
+      themeTitle: question?.stage_id || t('host.defaultTheme'),
     };
 
     console.log('📤 Broadcasting phase change:', {
@@ -270,7 +270,7 @@ export const HostDashboard: React.FC = () => {
 
   const handleManualPhaseChange = (phase: GamePhase) => {
     if (isPlaying) {
-      alert('⏸️ Pause the quiz first');
+      alert(t('host.pauseFirst'));
       return;
     }
     changePhase(phase, currentQuestionIndex);
@@ -302,13 +302,13 @@ export const HostDashboard: React.FC = () => {
 
   const getPhaseLabel = (phase: GamePhase) => {
     switch (phase) {
-      case 'theme_announcement': return 'Theme + Jokers';
-      case 'question_display': return 'Question';
-      case 'answer_selection': return 'Answers';
-      case 'results': return 'Results';
-      case 'intermission': return 'Leaderboard';
-      case 'commercial_break': return 'Break';
-      case 'quiz_complete': return 'Complete';
+      case 'theme_announcement': return t('host.phaseThemeJokers');
+      case 'question_display': return t('host.phaseQuestion');
+      case 'answer_selection': return t('host.phaseAnswers');
+      case 'results': return t('host.phaseResults');
+      case 'intermission': return t('host.phaseLeaderboard');
+      case 'commercial_break': return t('host.phaseBreak');
+      case 'quiz_complete': return t('host.phaseComplete');
     }
   };
 
@@ -371,7 +371,7 @@ export const HostDashboard: React.FC = () => {
         <Card className="p-12 text-center max-w-2xl">
           <div className="text-6xl mb-4">📚</div>
           <h2 className="text-3xl font-bold text-white mb-4">{t('common.loading')}</h2>
-          <p className="text-white/70">Generating quiz with AI...</p>
+          <p className="text-white/70">{t('host.generatingWithAI')}</p>
         </Card>
       </div>
     );
@@ -411,7 +411,7 @@ export const HostDashboard: React.FC = () => {
                   <div className="flex-1">
                     <div className="text-lg font-bold text-white">{player.player_name}</div>
                     <div className="text-sm text-white/60">
-                      {player.correct_answers} correct | {player.accuracy_percentage}% accuracy
+                      {t('host.playerStats', { correct: player.correct_answers, accuracy: player.accuracy_percentage })}
                     </div>
                   </div>
                   <div className="text-2xl font-bold text-qb-cyan">{player.total_score}</div>
@@ -441,7 +441,7 @@ export const HostDashboard: React.FC = () => {
                 </div>
               ) : (
                 <span className="text-white/50 text-sm">
-                  {playersWithEmail.length === 0 ? 'No emails to send' : 'Pending...'}
+                  {playersWithEmail.length === 0 ? t('host.noEmailsToSend') : t('host.emailsPending')}
                 </span>
               )}
             </div>
@@ -455,7 +455,7 @@ export const HostDashboard: React.FC = () => {
               icon={<Home />}
               onClick={() => navigate('dashboard')}
             >
-              {t('host.backToDashboard', 'Return to Dashboard')}
+              {t('host.backToDashboard')}
             </Button>
           </div>
         </div>
@@ -496,13 +496,13 @@ export const HostDashboard: React.FC = () => {
               variant="ghost"
               icon={<Square />}
               onClick={() => {
-                if (confirm('Are you sure you want to stop the quiz? All players will be disconnected.')) {
+                if (confirm(t('host.stopConfirmation'))) {
                   endSession();
                 }
               }}
               className="text-red-400 hover:text-red-300"
             >
-              {t('host.stopQuiz', 'Stop Quiz')}
+              {t('host.stopQuiz')}
             </Button>
           </div>
         </div>
@@ -522,11 +522,11 @@ export const HostDashboard: React.FC = () => {
                   }
                 </div>
                 <div className="text-xl text-white/90">
-                  Question {currentQuestionIndex + 1} / {allQuestions.length}
+                  {t('host.questionProgress', { current: currentQuestionIndex + 1, total: allQuestions.length })}
                 </div>
                 {currentQuestion && currentPhaseState !== 'commercial_break' && (
                   <div className="text-2xl text-yellow-300 font-bold">
-                    Theme: {currentQuestion.stage_id}
+                    {t('host.themePrefix', { theme: currentQuestion.stage_id })}
                   </div>
                 )}
                 {currentPhaseState === 'commercial_break' && promoMessage && (
@@ -569,7 +569,7 @@ export const HostDashboard: React.FC = () => {
                   icon={isMuted ? <VolumeX /> : <Volume2 />}
                   variant={isMuted ? 'ghost' : 'secondary'}
                 >
-                  {isMuted ? 'Mute' : 'Sound'}
+                  {isMuted ? t('host.mute') : t('host.sound')}
                 </Button>
               </div>
 
@@ -611,7 +611,7 @@ export const HostDashboard: React.FC = () => {
                             : 'bg-yellow-500/20 text-yellow-400'
                         }`}
                       >
-                        After Q{brk.afterQuestionIndex + 1} ({Math.floor(brk.durationSeconds / 60)} min)
+                        {t('host.breakSchedule', { question: brk.afterQuestionIndex + 1, minutes: Math.floor(brk.durationSeconds / 60) })}
                       </div>
                     );
                   })}
@@ -653,7 +653,7 @@ export const HostDashboard: React.FC = () => {
                         </span>
                         <span className="text-white flex-1">{option}</span>
                         {option === currentQuestion.correct_answer && (
-                          <span className="text-green-400 font-bold">✓ CORRECT</span>
+                          <span className="text-green-400 font-bold">{t('host.correctAnswer')}</span>
                         )}
                       </div>
                     ))}
@@ -662,7 +662,7 @@ export const HostDashboard: React.FC = () => {
                   {currentQuestion.explanation && (
                     <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                       <p className="text-sm text-white/80">
-                        <strong className="text-blue-400">Explanation:</strong> {currentQuestion.explanation}
+                        <strong className="text-blue-400">{t('host.explanationLabel')}</strong> {currentQuestion.explanation}
                       </p>
                     </div>
                   )}
@@ -670,13 +670,13 @@ export const HostDashboard: React.FC = () => {
                   {currentQuestion.fun_fact && (
                     <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                       <p className="text-sm text-white/80">
-                        <strong className="text-yellow-400">Fun Fact:</strong> {currentQuestion.fun_fact}
+                        <strong className="text-yellow-400">{t('host.funFactLabel')}</strong> {currentQuestion.fun_fact}
                       </p>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8 text-white/50">No question data</div>
+                <div className="text-center py-8 text-white/50">{t('host.noQuestionData')}</div>
               )}
             </Card>
           </div>
@@ -686,7 +686,7 @@ export const HostDashboard: React.FC = () => {
               <h3 className="text-xl font-bold text-white mb-4">{t('host.quizProgress')}</h3>
               <div>
                 <div className="flex justify-between text-sm text-white/70 mb-2">
-                  <span>Questions</span>
+                  <span>{t('host.questionsProgressLabel')}</span>
                   <span>{currentQuestionIndex + 1} / {allQuestions.length}</span>
                 </div>
                 <div className="h-3 bg-qb-darker rounded-full overflow-hidden">

@@ -196,7 +196,7 @@ export const ProDashboard: React.FC = () => {
                 <div>
                   <div className="text-3xl font-bold text-white capitalize">{org.subscription_plan}</div>
                   <div className="text-white/70">
-                    {org.max_participants} players max
+                    {t('proDashboard.playersMax', { count: org.max_participants })}
                   </div>
                 </div>
               </div>

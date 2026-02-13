@@ -7,24 +7,25 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { ArrowLeft, Building2, Search, CheckCircle, XCircle, AlertCircle, Shield, Mail } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import type { VerificationResult, Organization } from '../types/organization';
 import { useOrganizationStore } from '../stores/useOrganizationStore';
 
 type Step = 'form' | 'verifying' | 'result';
 
-const COUNTRIES = [
-  { code: 'FR', label: 'France', placeholder: '123 456 789 00012', hint: 'Enter your 14-digit SIRET number' },
-  { code: 'DE', label: 'Germany', placeholder: 'DE123456789', hint: 'Enter your VAT number (DE + 9 digits)' },
-  { code: 'ES', label: 'Spain', placeholder: 'ESA12345678', hint: 'Enter your VAT number (ES + 9 chars)' },
-  { code: 'IT', label: 'Italy', placeholder: 'IT12345678901', hint: 'Enter your VAT number (IT + 11 digits)' },
-  { code: 'BE', label: 'Belgium', placeholder: 'BE0123456789', hint: 'Enter your VAT number (BE + 10 digits)' },
-  { code: 'NL', label: 'Netherlands', placeholder: 'NL123456789B01', hint: 'Enter your VAT number' },
-  { code: 'PT', label: 'Portugal', placeholder: 'PT123456789', hint: 'Enter your VAT number' },
-  { code: 'AT', label: 'Austria', placeholder: 'ATU12345678', hint: 'Enter your VAT number' },
-  { code: 'GB', label: 'United Kingdom', placeholder: 'GB123456789', hint: 'Enter your VAT number' },
-  { code: 'US', label: 'United States', placeholder: '12-3456789', hint: 'Enter your EIN (Employer Identification Number)' },
-  { code: 'AU', label: 'Australia', placeholder: '12 345 678 901', hint: 'Enter your 11-digit ABN (Australian Business Number)' },
-  { code: 'NZ', label: 'New Zealand', placeholder: '1234567', hint: 'Enter your NZBN or company number' },
+const getCountries = (t: TFunction) => [
+  { code: 'FR', label: t('proSignup.countries.FR'), placeholder: '123 456 789 00012', hint: t('proSignup.hints.FR') },
+  { code: 'DE', label: t('proSignup.countries.DE'), placeholder: 'DE123456789', hint: t('proSignup.hints.DE') },
+  { code: 'ES', label: t('proSignup.countries.ES'), placeholder: 'ESA12345678', hint: t('proSignup.hints.ES') },
+  { code: 'IT', label: t('proSignup.countries.IT'), placeholder: 'IT12345678901', hint: t('proSignup.hints.IT') },
+  { code: 'BE', label: t('proSignup.countries.BE'), placeholder: 'BE0123456789', hint: t('proSignup.hints.BE') },
+  { code: 'NL', label: t('proSignup.countries.NL'), placeholder: 'NL123456789B01', hint: t('proSignup.hints.NL') },
+  { code: 'PT', label: t('proSignup.countries.PT'), placeholder: 'PT123456789', hint: t('proSignup.hints.PT') },
+  { code: 'AT', label: t('proSignup.countries.AT'), placeholder: 'ATU12345678', hint: t('proSignup.hints.AT') },
+  { code: 'GB', label: t('proSignup.countries.GB'), placeholder: 'GB123456789', hint: t('proSignup.hints.GB') },
+  { code: 'US', label: t('proSignup.countries.US'), placeholder: '12-3456789', hint: t('proSignup.hints.US') },
+  { code: 'AU', label: t('proSignup.countries.AU'), placeholder: '12 345 678 901', hint: t('proSignup.hints.AU') },
+  { code: 'NZ', label: t('proSignup.countries.NZ'), placeholder: '1234567', hint: t('proSignup.hints.NZ') },
 ];
 
 export const ProSignup: React.FC = () => {
@@ -39,14 +40,15 @@ export const ProSignup: React.FC = () => {
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [error, setError] = useState('');
 
-  const selectedCountry = COUNTRIES.find(c => c.code === country);
+  const countries = getCountries(t);
+  const selectedCountry = countries.find(c => c.code === country);
 
   // Auth is handled by ProtectedRoute wrapper
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      setError('Please sign in to verify your business.');
+      setError(t('proSignup.signInRequired'));
       return;
     }
 
@@ -68,7 +70,7 @@ export const ProSignup: React.FC = () => {
       const data = await response.json();
 
       if (!response.ok && response.status !== 200) {
-        setError(data.message || data.error || 'Verification failed');
+        setError(data.message || data.error || t('proSignup.verificationFailed'));
         setStep('form');
         return;
       }
@@ -76,7 +78,7 @@ export const ProSignup: React.FC = () => {
       setResult(data);
       setStep('result');
     } catch (err) {
-      setError('Connection error. Please try again.');
+      setError(t('proSignup.connectionError'));
       setStep('form');
     }
   };
@@ -124,18 +126,18 @@ export const ProSignup: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-white/60">{t('proSignup.quizLimit')}</span>
-                  <span className="font-bold">5/month</span>
+                  <span className="font-bold">{t('proSignup.fivePerMonth')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-white/60">{t('proSignup.playersLimit')}</span>
-                  <span className="font-bold">Up to 250</span>
+                  <span className="font-bold">{t('proSignup.upTo250')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-white/60">{t('proSignup.trialEnds')}</span>
                   <span className="font-bold text-qb-yellow">
                     {result.trialEndsAt
                       ? new Date(result.trialEndsAt).toLocaleDateString()
-                      : '30 days'}
+                      : t('proSignup.thirtyDays')}
                   </span>
                 </div>
               </div>
@@ -288,7 +290,7 @@ export const ProSignup: React.FC = () => {
                   value={country}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCountry(e.target.value)}
                 >
-                  {COUNTRIES.map(c => (
+                  {countries.map(c => (
                     <option key={c.code} value={c.code}>{c.label}</option>
                   ))}
                 </Select>
@@ -319,7 +321,7 @@ export const ProSignup: React.FC = () => {
                     type="text"
                     value={businessName}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBusinessName(e.target.value)}
-                    placeholder="Your business name"
+                    placeholder={t('proSignup.businessNamePlaceholder')}
                     required
                   />
                   <p className="text-white/50 text-xs mt-1">

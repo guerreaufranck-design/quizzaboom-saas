@@ -65,7 +65,7 @@ export const QuizLobby: React.FC = () => {
   const shareLink = () => {
     const url = `${window.location.origin}?code=${sessionCode}&view=join`;
     navigator.clipboard.writeText(url);
-    alert('Link copied to clipboard!');
+    alert(t('lobby.linkCopied'));
   };
 
   const handleStartQuiz = () => {
@@ -102,7 +102,7 @@ export const QuizLobby: React.FC = () => {
     return (
       <div className="min-h-screen bg-qb-dark flex items-center justify-center">
         <div className="text-center">
-          <p className="text-white text-xl">Loading lobby...</p>
+          <p className="text-white text-xl">{t('lobby.loading')}</p>
         </div>
       </div>
     );
@@ -127,21 +127,21 @@ export const QuizLobby: React.FC = () => {
             <Card className="p-12 text-center bg-gradient-to-br from-qb-purple/20 to-qb-cyan/20">
               <div className="text-6xl mb-4">⏳</div>
               <h2 className="text-3xl font-bold text-white mb-4">
-                Waiting for Host to Start...
+                {t('lobby.waitingForHost')}
               </h2>
               <p className="text-xl text-white/70 mb-6">
-                Get ready! The quiz will begin soon.
+                {t('lobby.getReady')}
               </p>
               <div className="flex items-center justify-center gap-2 text-white/50">
                 <Clock className="w-5 h-5 animate-pulse" />
-                <span>Stay connected</span>
+                <span>{t('lobby.stayConnected')}</span>
               </div>
             </Card>
 
             {/* Players Grid */}
             <Card gradient className="p-8">
               <h3 className="text-2xl font-bold text-white mb-6 text-center">
-                Players in Lobby ({players.length})
+                {t('lobby.playersInLobby', { count: players.length })}
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {players.map((player) => (
@@ -166,27 +166,27 @@ export const QuizLobby: React.FC = () => {
 
             {/* Quiz Details */}
             <Card className="p-6">
-              <h3 className="text-lg font-bold text-white mb-4 text-center">Quiz Info</h3>
+              <h3 className="text-lg font-bold text-white mb-4 text-center">{t('lobby.quizInfo')}</h3>
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
                   <div className="text-3xl font-bold text-qb-cyan">{currentQuiz.estimated_duration}</div>
-                  <div className="text-sm text-white/70">Minutes</div>
+                  <div className="text-sm text-white/70">{t('lobby.minutes')}</div>
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-qb-magenta">{currentQuiz.total_stages}</div>
-                  <div className="text-sm text-white/70">Stages</div>
+                  <div className="text-sm text-white/70">{t('lobby.stages')}</div>
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-qb-purple">
                     ~{currentQuiz.total_stages * currentQuiz.questions_per_stage}
                   </div>
-                  <div className="text-sm text-white/70">Questions</div>
+                  <div className="text-sm text-white/70">{t('lobby.questions')}</div>
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-qb-yellow capitalize">
                     {currentQuiz.difficulty}
                   </div>
-                  <div className="text-sm text-white/70">Difficulty</div>
+                  <div className="text-sm text-white/70">{t('lobby.difficulty')}</div>
                 </div>
               </div>
             </Card>
@@ -209,7 +209,7 @@ export const QuizLobby: React.FC = () => {
                 onClick={() => navigate('home')}
                 icon={<ArrowLeft />}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <div>
                 <h1 className="text-4xl font-bold text-white">{currentQuiz.title}</h1>
@@ -224,7 +224,7 @@ export const QuizLobby: React.FC = () => {
               icon={<Play />}
               disabled={players.length === 0}
             >
-              Start Quiz
+              {t('lobby.startQuiz')}
             </Button>
           </div>
 
@@ -233,7 +233,7 @@ export const QuizLobby: React.FC = () => {
             <div className="space-y-6">
               {/* Session Code */}
               <Card gradient className="p-8 text-center">
-                <h2 className="text-2xl font-bold text-white mb-4">Session Code</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">{t('lobby.sessionCode')}</h2>
                 <div className="bg-qb-darker rounded-xl p-6 mb-4">
                   <div className="text-6xl font-mono font-bold text-qb-cyan tracking-widest">
                     {sessionCode}
@@ -246,7 +246,7 @@ export const QuizLobby: React.FC = () => {
                     onClick={copySessionCode}
                     icon={copied ? <Check /> : <Copy />}
                   >
-                    {copied ? 'Copied!' : 'Copy Code'}
+                    {copied ? t('lobby.copied') : t('lobby.copyCode')}
                   </Button>
                   <Button
                     fullWidth
@@ -254,48 +254,48 @@ export const QuizLobby: React.FC = () => {
                     onClick={shareLink}
                     icon={<Share2 />}
                   >
-                    Share Link
+                    {t('lobby.shareLink')}
                   </Button>
                 </div>
               </Card>
 
               {/* QR Code */}
               <Card gradient className="p-8 text-center">
-                <h2 className="text-2xl font-bold text-white mb-4">Scan to Join</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">{t('lobby.scanToJoin')}</h2>
                 <div className="flex justify-center">
                   <QRCodeDisplay value={sessionCode || ''} size={256} />
                 </div>
                 <p className="text-white/70 mt-4">
-                  Players can scan this QR code to join instantly
+                  {t('lobby.qrCodeHint')}
                 </p>
               </Card>
 
               {/* Quiz Info */}
               <Card className="p-6">
-                <h3 className="text-lg font-bold text-white mb-4">Quiz Details</h3>
+                <h3 className="text-lg font-bold text-white mb-4">{t('lobby.quizDetails')}</h3>
                 <div className="space-y-3 text-white/80">
                   <div className="flex justify-between">
-                    <span>Duration:</span>
+                    <span>{t('lobby.duration')}</span>
                     <span className="font-bold text-qb-cyan">{currentQuiz.estimated_duration} min</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Stages:</span>
+                    <span>{t('lobby.stagesLabel')}</span>
                     <span className="font-bold text-qb-magenta">{currentQuiz.total_stages}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Questions:</span>
+                    <span>{t('lobby.questionsLabel')}</span>
                     <span className="font-bold text-qb-purple">
                       ~{currentQuiz.total_stages * currentQuiz.questions_per_stage}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Difficulty:</span>
+                    <span>{t('lobby.difficultyLabel')}</span>
                     <span className="font-bold text-qb-yellow capitalize">{currentQuiz.difficulty}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Strategic Mode:</span>
+                    <span>{t('lobby.strategicMode')}</span>
                     <span className="font-bold text-qb-lime">
-                      {currentQuiz.has_joker_rounds ? '✓ Enabled' : '✗ Disabled'}
+                      {currentQuiz.has_joker_rounds ? `✓ ${t('lobby.enabled')}` : `✗ ${t('lobby.disabled')}`}
                     </span>
                   </div>
                 </div>
@@ -308,19 +308,19 @@ export const QuizLobby: React.FC = () => {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                     <Users className="w-6 h-6" />
-                    Players ({players.length})
+                    {t('lobby.playersCount', { count: players.length })}
                   </h2>
                   {currentSession.unlimited_players && (
-                    <span className="text-sm text-white/70">Up to 250 players</span>
+                    <span className="text-sm text-white/70">{t('lobby.maxPlayers')}</span>
                   )}
                 </div>
 
                 {players.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">👥</div>
-                    <p className="text-xl text-white/70 mb-2">Waiting for players...</p>
+                    <p className="text-xl text-white/70 mb-2">{t('lobby.waitingForPlayers')}</p>
                     <p className="text-sm text-white/50">
-                      Share the code or QR code to get started!
+                      {t('lobby.shareToStart')}
                     </p>
                   </div>
                 ) : (
@@ -334,7 +334,7 @@ export const QuizLobby: React.FC = () => {
                         <div className="flex-1">
                           <div className="font-bold text-white">{player.player_name}</div>
                           <div className="text-sm text-white/50">
-                            Joined {new Date(player.joined_at).toLocaleTimeString()}
+                            {t('lobby.joined', { time: new Date(player.joined_at).toLocaleTimeString() })}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -343,7 +343,7 @@ export const QuizLobby: React.FC = () => {
                             style={{ backgroundColor: player.is_connected ? '#10B981' : '#EF4444' }}
                           />
                           <span className="text-sm text-white/70">
-                            {player.is_connected ? 'Ready' : 'Offline'}
+                            {player.is_connected ? t('lobby.ready') : t('lobby.offline')}
                           </span>
                         </div>
                       </div>
@@ -355,23 +355,23 @@ export const QuizLobby: React.FC = () => {
               {/* Joker Info */}
               {currentQuiz.has_joker_rounds && (
                 <Card className="p-6 bg-gradient-to-br from-qb-purple/20 to-qb-magenta/20 border border-white/10">
-                  <h3 className="text-lg font-bold text-white mb-4">Strategic Mode Active</h3>
+                  <h3 className="text-lg font-bold text-white mb-4">{t('lobby.strategicModeActive')}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center">
                       <div className="text-3xl mb-1">🛡️</div>
-                      <div className="text-xs text-white/70">Protection × 2</div>
+                      <div className="text-xs text-white/70">{t('lobby.jokerProtection')}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-3xl mb-1">🚫</div>
-                      <div className="text-xs text-white/70">Block × 10</div>
+                      <div className="text-xs text-white/70">{t('lobby.jokerBlock')}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-3xl mb-1">💰</div>
-                      <div className="text-xs text-white/70">Steal × 10</div>
+                      <div className="text-xs text-white/70">{t('lobby.jokerSteal')}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-3xl mb-1">⭐</div>
-                      <div className="text-xs text-white/70">Double × 5</div>
+                      <div className="text-xs text-white/70">{t('lobby.jokerDouble')}</div>
                     </div>
                   </div>
                 </Card>
