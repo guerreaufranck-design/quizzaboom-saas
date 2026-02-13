@@ -83,7 +83,14 @@
     "requirements": "Requirements",
     "startFreeTrial": "Start Free Trial",
     "getStarted": "Get Started",
-    "questions": "Questions?"
+    "questions": "Questions?",
+    "havePromoCode": "Have a promo code?",
+    "promoPlaceholder": "Enter code...",
+    "applyPromo": "Apply",
+    "promoSuccess": "Promo code redeemed! A credit has been added to your account.",
+    "promoInvalid": "Invalid promo code.",
+    "promoExpired": "This promo code has expired or is fully used.",
+    "promoAlreadyUsed": "You have already redeemed this code."
   },
   "join": {
     "title": "Join a Quiz",

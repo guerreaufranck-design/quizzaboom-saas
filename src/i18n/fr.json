@@ -83,7 +83,14 @@
     "requirements": "Conditions",
     "startFreeTrial": "Essai gratuit",
     "getStarted": "Commencer",
-    "questions": "Questions ?"
+    "questions": "Questions ?",
+    "havePromoCode": "Vous avez un code promo ?",
+    "promoPlaceholder": "Entrez le code...",
+    "applyPromo": "Appliquer",
+    "promoSuccess": "Code promo utilise ! Un credit a ete ajoute a votre compte.",
+    "promoInvalid": "Code promo invalide.",
+    "promoExpired": "Ce code promo est expire ou entierement utilise.",
+    "promoAlreadyUsed": "Vous avez deja utilise ce code."
   },
   "join": {
     "title": "Rejoindre un Quiz",

@@ -67,7 +67,7 @@ export const HostDashboard: React.FC = () => {
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
-    if (isPlaying && phaseTimeRemaining > 0) {
+    if (isPlaying) {
       interval = setInterval(() => {
         setPhaseTimeRemaining((prev) => {
           if (prev <= 1) {
@@ -90,7 +90,7 @@ export const HostDashboard: React.FC = () => {
     }
 
     return () => clearInterval(interval);
-  }, [isPlaying, phaseTimeRemaining, currentPhaseState, currentQuestionIndex, sessionCode]);
+  }, [isPlaying, currentPhaseState, currentQuestionIndex, sessionCode]);
 
   // Check if a commercial break should happen after the given question index
   const getBreakAfterQuestion = (questionIndex: number) => {

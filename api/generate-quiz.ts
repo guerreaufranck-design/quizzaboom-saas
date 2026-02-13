@@ -133,6 +133,14 @@ ${previousThemesWarning}
    - Micro_theme = GENERAL CATEGORY (2-4 words max)
    - NEVER use specific terms from the answer — Be BROAD
 
+7. LENGTH CONSTRAINTS (CRITICAL for TV screen readability):
+   - question_text: MAXIMUM 120 characters (1 short sentence, must be readable in 5 seconds)
+   - options: MAXIMUM 50 characters each (short, punchy, instantly scannable)
+   - explanation: MAXIMUM 200 characters (brief but engaging)
+   - fun_fact: MAXIMUM 150 characters (one mind-blowing sentence)
+   - NEVER use long compound sentences like "Which of the following statements about..."
+   - Prefer direct phrasing: "What is...?", "Who was...?", "How many...?"
+
 REQUIREMENTS:
 - Difficulty: ${difficulty}
 - Language: ${fullLanguage}
@@ -194,6 +202,26 @@ async function generateBatchWithRetry(
       // Validate that we got stages with questions
       if (!parsed.stages || parsed.stages.length === 0) {
         throw new Error('Empty stages in response');
+      }
+
+      // Enforce length limits (safety net — Gemini may exceed prompt constraints)
+      for (const stage of parsed.stages) {
+        for (const q of stage.questions || []) {
+          if (q.question_text && q.question_text.length > 150) {
+            q.question_text = q.question_text.substring(0, 147) + '...';
+          }
+          if (q.options) {
+            q.options = q.options.map((opt: string) =>
+              opt.length > 60 ? opt.substring(0, 57) + '...' : opt
+            );
+          }
+          if (q.explanation && q.explanation.length > 250) {
+            q.explanation = q.explanation.substring(0, 247) + '...';
+          }
+          if (q.fun_fact && q.fun_fact.length > 200) {
+            q.fun_fact = q.fun_fact.substring(0, 197) + '...';
+          }
+        }
       }
 
       const totalQs = parsed.stages.reduce((sum, s) => sum + (s.questions?.length || 0), 0);

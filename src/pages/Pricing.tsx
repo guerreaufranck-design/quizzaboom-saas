@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/useAuthStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Check, AlertCircle, Building2, Users, Crown, Shield, ArrowLeft } from 'lucide-react';
+import { Check, AlertCircle, Building2, Users, Crown, Shield, ArrowLeft, Gift, Loader2 } from 'lucide-react';
 
 export const Pricing: React.FC = () => {
   const routerNavigate = useNavigate();
@@ -12,6 +12,9 @@ export const Pricing: React.FC = () => {
   const { user } = useAuthStore();
   const [showB2B, setShowB2B] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoResult, setPromoResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const handleCheckout = async (priceId: string, planName: string) => {
     // Require auth before checkout
@@ -50,6 +53,57 @@ export const Pricing: React.FC = () => {
       console.error('Checkout error:', msg);
       alert(`Payment failed: ${msg}`);
       setLoading(null);
+    }
+  };
+
+  const handleRedeemPromo = async () => {
+    if (!user) {
+      routerNavigate('/auth?returnTo=/pricing');
+      return;
+    }
+
+    const code = promoCode.trim().toUpperCase();
+    if (!code) return;
+
+    setPromoLoading(true);
+    setPromoResult(null);
+
+    try {
+      const response = await fetch('/api/redeem-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, userId: user.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorKey = data.error;
+        if (errorKey === 'invalid') {
+          setPromoResult({ success: false, message: t('pricing.promoInvalid') });
+        } else if (errorKey === 'expired' || errorKey === 'exhausted') {
+          setPromoResult({ success: false, message: t('pricing.promoExpired') });
+        } else if (errorKey === 'already_redeemed') {
+          setPromoResult({ success: false, message: t('pricing.promoAlreadyUsed') });
+        } else {
+          setPromoResult({ success: false, message: t('pricing.promoInvalid') });
+        }
+        return;
+      }
+
+      setPromoResult({ success: true, message: t('pricing.promoSuccess') });
+      setPromoCode('');
+
+      // Redirect to dashboard after 2 seconds
+      setTimeout(() => {
+        routerNavigate('/dashboard?payment=success');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Promo redeem error:', error);
+      setPromoResult({ success: false, message: t('pricing.promoInvalid') });
+    } finally {
+      setPromoLoading(false);
     }
   };
 
@@ -212,6 +266,41 @@ export const Pricing: React.FC = () => {
                 <span className="text-white/40 text-sm">{showB2B ? '▼' : '▶'}</span>
               </button>
             </div>
+
+            {/* Promo Code Section */}
+            <Card gradient className="p-6 mb-8 max-w-lg mx-auto">
+              <h3 className="text-xl font-bold text-white mb-3 text-center flex items-center justify-center gap-2">
+                <Gift className="w-5 h-5 text-qb-yellow" />
+                {t('pricing.havePromoCode')}
+              </h3>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={promoCode}
+                  onChange={(e) => { setPromoCode(e.target.value); setPromoResult(null); }}
+                  placeholder={t('pricing.promoPlaceholder')}
+                  className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 uppercase tracking-wider focus:border-qb-yellow focus:outline-none"
+                  maxLength={20}
+                  disabled={promoLoading}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleRedeemPromo(); }}
+                />
+                <Button
+                  gradient
+                  onClick={handleRedeemPromo}
+                  disabled={!promoCode.trim() || promoLoading}
+                  icon={promoLoading ? <Loader2 className="animate-spin" /> : undefined}
+                >
+                  {t('pricing.applyPromo')}
+                </Button>
+              </div>
+              {promoResult && (
+                <div className={`mt-3 p-3 rounded-lg text-center font-bold text-sm ${
+                  promoResult.success ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'
+                }`}>
+                  {promoResult.message}
+                </div>
+              )}
+            </Card>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {b2cPlans.map((plan) => (

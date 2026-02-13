@@ -83,7 +83,14 @@
     "requirements": "Voraussetzungen",
     "startFreeTrial": "Kostenlos testen",
     "getStarted": "Loslegen",
-    "questions": "Fragen?"
+    "questions": "Fragen?",
+    "havePromoCode": "Haben Sie einen Promo-Code?",
+    "promoPlaceholder": "Code eingeben...",
+    "applyPromo": "Einlosen",
+    "promoSuccess": "Promo-Code eingelost! Ein Guthaben wurde Ihrem Konto hinzugefugt.",
+    "promoInvalid": "Ungultiger Promo-Code.",
+    "promoExpired": "Dieser Promo-Code ist abgelaufen oder bereits aufgebraucht.",
+    "promoAlreadyUsed": "Sie haben diesen Code bereits eingelost."
   },
   "join": {
     "title": "Quiz beitreten",

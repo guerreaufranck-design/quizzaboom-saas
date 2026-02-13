@@ -22,6 +22,17 @@ const getAdaptiveTextSize = (
   return sizes.xl;
 };
 
+/**
+ * Adaptive text size for answer options — based on the longest option in the set.
+ */
+const getAdaptiveOptionSize = (options: string[]): string => {
+  const maxLen = Math.max(...options.map(o => o.length));
+  if (maxLen > 80) return 'text-base';
+  if (maxLen > 50) return 'text-lg';
+  if (maxLen > 30) return 'text-xl';
+  return 'text-2xl';
+};
+
 export const TVDisplay: React.FC = () => {
   const {
     currentPhase,
@@ -517,6 +528,10 @@ export const TVDisplay: React.FC = () => {
   if (currentPhase === 'answer_selection') {
     const questionText = currentQuestion?.question_text || '';
     const answerQuestionClass = getAdaptiveTextSize(questionText, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' });
+    const options = currentQuestion?.options || [];
+    const optionTextClass = getAdaptiveOptionSize(options);
+    const maxOptionLen = Math.max(...options.map(o => o.length), 0);
+    const gridCols = maxOptionLen > 60 ? 'grid-cols-1' : 'grid-cols-2';
 
     return (
       <div className="h-screen bg-qb-dark p-6 overflow-hidden">
@@ -531,22 +546,22 @@ export const TVDisplay: React.FC = () => {
           </div>
 
           <Card className="p-6 bg-gradient-to-br from-qb-purple/30 to-qb-cyan/30 border-white/20 flex-1 min-h-0 my-4">
-            <h2 className={`font-bold text-white text-center mb-6 ${answerQuestionClass}`}>
+            <h2 className={`font-bold text-white text-center mb-4 ${answerQuestionClass}`}>
               {currentQuestion?.question_text}
             </h2>
 
-            <div className="grid grid-cols-2 gap-4">
-              {currentQuestion?.options?.map((option, idx) => (
+            <div className={`grid ${gridCols} gap-3`}>
+              {options.map((option, idx) => (
                 <div
                   key={idx}
-                  className="p-4 rounded-2xl bg-qb-darker border-2 border-white/20 flex items-center gap-4"
+                  className="p-3 rounded-2xl bg-qb-darker border-2 border-white/20 flex items-center gap-3"
                 >
-                  <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                    <span className="text-3xl font-bold text-white">
+                  <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                    <span className="text-2xl font-bold text-white">
                       {['A', 'B', 'C', 'D'][idx]}
                     </span>
                   </div>
-                  <span className="text-2xl text-white font-medium flex-1">
+                  <span className={`${optionTextClass} text-white font-medium flex-1`}>
                     {option}
                   </span>
                 </div>
@@ -562,14 +577,17 @@ export const TVDisplay: React.FC = () => {
   // PHASE 4: Results — compact
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'results') {
+    const correctAnswer = currentQuestion?.correct_answer || '';
+    const correctAnswerClass = getAdaptiveTextSize(correctAnswer, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' });
+
     return (
       <div className="h-screen bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 p-8 overflow-hidden">
         <div className="max-w-7xl mx-auto h-full flex flex-col items-center justify-center">
           <div className="text-6xl mb-3 animate-bounce">✅</div>
           <h1 className="text-5xl font-bold text-white mb-6">CORRECT ANSWER</h1>
           <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-8 mb-6">
-            <p className="text-4xl font-bold text-white">
-              {currentQuestion?.correct_answer}
+            <p className={`${correctAnswerClass} font-bold text-white`}>
+              {correctAnswer}
             </p>
           </div>
 
