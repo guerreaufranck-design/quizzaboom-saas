@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuizStore } from '../stores/useQuizStore';
 import { useAppNavigate } from '../hooks/useAppNavigate';
@@ -39,11 +39,36 @@ export const CreateQuiz: React.FC = () => {
     double_points: true,
   });
   const [formData, setFormData] = useState({
-    questionCount: 25 as 25 | 50 | 100,
+    questionCount: 25,
     difficulty: 'medium' as 'easy' | 'medium' | 'hard',
     language: 'fr' as QuizGenRequest['language'],
     includeJokers: true,
   });
+  const [customQuestionCount, setCustomQuestionCount] = useState('');
+  const [isCustomCount, setIsCustomCount] = useState(false);
+
+  // Multi-theme toggle using functional setState to avoid stale closures
+  const toggleTheme = useCallback((category: ThemeCategory) => {
+    setSelectedThemes(prev => {
+      const isSelected = prev.includes(category);
+      if (isSelected) {
+        // Don't allow deselecting the last theme
+        if (prev.length > 1) {
+          // Also clean up excluded sub-themes for this category
+          const themeObj = THEMES.find(t => t.category === category);
+          if (themeObj?.subThemes) {
+            setExcludedSubThemes(prevExcl =>
+              prevExcl.filter(st => !themeObj.subThemes!.includes(st))
+            );
+          }
+          return prev.filter(t => t !== category);
+        }
+        return prev; // Keep at least one
+      } else {
+        return [...prev, category];
+      }
+    });
+  }, []);
   const [commercialBreaks, setCommercialBreaks] = useState<CommercialBreakConfig>({
     enabled: false,
     numberOfPauses: 2,
@@ -176,21 +201,7 @@ export const CreateQuiz: React.FC = () => {
                     <button
                       key={theme.id}
                       type="button"
-                      onClick={() => {
-                        if (isSelected) {
-                          // Don't allow deselecting the last theme
-                          if (selectedThemes.length > 1) {
-                            setSelectedThemes(selectedThemes.filter(t => t !== theme.category));
-                            // Remove excluded sub-themes that belong to this theme
-                            const themeObj = THEMES.find(t => t.category === theme.category);
-                            if (themeObj?.subThemes) {
-                              setExcludedSubThemes(excludedSubThemes.filter(st => !themeObj.subThemes!.includes(st)));
-                            }
-                          }
-                        } else {
-                          setSelectedThemes([...selectedThemes, theme.category]);
-                        }
-                      }}
+                      onClick={() => toggleTheme(theme.category)}
                       disabled={isLoading}
                       className={`p-6 rounded-xl border-2 transition-all relative ${
                         isSelected
@@ -303,17 +314,22 @@ export const CreateQuiz: React.FC = () => {
                 <Hash className="w-5 h-5 text-qb-cyan" />
                 {t('create.questionCount')}
               </label>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 {QUESTION_COUNT_OPTIONS.map((option) => {
                   const structure = calculateQuizStructureFromCount(option.value);
+                  const isActive = !isCustomCount && formData.questionCount === option.value;
                   return (
                     <button
                       key={option.value}
                       type="button"
-                      onClick={() => setFormData({ ...formData, questionCount: option.value })}
+                      onClick={() => {
+                        setIsCustomCount(false);
+                        setCustomQuestionCount('');
+                        setFormData({ ...formData, questionCount: option.value });
+                      }}
                       disabled={isLoading}
                       className={`p-6 rounded-xl border-2 transition-all ${
-                        formData.questionCount === option.value
+                        isActive
                           ? 'bg-qb-cyan border-qb-cyan scale-105 shadow-lg shadow-qb-cyan/50'
                           : 'bg-qb-darker border-white/20 hover:border-qb-cyan hover:scale-105'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -326,7 +342,58 @@ export const CreateQuiz: React.FC = () => {
                     </button>
                   );
                 })}
+                {/* Custom question count */}
+                <button
+                  type="button"
+                  onClick={() => setIsCustomCount(true)}
+                  disabled={isLoading}
+                  className={`p-6 rounded-xl border-2 transition-all ${
+                    isCustomCount
+                      ? 'bg-qb-cyan border-qb-cyan scale-105 shadow-lg shadow-qb-cyan/50'
+                      : 'bg-qb-darker border-white/20 hover:border-qb-cyan hover:scale-105'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <div className="text-4xl mb-2">✏️</div>
+                  <div className="text-xl font-bold text-white mb-1">{t('create.custom')}</div>
+                  <div className="text-sm text-white/80 font-medium">{t('create.questions')}</div>
+                  <div className="text-xs text-white/50 mt-2">5-100</div>
+                  <div className="text-xs text-white/50">{t('create.customDesc')}</div>
+                </button>
               </div>
+
+              {/* Custom input field */}
+              {isCustomCount && (
+                <div className="mt-4 p-4 bg-qb-darker rounded-lg border border-qb-cyan/30">
+                  <label className="block text-sm text-white/80 mb-2">{t('create.customQuestionLabel')}</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min={5}
+                      max={100}
+                      value={customQuestionCount}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomQuestionCount(val);
+                        const num = parseInt(val, 10);
+                        if (num >= 5 && num <= 100) {
+                          setFormData({ ...formData, questionCount: num });
+                        }
+                      }}
+                      placeholder="15"
+                      disabled={isLoading}
+                      className="w-28 px-4 py-3 bg-qb-dark border border-white/20 rounded-lg text-white text-center text-2xl font-bold focus:border-qb-cyan focus:outline-none focus:ring-2 focus:ring-qb-cyan/30"
+                    />
+                    <div className="text-white/60 text-sm">
+                      {customQuestionCount && parseInt(customQuestionCount, 10) >= 5 && parseInt(customQuestionCount, 10) <= 100 && (
+                        <span>~{calculateQuizStructureFromCount(parseInt(customQuestionCount, 10)).estimatedDurationMinutes} min</span>
+                      )}
+                      {customQuestionCount && (parseInt(customQuestionCount, 10) < 5 || parseInt(customQuestionCount, 10) > 100) && (
+                        <span className="text-red-400">{t('create.customRange')}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="mt-4 p-4 bg-qb-darker rounded-lg">
                 <div className="text-sm text-white/70 mb-2">{t('create.quizStructure')}</div>

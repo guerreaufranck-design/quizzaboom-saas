@@ -46,7 +46,7 @@ export interface CommercialBreakSchedule {
 // Quiz generation request
 export interface QuizGenRequest {
   theme: string;
-  questionCount: 25 | 50 | 100;    // NEW: fixed question counts
+  questionCount: number;             // 5-100 questions (custom or preset 25/50/100)
   duration?: number;                // DEPRECATED: kept for backward compatibility
   difficulty: DifficultyLevel;
   language: LanguageCode;

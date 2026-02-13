@@ -109,23 +109,44 @@ export const JoinQuiz: React.FC = () => {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    // Auto-consent when entering email
+                    if (e.target.value && !emailConsent) {
+                      setEmailConsent(true);
+                    }
+                    if (!e.target.value) {
+                      setEmailConsent(false);
+                    }
+                  }}
                   placeholder={t('join.emailPlaceholder')}
                   className="w-full px-4 py-3 rounded-lg bg-qb-darker text-white border border-white/20 focus:border-qb-purple focus:outline-none focus:ring-2 focus:ring-qb-purple/30"
                 />
                 {email && (
-                  <label className="flex items-start gap-3 mt-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={emailConsent}
-                      onChange={(e) => setEmailConsent(e.target.checked)}
-                      className="w-5 h-5 mt-0.5 rounded accent-qb-purple shrink-0"
-                    />
-                    <span className="text-xs text-white/60">
-                      {t('join.emailConsent')}{' '}
-                      <a href="/privacy" className="text-qb-cyan underline">{t('join.privacyPolicy')}</a>
-                    </span>
-                  </label>
+                  <div className="mt-3 p-3 bg-qb-purple/10 border border-qb-purple/30 rounded-lg">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={emailConsent}
+                        onChange={(e) => setEmailConsent(e.target.checked)}
+                        className="w-5 h-5 mt-0.5 rounded accent-qb-purple shrink-0"
+                      />
+                      <div>
+                        <span className="text-sm text-white/80 font-medium">
+                          {t('join.emailConsentTitle')}
+                        </span>
+                        <p className="text-xs text-white/50 mt-1">
+                          {t('join.emailConsent')}{' '}
+                          <a href="/privacy" className="text-qb-cyan underline">{t('join.privacyPolicy')}</a>
+                        </p>
+                      </div>
+                    </label>
+                    {!emailConsent && (
+                      <p className="text-xs text-qb-yellow mt-2 flex items-center gap-1">
+                        ⚠️ {t('join.emailConsentWarning')}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
 

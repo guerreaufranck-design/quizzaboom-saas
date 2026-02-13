@@ -102,7 +102,9 @@
     "namePlaceholder": "Introduce tu nombre",
     "email": "Email (Opcional)",
     "emailPlaceholder": "Recibe tus resultados por email",
+    "emailConsentTitle": "Si, enviadme mis resultados!",
     "emailConsent": "Acepto recibir mis resultados de quiz y actualizaciones ocasionales de QuizzaBoom. Puedes darte de baja en cualquier momento.",
+    "emailConsentWarning": "Desmarcar = sin email de resultados. Tu email no se guardara.",
     "privacyPolicy": "Politica de privacidad",
     "chooseAvatar": "Elige tu avatar",
     "joinBattle": "Unirse a la batalla!",
@@ -164,19 +166,45 @@
     "breakPreview": "Vista previa de pausas",
     "pauseAfterQuestions": "Pausas despues de las preguntas",
     "pausesOf": "pausa(s) de",
-    "endBreakEarly": "Acortar la pausa"
+    "endBreakEarly": "Acortar la pausa",
+    "custom": "Personalizado",
+    "customDesc": "Tu decides!",
+    "customQuestionLabel": "Cuantas preguntas?",
+    "customRange": "Entre 5 y 100 preguntas"
   },
   "auth": {
     "welcome": "Bienvenido!",
     "signInAccess": "Inicia sesion para acceder a tus quiz",
+    "loginRequired": "Inicia sesion para continuar",
+    "login": "Iniciar sesion",
+    "signup": "Registrarse",
     "continueGoogle": "Continuar con Google",
     "emailAddress": "Direccion de email",
+    "password": "Contrasena",
+    "confirmPassword": "Confirmar contrasena",
+    "signInPassword": "Iniciar sesion",
+    "createAccount": "Crear cuenta",
+    "forgotPassword": "Olvidaste tu contrasena?",
+    "forgotDesc": "Introduce tu email y te enviaremos un enlace para restablecerla.",
+    "sendResetLink": "Enviar enlace",
+    "resetSent": "Enlace enviado!",
+    "resetSentDesc": "Hemos enviado un enlace para restablecer a",
+    "backToLogin": "Volver a iniciar sesion",
+    "orMagicLink": "O con enlace magico",
     "sendMagicLink": "Enviar enlace magico",
     "checkEmail": "Revisa tu email",
+    "confirmEmail": "Confirma tu email",
+    "confirmEmailSent": "Hemos enviado un enlace de confirmacion a",
     "magicLinkSent": "Hemos enviado un enlace magico a",
     "closePageHint": "Haz clic en el enlace del email para iniciar sesion. Puedes cerrar esta pagina.",
     "tryAnother": "Probar otro email",
-    "businessHint": "Para cuentas de empresa, usa tu email profesional"
+    "businessHint": "Para cuentas de empresa, usa tu email profesional",
+    "errorGeneric": "Algo salio mal. Por favor, intentalo de nuevo.",
+    "invalidCredentials": "Email o contrasena incorrectos. Intentalo de nuevo.",
+    "alreadyRegistered": "Este email ya esta registrado. Intenta iniciar sesion.",
+    "emailNotConfirmed": "Por favor, confirma tu email primero. Revisa tu bandeja de entrada.",
+    "passwordMismatch": "Las contrasenas no coinciden.",
+    "passwordTooShort": "La contrasena debe tener al menos 6 caracteres."
   },
   "host": {
     "hostDashboard": "Panel del anfitrion",
@@ -261,108 +289,108 @@
   "guide": {
     "back": "Volver",
     "hero": {
-      "badge": "Primer mes GRATIS + 5 quiz - Sin tarjeta de credito",
-      "title": "Transforma tu local en un destino de quiz",
-      "subtitle": "Aumenta los ingresos, atrae nuevos clientes y crea noches inolvidables con eventos de quiz impulsados por IA",
-      "ctaPrimary": "PRUEBO AHORA - GRATIS",
+      "badge": "Primer mes GRATIS + 5 quiz - Sin tarjeta de credito!",
+      "title": "Convierte tu local en EL punto de quiz!",
+      "subtitle": "Mas diversion, mas clientes, mas rondas pedidas. Noches de quiz con IA que funcionan solas!",
+      "ctaPrimary": "PRUEBO GRATIS - VAMOS!",
       "ctaSecondary": "Planes individuales",
       "trustNoCard": "Sin tarjeta de credito",
       "trust30Days": "Prueba gratis 30 dias",
       "trust250Players": "Hasta 250 jugadores"
     },
     "roi": {
-      "title": "Por que noches de quiz?",
-      "subtitle": "Los eventos de quiz son generadores de ingresos comprobados para bares, restaurantes y locales de entretenimiento",
+      "title": "Por que las noches de quiz triunfan",
+      "subtitle": "Buen rollo, local lleno, clientes que vuelven a por mas",
       "stat1Value": "+30%",
-      "stat1Label": "de aumento en ventas de bebidas durante noches de quiz",
+      "stat1Label": "mas bebidas vendidas en noches de quiz",
       "stat2Value": "2x",
-      "stat2Label": "mas visitas de retorno de los jugadores de quiz",
+      "stat2Label": "mas clientes que repiten",
       "stat3Value": "$0",
-      "stat3Label": "de inversion en equipamiento - solo un TV o proyector",
-      "compareTitle": "QuizzaBoom vs. Salas de quiz tradicionales",
-      "quizRoomCon1": "Alquiler costoso del local",
-      "quizRoomCon2": "Horarios fijos, flexibilidad limitada",
-      "quizRoomCon3": "Limitado a una ubicacion",
-      "quizRoomCon4": "Preparacion manual de preguntas",
-      "qbPro1": "Gratis para empezar, paga segun creces",
-      "qbPro2": "Juega cuando quieras, a tu ritmo",
-      "qbPro3": "Competiciones multi-sede entre locales",
-      "qbPro4": "La IA genera preguntas unicas cada vez"
+      "stat3Label": "de equipamiento - solo una TV o proyector!",
+      "compareTitle": "QuizzaBoom vs. Salas de quiz clasicas",
+      "quizRoomCon1": "Alquiler carisimo",
+      "quizRoomCon2": "Horarios fijos, cero flexibilidad",
+      "quizRoomCon3": "Atado a un solo local",
+      "quizRoomCon4": "Horas preparando preguntas",
+      "qbPro1": "Gratis para empezar, crece a tu ritmo",
+      "qbPro2": "Juega cuando te apetezca",
+      "qbPro3": "Batallas multi-local entre colegas",
+      "qbPro4": "Preguntas frescas de IA cada vez"
     },
     "howItWorks": {
-      "title": "Como funciona",
-      "subtitle": "De la inscripcion a la noche de quiz en menos de 5 minutos",
-      "step1Title": "Registra tu empresa",
-      "step1Desc": "La IA verifica tu empresa en segundos. Acceso inmediato a tu prueba gratuita.",
-      "step2Title": "Lanza un quiz",
-      "step2Desc": "Elige un tema o deja que la IA te sorprenda. Preguntas unicas generadas al instante.",
-      "step3Title": "Los clientes juegan en su smartphone",
-      "step3Desc": "Sin descargas. Los jugadores escanean un codigo QR y juegan al instante en su telefono.",
-      "step4Title": "Relajate y sirve las bebidas",
-      "step4Desc": "Todo es completamente automatico: preguntas, temporizadores, clasificacion, incluso mensajes promocionales durante las pausas.",
-      "autoMessage": "100% automatico despues del lanzamiento - mensajes durante pausas, clasificacion en vivo, resultados por email!"
+      "title": "Super facil de montar",
+      "subtitle": "De cero a noche de quiz en menos de 5 minutos. En serio!",
+      "step1Title": "Registra tu negocio",
+      "step1Desc": "Verificacion IA rapida, acceso al instante. 30 segundos, no mas.",
+      "step2Title": "Elige tema y lanza",
+      "step2Desc": "Elige el ambiente o deja que la IA te sorprenda. Boom - preguntas listas!",
+      "step3Title": "Los clientes juegan en su movil",
+      "step3Desc": "Sin app! Escanean QR y a jugar. Asi de facil.",
+      "step4Title": "Tu sirves, nosotros nos encargamos",
+      "step4Desc": "100% automatico: preguntas, temporizadores, clasificacion, hasta tus promos en las pausas.",
+      "autoMessage": "Todo en piloto automatico - dale al play y disfruta del show!"
     },
     "features": {
-      "title": "Todo lo que necesitas",
-      "subtitle": "Funciones potentes disenadas para locales profesionales",
+      "title": "Todo incluido, sin complicaciones",
+      "subtitle": "Todo lo que necesitas para noches de quiz epicas, sin estres",
       "ai": {
-        "title": "Temas generados por IA",
-        "desc": "Preguntas unicas cada vez. Nunca repitas el mismo quiz."
+        "title": "Preguntas con IA",
+        "desc": "Frescas y unicas cada vez. Tus clientes habituales nunca se aburriran!"
       },
       "tv": {
-        "title": "Pantalla TV / Proyector",
-        "desc": "Transmite en cualquier pantalla. Sin equipamiento especial."
+        "title": "Pantalla grande",
+        "desc": "TV o proyector, tu eliges. Sin equipos especiales."
       },
       "mobile": {
-        "title": "Juego en smartphone",
-        "desc": "Sin descargar app. Los jugadores se unen via codigo QR en segundos."
+        "title": "Juego en el movil",
+        "desc": "Sin descargar nada. QR code y listos!"
       },
       "multiSite": {
-        "title": "Competiciones multi-sede",
-        "desc": "Batallas entre locales. Compite entre bares, restaurantes u oficinas."
+        "title": "Batallas multi-local",
+        "desc": "Tu bar contra el de enfrente. Rivalidades epicas!"
       },
       "auto": {
-        "title": "Completamente automatico",
-        "desc": "Lanza y olvidate. Preguntas, temporizadores, puntuaciones - todo gestionado."
+        "title": "100% automatico",
+        "desc": "Lanza y dedicate a lo tuyo: servir copas!"
       },
       "analytics": {
-        "title": "Resultados y estadisticas",
-        "desc": "Envia resultados personalizados por email a cada jugador automaticamente."
+        "title": "Resultados por email",
+        "desc": "Cada jugador recibe su puntuacion y stats divertidas automaticamente."
       },
       "strategic": {
         "title": "Modo estrategico",
-        "desc": "Comodines, sabotaje y escudos para maxima emocion."
+        "desc": "Comodines, sabotaje, escudos - caos puro y risas!"
       },
       "breaks": {
-        "title": "Pausas comerciales",
-        "desc": "Muestra tus promociones y mensajes durante las pausas del quiz."
+        "title": "Pausas promo",
+        "desc": "Muestra tus ofertas durante las pausas. Marketing inteligente!"
       }
     },
     "pricing": {
-      "title": "Precios simples y transparentes",
+      "title": "Precios claros, sin sorpresas",
       "perMonth": "/mes",
       "freeTrial": "PRUEBA GRATIS",
-      "starterTrial": "Primer mes completamente GRATIS",
+      "starterTrial": "Primer mes 100% GRATIS!",
       "starterFeature1": "5 quiz al mes",
       "starterFeature2": "Hasta 250 jugadores por sesion",
       "starterFeature3": "Modo estrategico incluido",
       "starterFeature4": "Resultados por email y estadisticas",
       "starterFeature5": "Soporte estandar",
-      "startTrial": "Comenzar mi prueba gratis",
+      "startTrial": "Vamos - Prueba gratis!",
       "proFeature1": "Quiz ilimitados",
       "proFeature2": "Hasta 250 jugadores por sesion",
       "proFeature3": "2 asientos de equipo",
-      "proFeature4": "Marca blanca (subdominio personalizado)",
+      "proFeature4": "Marca blanca (tu imagen!)",
       "proFeature5": "Soporte prioritario",
       "proFeature6": "Estadisticas avanzadas",
-      "getPro": "Plan Pro",
-      "individualLink": "Buscas planes individuales?"
+      "getPro": "Hazte Pro",
+      "individualLink": "Solo un quiz? Mira los planes individuales"
     },
     "cta": {
-      "title": "Listo para transformar tu local?",
-      "subtitle": "Unete a los locales que ya usan QuizzaBoom para impulsar su negocio",
-      "button": "Comenzar mi prueba gratis ahora",
-      "support": "Preguntas? Contactanos en"
+      "title": "Listo para llenar tu local?",
+      "subtitle": "Unete a los locales que ya hacen noches de quiz legendarias!",
+      "button": "Empezar gratis - invita la casa!",
+      "support": "Preguntas? Escribenos a"
     }
   },
   "dashboard": {

@@ -102,7 +102,9 @@
     "namePlaceholder": "Enter your name",
     "email": "Email (Optional)",
     "emailPlaceholder": "Get your results by email",
+    "emailConsentTitle": "Yes, send me my results!",
     "emailConsent": "I agree to receive my quiz results and occasional updates from QuizzaBoom. You can unsubscribe at any time.",
+    "emailConsentWarning": "Uncheck = no results email. Your email won't be saved.",
     "privacyPolicy": "Privacy Policy",
     "chooseAvatar": "Choose Your Avatar",
     "joinBattle": "Join the Battle!",
@@ -164,19 +166,45 @@
     "breakPreview": "Break schedule preview",
     "pauseAfterQuestions": "Pauses after questions",
     "pausesOf": "break(s) of",
-    "endBreakEarly": "End break early"
+    "endBreakEarly": "End break early",
+    "custom": "Custom",
+    "customDesc": "You choose!",
+    "customQuestionLabel": "How many questions?",
+    "customRange": "Between 5 and 100 questions"
   },
   "auth": {
     "welcome": "Welcome!",
     "signInAccess": "Sign in to access your quizzes",
+    "loginRequired": "Sign in to continue",
+    "login": "Sign In",
+    "signup": "Sign Up",
     "continueGoogle": "Continue with Google",
     "emailAddress": "Email Address",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "signInPassword": "Sign In",
+    "createAccount": "Create Account",
+    "forgotPassword": "Forgot password?",
+    "forgotDesc": "Enter your email and we'll send you a reset link.",
+    "sendResetLink": "Send Reset Link",
+    "resetSent": "Reset Link Sent!",
+    "resetSentDesc": "We sent a password reset link to",
+    "backToLogin": "Back to Sign In",
+    "orMagicLink": "Or use a magic link",
     "sendMagicLink": "Send Magic Link",
     "checkEmail": "Check Your Email",
+    "confirmEmail": "Confirm Your Email",
+    "confirmEmailSent": "We sent a confirmation link to",
     "magicLinkSent": "We sent a magic link to",
     "closePageHint": "Click the link in the email to sign in. You can close this page.",
     "tryAnother": "Try another email",
-    "businessHint": "For business accounts, please use your professional email"
+    "businessHint": "For business accounts, please use your professional email",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "invalidCredentials": "Wrong email or password. Please try again.",
+    "alreadyRegistered": "This email is already registered. Try signing in.",
+    "emailNotConfirmed": "Please confirm your email first. Check your inbox.",
+    "passwordMismatch": "Passwords do not match.",
+    "passwordTooShort": "Password must be at least 6 characters."
   },
   "host": {
     "hostDashboard": "Host Dashboard",
@@ -261,108 +289,108 @@
   "guide": {
     "back": "Back",
     "hero": {
-      "badge": "First month FREE + 5 quizzes - No credit card required",
-      "title": "Transform Your Venue Into a Quiz Destination",
-      "subtitle": "Boost revenue, attract new customers, and create unforgettable nights with AI-powered quiz events",
-      "ctaPrimary": "I TEST NOW - FREE",
+      "badge": "First month FREE + 5 quizzes - No credit card needed!",
+      "title": "Turn Your Venue Into THE Quiz Hotspot!",
+      "subtitle": "More fun, more customers, more rounds ordered. AI-powered quiz nights that run themselves!",
+      "ctaPrimary": "TRY IT FREE - LET'S GO!",
       "ctaSecondary": "Individual plans",
       "trustNoCard": "No credit card",
       "trust30Days": "30-day free trial",
       "trust250Players": "Up to 250 players"
     },
     "roi": {
-      "title": "Why Quiz Nights?",
-      "subtitle": "Quiz events are proven revenue drivers for bars, restaurants, and entertainment venues",
+      "title": "Why Quiz Nights Rock",
+      "subtitle": "Good vibes, packed venues, happy customers coming back for more",
       "stat1Value": "+30%",
-      "stat1Label": "increase in drinks sales during quiz nights",
+      "stat1Label": "more drinks sold on quiz nights",
       "stat2Value": "2x",
-      "stat2Label": "more return visits from quiz players",
+      "stat2Label": "more return visits from quiz fans",
       "stat3Value": "$0",
-      "stat3Label": "equipment investment - just a TV or projector",
-      "compareTitle": "QuizzaBoom vs. Traditional Quiz Rooms",
-      "quizRoomCon1": "Expensive venue rental",
-      "quizRoomCon2": "Fixed schedule, limited flexibility",
-      "quizRoomCon3": "Limited to one location",
-      "quizRoomCon4": "Manual question preparation",
-      "qbPro1": "Free to start, pay as you grow",
-      "qbPro2": "Play anytime, on your schedule",
-      "qbPro3": "Multi-site competitions between venues",
-      "qbPro4": "AI generates unique questions every time"
+      "stat3Label": "equipment needed - just a TV or projector!",
+      "compareTitle": "QuizzaBoom vs. Old-School Quiz Rooms",
+      "quizRoomCon1": "Pricey venue rental",
+      "quizRoomCon2": "Fixed schedule, no flexibility",
+      "quizRoomCon3": "Stuck in one location",
+      "quizRoomCon4": "Hours spent writing questions",
+      "qbPro1": "Free to start, grow at your pace",
+      "qbPro2": "Play whenever you want",
+      "qbPro3": "Multi-venue battles across locations",
+      "qbPro4": "Fresh AI questions every single time"
     },
     "howItWorks": {
-      "title": "How It Works",
-      "subtitle": "From signup to quiz night in under 5 minutes",
+      "title": "Dead Simple Setup",
+      "subtitle": "From zero to quiz night in under 5 minutes. Seriously!",
       "step1Title": "Register Your Business",
-      "step1Desc": "AI verifies your business in seconds. Get instant access to your free trial.",
-      "step2Title": "Launch a Quiz",
-      "step2Desc": "Choose a theme or let AI surprise you. Unique questions generated on the fly.",
-      "step3Title": "Clients Play on Smartphones",
-      "step3Desc": "No app download. Players scan a QR code and play instantly on their phones.",
-      "step4Title": "Sit Back & Serve Drinks",
-      "step4Desc": "Everything is fully automatic: questions, timers, leaderboard, even promo messages during breaks.",
-      "autoMessage": "100% automatic after launch - messages during breaks, live leaderboard, email results!"
+      "step1Desc": "Quick AI check, instant access. Takes 30 seconds, tops.",
+      "step2Title": "Pick a Theme & Launch",
+      "step2Desc": "Choose a vibe or let AI surprise you. Boom - unique questions ready!",
+      "step3Title": "Customers Play on Their Phones",
+      "step3Desc": "No app needed! Scan QR code, jump in. That easy.",
+      "step4Title": "You Serve Drinks, We Handle the Rest",
+      "step4Desc": "100% automatic: questions, timers, leaderboard, even your promo messages during breaks.",
+      "autoMessage": "Fully automatic after launch - just press play and enjoy the show!"
     },
     "features": {
-      "title": "Everything You Need",
-      "subtitle": "Powerful features designed for professional venues",
+      "title": "Packed With Good Stuff",
+      "subtitle": "Everything you need to run amazing quiz nights, zero hassle",
       "ai": {
-        "title": "AI-Generated Themes",
-        "desc": "Unique questions every time. Never repeat the same quiz twice."
+        "title": "AI-Powered Questions",
+        "desc": "Fresh, unique questions every time. Your regulars will never get bored!"
       },
       "tv": {
-        "title": "TV / Projector Display",
-        "desc": "Cast on any screen. No special equipment needed."
+        "title": "Big Screen Display",
+        "desc": "TV or projector, your pick. No fancy equipment needed."
       },
       "mobile": {
-        "title": "Smartphone Play",
-        "desc": "No app download. Players join via QR code in seconds."
+        "title": "Play on Smartphones",
+        "desc": "No app to download. QR code scan and they're in!"
       },
       "multiSite": {
-        "title": "Multi-Site Competitions",
-        "desc": "Inter-establishment battles. Compete across venues or offices."
+        "title": "Multi-Venue Battles",
+        "desc": "Pit your bar against the one across town. Epic rivalries!"
       },
       "auto": {
-        "title": "Fully Automatic",
-        "desc": "Launch and forget. Questions, timers, scores - all handled."
+        "title": "100% Automatic",
+        "desc": "Hit launch, then focus on what you do best: serving drinks!"
       },
       "analytics": {
-        "title": "Results & Analytics",
-        "desc": "Email personalized results to every player automatically."
+        "title": "Results by Email",
+        "desc": "Every player gets their score + fun stats automatically."
       },
       "strategic": {
         "title": "Strategic Mode",
-        "desc": "Jokers, sabotage, and shields for maximum excitement."
+        "desc": "Jokers, sabotage, shields - pure chaos and laughs!"
       },
       "breaks": {
-        "title": "Commercial Breaks",
-        "desc": "Display your promotions and messages during quiz pauses."
+        "title": "Promo Breaks",
+        "desc": "Show your deals during quiz pauses. Smart marketing!"
       }
     },
     "pricing": {
-      "title": "Simple, Transparent Pricing",
+      "title": "Simple Pricing, No Surprises",
       "perMonth": "/month",
       "freeTrial": "FREE TRIAL",
-      "starterTrial": "First month completely FREE",
+      "starterTrial": "First month 100% FREE!",
       "starterFeature1": "5 quizzes per month",
       "starterFeature2": "Up to 250 players per session",
       "starterFeature3": "Strategic mode included",
       "starterFeature4": "Email results & analytics",
       "starterFeature5": "Standard support",
-      "startTrial": "Start My Free Trial",
+      "startTrial": "Let's Go - Free Trial!",
       "proFeature1": "Unlimited quizzes",
       "proFeature2": "Up to 250 players per session",
       "proFeature3": "2 team seats",
-      "proFeature4": "White label (custom subdomain)",
+      "proFeature4": "White label (your branding!)",
       "proFeature5": "Priority support",
       "proFeature6": "Advanced analytics",
-      "getPro": "Get Pro Plan",
-      "individualLink": "Looking for individual plans?"
+      "getPro": "Go Pro",
+      "individualLink": "Just want to host one quiz? Check individual plans"
     },
     "cta": {
-      "title": "Ready to Transform Your Venue?",
-      "subtitle": "Join venues already using QuizzaBoom to boost their business",
-      "button": "Start My Free Trial Now",
-      "support": "Questions? Contact us at"
+      "title": "Ready to Pack Your Venue?",
+      "subtitle": "Join the venues already hosting legendary quiz nights!",
+      "button": "Start Free - It's on Us!",
+      "support": "Questions? Hit us up at"
     }
   },
   "dashboard": {

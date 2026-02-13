@@ -87,6 +87,51 @@ function buildBatchPrompt(
 Use COMPLETELY DIFFERENT sub-topics and angles. DO NOT repeat any questions or themes from previous batches.`
     : '';
 
+  // Detect mode from theme string
+  const isFunnyMode = theme.toLowerCase().includes('funny mode') || theme.toLowerCase().includes('mode humour') || theme.toLowerCase().includes('modo humor') || theme.toLowerCase().includes('lustig');
+  const isKidsMode = theme.toLowerCase().includes('kids mode') || theme.toLowerCase().includes('mode enfant') || theme.toLowerCase().includes('modo ni') || theme.toLowerCase().includes('kinder');
+
+  // Mode-specific instructions
+  let modeInstructions = '';
+  if (isFunnyMode) {
+    modeInstructions = `
+🤣 FUNNY MODE — CRITICAL INSTRUCTIONS:
+- This is COMEDY QUIZ TIME! Questions and answers MUST be HILARIOUS, QUIRKY, and SURPRISING
+- Focus on: absurd true facts, bizarre world records, ridiculous laws, funny historical anecdotes, weird animal behaviors, surprising food facts
+- Question phrasing should be PLAYFUL and WITTY — make players laugh just reading the question
+- Wrong answers should be FUNNY too — each option should make people smile
+- Explanations should be told like a comedy bit — short, punchy, unexpected punchline
+- Fun facts should make players say "No way, that's actually real?!"
+- Prioritize UNUSUAL and BIZARRE real facts over standard trivia
+- Include questions about: weird world records, absurd inventions, funny mistranslations, bizarre animal facts, ridiculous historical events
+- TONE: Like a stand-up comedian hosting a quiz night — fun, irreverent, surprising
+- ALL facts must still be TRUE and REAL — the humor comes from reality being stranger than fiction
+`;
+  } else if (isKidsMode) {
+    modeInstructions = `
+👶 KIDS MODE — CRITICAL INSTRUCTIONS (ages 6-12):
+- Questions must be FUN, COLORFUL, and ACCESSIBLE for children
+- Use SIMPLE, clear language — no complex vocabulary or abstract concepts
+- Topics kids LOVE: animals, dinosaurs, space, cartoons, superheroes, nature, food, sports, video games, fun science experiments
+- Make it EDUCATIONAL but ENTERTAINING — kids should learn while having a blast
+- Include visual/imaginative questions: "If a T-Rex tried to clap, what would happen?"
+- Wrong answers can be SILLY and IMAGINATIVE — kids love goofy options
+- Explanations should be like talking to a curious kid — "Did you know that..." style
+- Fun facts should trigger "WOW! Cool!" reactions
+- NEVER include: scary content, violence, complex politics, adult humor, or anything inappropriate
+- Difficulty should be AGE-APPROPRIATE: easy enough to feel good, challenging enough to learn
+- TONE: Like a fun teacher or a cool older sibling — enthusiastic, encouraging, playful
+`;
+  } else {
+    modeInstructions = `
+📚 STANDARD MODE:
+- Classic quiz format with a good balance of education and entertainment
+- Questions should be interesting, informative, and engaging
+- Mix of well-known facts and surprising discoveries
+- Professional but accessible tone — suitable for all audiences
+`;
+  }
+
   return `${batchContext}Create a HIGHLY ENGAGING quiz segment in ${fullLanguage} about: ${theme}
 
 UNIQUE BATCH SEED: ${randomSeed} — Use this seed to ensure completely different questions.
@@ -95,6 +140,7 @@ Generate EXACTLY ${batchQuestionCount} questions organized in ${batchStageCount}
 Stage numbers should start at ${startStageNumber + 1}.
 Each stage has ${QUESTIONS_PER_STAGE} questions (last stage may have fewer).
 ${previousThemesWarning}
+${modeInstructions}
 
 🎯 ABSOLUTE DIVERSITY REQUIREMENTS:
 
