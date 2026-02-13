@@ -378,5 +378,30 @@
     "noPlayers": "Warte, bis mindestens ein Spieler beigetreten ist!",
     "noCreditsError": "Keine Credits verfugbar. Bitte kaufen Sie Credits, um das Quiz zu starten.",
     "startError": "Quiz konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
+  },
+  "offer": {
+    "badge": "EXKLUSIVES ANGEBOT",
+    "title": "Du hast gespielt, du hast es geliebt — jetzt organisiere dein eigenes!",
+    "subtitle": "Du hast bereits an einem unserer Quiz teilgenommen. Nutze dieses exklusive Angebot, um dein eigenes unvergessliches Erlebnis zu organisieren!",
+    "urgency": "Zeitlich begrenztes Angebot — Sonderpreise nur fur Quiz-Teilnehmer!",
+    "multiSite": "Multi-Standort",
+    "save": "Spare",
+    "grabDeal": "Jetzt zuschlagen!",
+    "noSubscription": "Einmalzahlung. Kein Abo. Keine versteckten Kosten. In 30 Sekunden startklar.",
+    "oneQuizSession": "1 Quiz-Sitzung",
+    "allGameModes": "Alle Spielmodi inklusive",
+    "strategicJokers": "Strategische Joker",
+    "realtimeLeaderboard": "Echtzeit-Bestenliste",
+    "emailResults": "Ergebnisse per E-Mail an alle Spieler",
+    "multiSiteFeature": "Multi-Standort: Spieler an verschiedenen Orten!",
+    "aiGenerated": "KI-generierte einzigartige Fragen",
+    "wasPrice": "war",
+    "playersMax": "Bis zu {{count}} Spieler",
+    "perfectForParties": "Perfekt fur Partys!",
+    "maximumCapacity": "Maximale Kapazitat!",
+    "promoSection": "Hast du einen Promo-Code?",
+    "trustBadge1": "Uber 50.000 Spieler vertrauen uns",
+    "trustBadge2": "In 30 Sekunden startklar",
+    "trustBadge3": "Kein Download erforderlich"
   }
 }

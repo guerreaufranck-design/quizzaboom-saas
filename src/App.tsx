@@ -15,6 +15,7 @@ import { TVDisplay } from './pages/TVDisplay';
 import { ProSignup } from './pages/ProSignup';
 import { ProDashboard } from './pages/ProDashboard';
 import { Guide } from './pages/Guide';
+import { SpecialOffer } from './pages/SpecialOffer';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 function PlayRoute() {
@@ -68,6 +69,7 @@ function App() {
       <Route path="/pro-signup" element={<ProtectedRoute><ProSignup /></ProtectedRoute>} />
       <Route path="/pro-dashboard" element={<ProtectedRoute><ProDashboard /></ProtectedRoute>} />
       <Route path="/guide" element={<Guide />} />
+      <Route path="/offer" element={<SpecialOffer />} />
       <Route path="*" element={<HomePage />} />
     </Routes>
   );

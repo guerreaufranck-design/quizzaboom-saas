@@ -14,6 +14,7 @@ const VIEW_TO_PATH: Record<string, string> = {
   'pro-signup': '/pro-signup',
   'pro-dashboard': '/pro-dashboard',
   guide: '/guide',
+  offer: '/offer',
 };
 
 export function useAppNavigate() {

@@ -378,5 +378,30 @@
     "noPlayers": "Wait for at least one player to join!",
     "noCreditsError": "No credits available. Purchase credits to start the quiz.",
     "startError": "Failed to start the quiz. Please try again."
+  },
+  "offer": {
+    "badge": "EXCLUSIVE OFFER",
+    "title": "You played, you loved it — now host your own!",
+    "subtitle": "You already participated in one of our quizzes. Now take advantage of this exclusive offer to organize your own unforgettable experience!",
+    "urgency": "Limited time offer — Special prices for quiz participants only!",
+    "multiSite": "Multi-site",
+    "save": "Save",
+    "grabDeal": "Grab This Deal!",
+    "noSubscription": "One-time payment. No subscription. No hidden fees. Ready in 30 seconds.",
+    "oneQuizSession": "1 Quiz Session",
+    "allGameModes": "All Game Modes",
+    "strategicJokers": "Strategic Jokers",
+    "realtimeLeaderboard": "Real-time Leaderboard",
+    "emailResults": "Email Results to All Players",
+    "multiSiteFeature": "Multi-site: Players from different locations!",
+    "aiGenerated": "AI-generated unique questions",
+    "wasPrice": "was",
+    "playersMax": "Up to {{count}} Players",
+    "perfectForParties": "Perfect for parties!",
+    "maximumCapacity": "Maximum capacity!",
+    "promoSection": "Have a promo code?",
+    "trustBadge1": "Trusted by 50,000+ players",
+    "trustBadge2": "Ready in 30 seconds",
+    "trustBadge3": "No download required"
   }
 }

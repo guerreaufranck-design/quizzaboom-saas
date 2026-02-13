@@ -378,5 +378,30 @@
     "noPlayers": "Attendez qu'au moins un joueur rejoigne !",
     "noCreditsError": "Aucun credit disponible. Achetez des credits pour lancer le quiz.",
     "startError": "Impossible de lancer le quiz. Veuillez reessayer."
+  },
+  "offer": {
+    "badge": "OFFRE EXCLUSIVE",
+    "title": "Vous avez joue, vous avez adore — maintenant organisez le votre !",
+    "subtitle": "Vous avez deja participe a un de nos quiz. Profitez de cette offre exceptionnelle pour organiser votre propre experience inoubliable !",
+    "urgency": "Offre limitee — Tarifs speciaux reserves aux participants !",
+    "multiSite": "Multi-site",
+    "save": "Economie",
+    "grabDeal": "J'en profite !",
+    "noSubscription": "Paiement unique. Sans abonnement. Sans frais caches. Pret en 30 secondes.",
+    "oneQuizSession": "1 Session de Quiz",
+    "allGameModes": "Tous les modes de jeu",
+    "strategicJokers": "Jokers strategiques",
+    "realtimeLeaderboard": "Classement en direct",
+    "emailResults": "Resultats par email a tous les joueurs",
+    "multiSiteFeature": "Multi-site : Joueurs a differents endroits !",
+    "aiGenerated": "Questions uniques generees par IA",
+    "wasPrice": "etait",
+    "playersMax": "Jusqu'a {{count}} joueurs",
+    "perfectForParties": "Parfait pour les soirees !",
+    "maximumCapacity": "Capacite maximale !",
+    "promoSection": "Vous avez un code promo ?",
+    "trustBadge1": "Plus de 50 000 joueurs",
+    "trustBadge2": "Pret en 30 secondes",
+    "trustBadge3": "Aucun telechargement requis"
   }
 }
