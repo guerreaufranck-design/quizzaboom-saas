@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/**/*.ts": {
-      "runtime": "@vercel/node@3.1.5"
+      "runtime": "@vercel/node@5.6.3"
     }
   },
   "rewrites": [
