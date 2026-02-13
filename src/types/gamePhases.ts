@@ -8,11 +8,11 @@ export type GamePhase =
   | 'quiz_complete';
 
 export const PHASE_DURATIONS: Record<GamePhase, number> = {
-  theme_announcement: 5,
-  question_display: 8,
-  answer_selection: 15,
-  results: 8,
-  intermission: 5,
+  theme_announcement: 7,
+  question_display: 10,
+  answer_selection: 17,
+  results: 10,
+  intermission: 7,
   commercial_break: 0, // Dynamic — set by break schedule
   quiz_complete: 0,
 };

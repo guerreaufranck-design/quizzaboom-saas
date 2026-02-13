@@ -1,6 +1,6 @@
 import type { QuizGenRequest, AIQuizResponse } from '../types/quiz';
 
-const SECONDS_PER_QUESTION = 41;
+const SECONDS_PER_QUESTION = 51;
 const QUESTIONS_PER_STAGE = 5;
 
 // New: calculate structure from fixed question count
