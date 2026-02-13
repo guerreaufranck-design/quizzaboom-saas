@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 
 interface AnimatedLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  banner?: boolean;
   className?: string;
 }
 
@@ -12,7 +13,7 @@ const SIZE_CLASSES = {
   xl: 'h-64',
 };
 
-export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ size = 'md', className = '' }) => {
+export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ size = 'md', banner = false, className = '' }) => {
   const [videoError, setVideoError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -55,8 +56,12 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ size = 'md', classNa
     );
   }
 
+  const videoClasses = banner
+    ? 'w-full h-auto object-contain'
+    : `${SIZE_CLASSES[size]} w-auto object-contain`;
+
   return (
-    <div className={`inline-block ${className}`}>
+    <div className={`${banner ? 'w-full' : 'inline-block'} ${className}`}>
       <video
         ref={videoRef}
         autoPlay
@@ -64,7 +69,7 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ size = 'md', classNa
         muted
         playsInline
         preload="auto"
-        className={`${SIZE_CLASSES[size]} w-auto object-contain`}
+        className={videoClasses}
         onError={() => setVideoError(true)}
       >
         <source src="/images/logo-animated.mp4" type="video/mp4" />

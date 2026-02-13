@@ -40,7 +40,7 @@ export const HomePage: React.FC = () => {
         <div className="max-w-6xl mx-auto space-y-16">
           {/* Hero Section */}
           <div className="text-center space-y-8">
-            <AnimatedLogo size="xl" className="mx-auto" />
+            <AnimatedLogo banner className="mx-auto max-w-4xl" />
 
             <div className="space-y-4">
               <p className="text-2xl lg:text-3xl text-white/90 font-medium">
