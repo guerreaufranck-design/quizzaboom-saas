@@ -114,8 +114,8 @@ export const TVDisplay: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Hide instructions when timer starts (phaseEndTime is set by the host)
-    if (currentPhase === 'theme_announcement' && phaseEndTime && showInstructions) {
+    // Hide instructions as soon as the host starts the quiz (any phase with a valid phaseEndTime)
+    if (phaseEndTime && phaseEndTime > 0 && showInstructions) {
       setShowInstructions(false);
     }
   }, [currentPhase, phaseEndTime]);
