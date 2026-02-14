@@ -251,6 +251,23 @@ export const useQuizStore = create<QuizState>((set, get) => ({
 
       console.log('✅ All questions saved');
 
+      // Fire-and-forget: fetch Unsplash images in the background
+      const questionsWithImages = allQuestions
+        .map((q, i) => {
+          const aiQ = aiResponse.stages.flatMap(s => s.questions)[i];
+          return aiQ?.image_search_term ? { id: q.id, searchTerm: aiQ.image_search_term } : null;
+        })
+        .filter((q): q is { id: string; searchTerm: string } => q !== null);
+
+      if (questionsWithImages.length > 0) {
+        console.log(`🖼️ Fetching ${questionsWithImages.length} images in background...`);
+        fetch('/api/fetch-unsplash-images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questions: questionsWithImages }),
+        }).catch(err => console.warn('Image fetch failed (non-critical):', err));
+      }
+
       set({ currentQuiz: quizData as Quiz, isLoading: false });
       return quizData as Quiz;
       

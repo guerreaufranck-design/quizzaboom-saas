@@ -660,6 +660,15 @@ export const HostDashboard: React.FC = () => {
 
               {currentQuestion ? (
                 <div className="bg-qb-darker p-6 rounded-xl space-y-4">
+                  {currentQuestion.image_url && (
+                    <div className="flex justify-center">
+                      <img
+                        src={currentQuestion.image_url}
+                        alt=""
+                        className="max-h-48 max-w-full object-contain rounded-xl"
+                      />
+                    </div>
+                  )}
                   <p className="text-2xl text-white font-medium">
                     {currentQuestion.question_text}
                   </p>

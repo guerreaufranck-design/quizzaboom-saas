@@ -425,6 +425,16 @@ export const PlayerView: React.FC = () => {
           </div>
         </Card>
 
+        {(currentPhase === 'question_display' || currentPhase === 'answer_selection') && currentQuestion?.image_url && (
+          <Card className="p-2 bg-white/10 backdrop-blur-lg border-white/20">
+            <img
+              src={currentQuestion.image_url}
+              alt=""
+              className="w-full h-32 object-cover rounded-xl"
+            />
+          </Card>
+        )}
+
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
             {t('player.answersTitle')} {answersEnabled ? t('player.answersSelectNow') : t('player.answersWaitTime')}

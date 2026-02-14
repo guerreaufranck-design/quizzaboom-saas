@@ -476,12 +476,24 @@ export const TVDisplay: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'question_display') {
     const questionText = currentQuestion?.question_text || t('common.loading');
-    const questionTextClass = getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
+    const hasImage = !!currentQuestion?.image_url;
+    const questionTextClass = hasImage
+      ? getAdaptiveTextSize(questionText, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' })
+      : getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
 
     return (
       <div className="h-screen bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-500 flex items-center justify-center p-8 overflow-hidden">
         <div className="max-w-6xl w-full text-center flex flex-col items-center justify-center h-full">
-          <div className="text-6xl mb-4">📖</div>
+          {!hasImage && <div className="text-6xl mb-4">📖</div>}
+          {hasImage && (
+            <div className="mb-4 w-full flex justify-center">
+              <img
+                src={currentQuestion!.image_url}
+                alt=""
+                className="max-h-[40vh] max-w-full object-contain rounded-2xl shadow-2xl"
+              />
+            </div>
+          )}
           <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-8 mb-6 w-full">
             <h2 className={`font-bold text-white leading-tight ${questionTextClass}`}>
               {questionText}
@@ -501,7 +513,10 @@ export const TVDisplay: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'answer_selection') {
     const questionText = currentQuestion?.question_text || '';
-    const answerQuestionClass = getAdaptiveTextSize(questionText, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' });
+    const hasImage = !!currentQuestion?.image_url;
+    const answerQuestionClass = hasImage
+      ? getAdaptiveTextSize(questionText, { xl: 'text-2xl', lg: 'text-xl', md: 'text-lg', sm: 'text-base' })
+      : getAdaptiveTextSize(questionText, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' });
     const options = currentQuestion?.options || [];
     const optionTextClass = getAdaptiveOptionSize(options);
     const maxOptionLen = Math.max(...options.map(o => o.length), 0);
@@ -520,6 +535,15 @@ export const TVDisplay: React.FC = () => {
           </div>
 
           <Card className="p-6 bg-gradient-to-br from-qb-purple/30 to-qb-cyan/30 border-white/20 flex-1 min-h-0 my-4">
+            {hasImage && (
+              <div className="flex justify-center mb-3">
+                <img
+                  src={currentQuestion!.image_url}
+                  alt=""
+                  className="max-h-[25vh] max-w-full object-contain rounded-xl"
+                />
+              </div>
+            )}
             <h2 className={`font-bold text-white text-center mb-4 ${answerQuestionClass}`}>
               {currentQuestion?.question_text}
             </h2>
@@ -553,10 +577,20 @@ export const TVDisplay: React.FC = () => {
   if (currentPhase === 'results') {
     const correctAnswer = currentQuestion?.correct_answer || '';
     const correctAnswerClass = getAdaptiveTextSize(correctAnswer, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' });
+    const hasImage = !!currentQuestion?.image_url;
 
     return (
-      <div className="h-screen bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 p-8 overflow-hidden">
-        <div className="max-w-7xl mx-auto h-full flex flex-col items-center justify-center">
+      <div className="h-screen bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 p-8 overflow-hidden relative">
+        {hasImage && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <img
+              src={currentQuestion!.image_url}
+              alt=""
+              className="w-full h-full object-cover opacity-20 blur-sm"
+            />
+          </div>
+        )}
+        <div className="max-w-7xl mx-auto h-full flex flex-col items-center justify-center relative z-10">
           <div className="text-6xl mb-3 animate-bounce">✅</div>
           <h1 className="text-5xl font-bold text-white mb-6">{t('tv.correctAnswer')}</h1>
           <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-8 mb-6">

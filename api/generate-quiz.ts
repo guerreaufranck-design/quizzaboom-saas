@@ -50,6 +50,7 @@ interface BatchResult {
       time_limit: number;
       difficulty: string;
       micro_theme?: string;
+      image_search_term?: string;
     }>;
   }>;
 }
@@ -214,6 +215,13 @@ PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
    - 2-4 word general category (e.g., "Marine Biology", "European History")
    - NEVER include the answer in the micro-theme
 
+8. IMAGE SEARCH TERM:
+   - Provide a 2-3 word ENGLISH search term for finding a relevant photo on Unsplash
+   - Must be CONCRETE and VISUAL (objects, places, animals — not abstract concepts)
+   - Examples: "coral reef", "Saturn rings", "Japanese sushi", "African elephant"
+   - NEVER use the correct answer as the search term (to avoid giving away the answer)
+   - The image should set the CONTEXT of the question, not reveal the answer
+
 REQUIREMENTS:
 - Difficulty: ${difficulty}
 - Language: ${fullLanguage} (questions, answers, explanations — everything in this language)
@@ -237,7 +245,8 @@ REQUIREMENTS:
           "points": 100,
           "time_limit": 20,
           "difficulty": "${difficulty}",
-          "micro_theme": "General Category"
+          "micro_theme": "General Category",
+          "image_search_term": "relevant photo term"
         }
       ]
     }

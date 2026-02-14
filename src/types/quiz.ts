@@ -23,6 +23,7 @@ export interface Question {
   points: number;
   time_limit: number;
   difficulty: DifficultyLevel;
+  image_url?: string;
   created_at: string;
 }
 
@@ -78,7 +79,8 @@ export interface AIQuizResponse {
       points: number;
       time_limit: number;
       difficulty: string;
-      micro_theme?: string; // ✅ Ajouté
+      micro_theme?: string;
+      image_search_term?: string;
     }>;
   }>;
 }
