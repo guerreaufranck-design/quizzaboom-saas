@@ -260,10 +260,32 @@ PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
    - NEVER use "surprising", "unusual", "insolite", "bizarre" in stage theme names
    - NEVER repeat a sub-topic across stages
 
-5. DIFFICULTY DISTRIBUTION for "${difficulty}":
-   ${difficulty === 'easy' ? '- 70% accessible (most adults know), 30% moderately challenging' :
-     difficulty === 'hard' ? '- 30% moderately challenging, 70% genuinely hard (expert-level)' :
-     '- 40% accessible, 40% moderately challenging, 20% hard (the "wow" questions)'}
+5. DIFFICULTY LEVEL: "${difficulty}" — THIS IS CRITICAL, respect it strictly:
+   ${difficulty === 'easy' ? `EASY — Casual / Family level:
+   - Questions that most teenagers and adults can answer
+   - Common knowledge, popular culture, basic school-level facts
+   - Example: "What is the capital of France?" → Paris
+   - Example: "How many legs does a spider have?" → 8
+   - Example: "Who painted the Mona Lisa?" → Leonardo da Vinci
+   - Wrong answers should be obviously from the same category but clearly distinguishable
+   - Target: 70-80% of players should answer correctly` :
+     difficulty === 'hard' ? `HARD — Expert / Competition level:
+   - Questions that only well-read, knowledgeable people can answer
+   - Requires specific expertise, precise dates, obscure facts, deep knowledge
+   - Example: "In what year was the Treaty of Westphalia signed?" → 1648
+   - Example: "What is the atomic number of Molybdenum?" → 42
+   - Example: "Who won the FIFA Ballon d'Or in 1999?" → Rivaldo
+   - Wrong answers must be VERY close and plausible — designed to confuse even experts
+   - Example: for a date question, wrong answers should be within 10-20 years, not 200 years apart
+   - Target: only 20-30% of players should answer correctly` :
+     `MEDIUM — Standard pub quiz level:
+   - Questions that require general culture but not expert knowledge
+   - Mix of well-known facts and things you "should know but might not remember"
+   - Example: "What is the longest river in Africa?" → Nile
+   - Example: "In which decade was the Berlin Wall built?" → 1960s
+   - Example: "Which element has the symbol 'Au'?" → Gold
+   - Wrong answers should be genuinely confusing — close enough to make players hesitate
+   - Target: 40-60% of players should answer correctly`}
 
 6. LENGTH CONSTRAINTS (CRITICAL — displayed on TV screens):
    - question_text: MAX 120 characters, 1 clear sentence
