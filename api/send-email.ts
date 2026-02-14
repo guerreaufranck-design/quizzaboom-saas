@@ -48,6 +48,7 @@ interface EmailI18n {
   ctaSubline: string;
   ctaButton: string;
   ctaPrice: string;
+  ctaPricePerPlayer: string;
   useCaseTitle: string;
   useCase1: string;
   useCase2: string;
@@ -80,8 +81,9 @@ const i18n: Record<Lang, EmailI18n> = {
     inARow: 'in a row',
     ctaHeadline: '🎉 YOU just had a BLAST — now imagine being the one who CREATES that experience!',
     ctaSubline: 'Your friends in Paris, your cousin in London, your team working from home — everyone plays together, from ANYWHERE! All this for less than a coffee ☕',
-    ctaButton: '🚀 YES! MY QUIZ FROM $1.99',
-    ctaPrice: 'From $1.99 — No subscription. No hidden fees. Ready in 30 seconds!',
+    ctaButton: '🚀 YES! HOST MY QUIZ FROM $1.99',
+    ctaPrice: 'From $1.99 per game — No subscription. No hidden fees. Ready in 30 seconds!',
+    ctaPricePerPlayer: 'That\'s only $0.10 per player for a 20-player game! 🤯',
     useCaseTitle: '🌍 People EVERYWHERE are already playing!',
     useCase1: '🍻 Bars & restaurants — packed houses, incredible energy!',
     useCase2: '🏢 The office — team building that people ACTUALLY enjoy',
@@ -112,8 +114,9 @@ const i18n: Record<Lang, EmailI18n> = {
     inARow: 'de suite',
     ctaHeadline: '🎉 Vous venez de vivre un moment INCROYABLE — et si VOUS organisiez le prochain ?',
     ctaSubline: 'Vos amis a Paris, votre cousin a Londres, vos collegues en teletravail — tout le monde joue ensemble, de N\'IMPORTE OU ! Le tout pour moins qu\'un cafe ☕',
-    ctaButton: '🚀 OUI ! MON QUIZ DES $1.99',
-    ctaPrice: 'A partir de $1.99 — Sans abonnement. Sans frais caches. Pret en 30 secondes !',
+    ctaButton: '🚀 OUI ! J\'ORGANISE MON QUIZ DES $1.99',
+    ctaPrice: 'A partir de $1.99 la partie — Sans abonnement. Sans frais caches. Pret en 30 secondes !',
+    ctaPricePerPlayer: 'Soit seulement $0.10 par joueur pour 20 participants ! 🤯',
     useCaseTitle: '🌍 Ils jouent PARTOUT dans le monde !',
     useCase1: '🍻 Bars & restaurants — salles combles, ambiance de folie !',
     useCase2: '🏢 Au bureau — du team building que les gens ADORENT vraiment',
@@ -145,7 +148,8 @@ const i18n: Record<Lang, EmailI18n> = {
     ctaHeadline: '🎉 DU hattest gerade einen RIESENSPASS — stell dir vor, DU organisierst das nachste!',
     ctaSubline: 'Deine Freunde in Berlin, dein Cousin in Wien, deine Kollegen im Homeoffice — alle spielen zusammen, von UBERALL! Das alles fur weniger als einen Kaffee ☕',
     ctaButton: '🚀 JA! MEIN QUIZ AB $1.99',
-    ctaPrice: 'Ab $1.99 — Kein Abo. Keine versteckten Kosten. In 30 Sekunden startklar!',
+    ctaPrice: 'Ab $1.99 pro Spiel — Kein Abo. Keine versteckten Kosten. In 30 Sekunden startklar!',
+    ctaPricePerPlayer: 'Das sind nur $0.10 pro Spieler bei 20 Teilnehmern! 🤯',
     useCaseTitle: '🌍 UBERALL wird schon gespielt!',
     useCase1: '🍻 Bars & Restaurants — volles Haus, unglaubliche Stimmung!',
     useCase2: '🏢 Im Buro — Teambuilding, das WIRKLICH Spass macht',
@@ -176,8 +180,9 @@ const i18n: Record<Lang, EmailI18n> = {
     inARow: 'seguidas',
     ctaHeadline: '🎉 Acabas de vivir algo INCREIBLE — ahora imagina ser TU quien organiza el proximo!',
     ctaSubline: 'Tus amigos en Madrid, tu primo en Buenos Aires, tus companeros en teletrabajo — todos juegan juntos, desde CUALQUIER LUGAR! Todo por menos que un cafe ☕',
-    ctaButton: '🚀 SI! MI QUIZ DESDE $1.99',
-    ctaPrice: 'Desde $1.99 — Sin suscripcion. Sin costos ocultos. Listo en 30 segundos!',
+    ctaButton: '🚀 SI! ORGANIZO MI QUIZ DESDE $1.99',
+    ctaPrice: 'Desde $1.99 por partida — Sin suscripcion. Sin costos ocultos. Listo en 30 segundos!',
+    ctaPricePerPlayer: 'Eso es solo $0.10 por jugador con 20 participantes! 🤯',
     useCaseTitle: '🌍 Ya estan jugando en TODO EL MUNDO!',
     useCase1: '🍻 Bares y restaurantes — lleno total, energia increible!',
     useCase2: '🏢 La oficina — team building que la gente DISFRUTA de verdad',
@@ -357,6 +362,7 @@ function buildResultsEmail(player: PlayerResult, quizTitle: string, lang: Lang):
               <td style="text-align:center;padding:16px;background-color:#201040;border-radius:12px;border:2px solid #8B3FE8;">
                 <p style="color:#FFD700;font-size:28px;font-weight:900;margin:0;">💰 <span style="text-decoration:line-through;color:#FF6B6B;font-size:18px;">$3.99</span> $1.99</p>
                 <p style="color:#A0A0B8;font-size:13px;margin:4px 0 0;">${t.ctaPrice}</p>
+                <p style="color:#00D4FF;font-size:15px;font-weight:bold;margin:8px 0 0;">${t.ctaPricePerPlayer}</p>
               </td>
             </tr>
           </table>
