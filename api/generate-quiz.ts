@@ -218,9 +218,14 @@ PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
 8. IMAGE SEARCH TERM:
    - Provide a 2-3 word ENGLISH search term for finding a relevant photo on Unsplash
    - Must be CONCRETE and VISUAL (objects, places, animals — not abstract concepts)
-   - Examples: "coral reef", "Saturn rings", "Japanese sushi", "African elephant"
-   - NEVER use the correct answer as the search term (to avoid giving away the answer)
-   - The image should set the CONTEXT of the question, not reveal the answer
+   - The image must illustrate the THEME or TOPIC of the question, NOT the correct answer
+   - NEVER search for the correct answer directly — the photo must NOT give away the answer
+   - Think: "What broad visual context helps the player understand the topic?"
+   - Good: Question "Which ocean is the deepest?" → image_search_term: "ocean waves" (shows the topic, not the answer)
+   - Good: Question "Who painted the Mona Lisa?" → image_search_term: "art museum painting" (NOT "Mona Lisa" or "Leonardo da Vinci")
+   - Good: Question "What is the largest planet?" → image_search_term: "solar system planets" (NOT "Jupiter")
+   - Bad: Question "What is the capital of Japan?" → image_search_term: "Tokyo" (gives away the answer!)
+   - If the question is about a specific thing (e.g., a painting, an animal species), show the CATEGORY not the specific item
 
 REQUIREMENTS:
 - Difficulty: ${difficulty}
