@@ -39,6 +39,8 @@ export const PlayerView: React.FC = () => {
   const [frozenScore, setFrozenScore] = useState(0);
   const lastPhaseRef = useRef<string>('');
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectingRef = useRef(false);
+  const lastWakeLockAttemptRef = useRef(0);
 
   // ===== RECONNECTION ROBUSTE =====
   // 3 mécanismes complémentaires : polling DB + visibility/pageshow/focus + health check Realtime
@@ -55,8 +57,23 @@ export const PlayerView: React.FC = () => {
 
       if (error || !session) return;
 
-      // Quiz ended
-      if (session.status === 'finished' || session.status === 'completed') return;
+      // Quiz ended — set phase to quiz_complete so UI updates
+      if (session.status === 'finished' || session.status === 'completed') {
+        const { currentPhase: localPhase } = useStrategicQuizStore.getState();
+        if (localPhase !== 'quiz_complete') {
+          console.log('🏁 Quiz ended while disconnected — syncing to quiz_complete');
+          setPhaseData({
+            phase: 'quiz_complete',
+            questionIndex: 0,
+            stageNumber: 0,
+            timeRemaining: 0,
+            phaseEndTime: 0,
+            currentQuestion: null,
+            themeTitle: 'Quiz Complete',
+          } as any);
+        }
+        return;
+      }
 
       const settings = session.settings as Record<string, unknown>;
       const dbPhase = settings?.currentPhase as { phase: string; questionIndex: number; stageNumber: number; timeRemaining: number; phaseEndTime?: number; currentQuestion: unknown; themeTitle?: string } | undefined;
@@ -84,29 +101,42 @@ export const PlayerView: React.FC = () => {
     }
   };
 
+  // Debounced reconnect — prevents multiple simultaneous reconnection attempts
   const handleReconnect = () => {
-    if (currentSession?.id && sessionCode) {
-      console.log('🔄 Reconnecting (visibility/pageshow/focus)...');
-      reconnectToSession(currentSession.id, sessionCode);
-    }
+    if (reconnectingRef.current) return;
+    if (!currentSession?.id || !sessionCode) return;
+
+    reconnectingRef.current = true;
+    console.log('🔄 Reconnecting (visibility/pageshow/focus)...');
+
+    // Reconnect channel + sync phase from DB
+    reconnectToSession(currentSession.id, sessionCode);
+    // Also poll immediately to catch any missed phase changes
+    pollPhaseFromDB();
+
+    // Reset debounce after 2s
+    setTimeout(() => { reconnectingRef.current = false; }, 2000);
   };
 
   useEffect(() => {
     const keepAwake = async () => {
+      // Debounce: max once per 5 seconds
+      const now = Date.now();
+      if (now - lastWakeLockAttemptRef.current < 5000) return;
+      lastWakeLockAttemptRef.current = now;
+
       try {
         if ('wakeLock' in navigator) {
           wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
-          console.log('🔋 Wake Lock activated');
 
           if (wakeLockRef.current) {
             wakeLockRef.current.addEventListener('release', () => {
-              console.log('🔋 Re-requesting wake lock');
-              setTimeout(() => keepAwake(), 100);
+              wakeLockRef.current = null;
             });
           }
         }
       } catch (err) {
-        console.log('⚠️ Wake Lock error:', err);
+        // Silently fail — Wake Lock not critical
       }
     };
 
@@ -117,7 +147,7 @@ export const PlayerView: React.FC = () => {
     // 1. visibilitychange (Chrome Android, desktop)
     const handleVisibility = () => {
       if (!document.hidden) {
-        if (!wakeLockRef.current) keepAwake();
+        keepAwake();
         handleReconnect();
       }
     };
@@ -126,49 +156,44 @@ export const PlayerView: React.FC = () => {
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) {
         console.log('📱 pageshow (bfcache) — reconnecting...');
-        if (!wakeLockRef.current) keepAwake();
+        keepAwake();
         handleReconnect();
       }
     };
 
     // 3. focus (onglet reprend le focus)
     const handleFocus = () => {
-      if (!wakeLockRef.current) keepAwake();
+      keepAwake();
       handleReconnect();
-    };
-
-    // Touch/click wake lock re-acquire
-    const handleInteraction = () => {
-      if (!wakeLockRef.current) {
-        keepAwake();
-      }
     };
 
     document.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('pageshow', handlePageShow);
     window.addEventListener('focus', handleFocus);
-    document.addEventListener('touchstart', handleInteraction, { passive: true });
-    document.addEventListener('click', handleInteraction);
 
-    // === Polling périodique de la phase depuis la DB (filet de sécurité — fallback only) ===
+    // === Polling continu de la phase depuis la DB ===
+    // Fast poll (3s) quand Realtime est mort, slow poll (5s) quand il est sain
     pollIntervalRef.current = setInterval(() => {
-      // Skip polling if Realtime channel is healthy
       const channelState = getChannelState();
-      if (channelState === 'SUBSCRIBED') return;
+      const isHealthy = channelState === 'SUBSCRIBED';
+
+      // Always poll — just less frequently when channel is healthy
+      // This catches phase changes even if a single broadcast was missed
       pollPhaseFromDB();
-    }, 10000);
+
+      // Adjust interval if needed: if unhealthy, reconnect channel too
+      if (!isHealthy && currentSession?.id && sessionCode) {
+        reconnectToSession(currentSession.id, sessionCode);
+      }
+    }, 4000); // 4s — good balance between responsiveness and server load
 
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('pageshow', handlePageShow);
       window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('touchstart', handleInteraction);
-      document.removeEventListener('click', handleInteraction);
       if (wakeLockRef.current) {
-        try {
-          wakeLockRef.current.release();
-        } catch (err) {}
+        try { wakeLockRef.current.release(); } catch (_) {}
       }
     };
   }, [currentSession?.id, sessionCode]);

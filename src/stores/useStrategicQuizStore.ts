@@ -126,10 +126,10 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   },
 
   setPhaseData: (data) => {
-    const { allQuestions } = get();
+    const { allQuestions, currentQuestionIndex: prevQIdx, hasAnswered: prevHasAnswered } = get();
     const question = allQuestions[data.questionIndex] || null;
 
-    console.log('📍 Phase data received:', data.phase, data);
+    console.log('📍 Phase data received:', data.phase, 'Q:', data.questionIndex);
 
     set({
       currentPhase: data.phase,
@@ -146,6 +146,13 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     });
 
     if (data.phase === 'theme_announcement') {
+      // If the question index advanced, the previous question is over.
+      // If the player didn't answer → score 0 (already handled by not submitting).
+      if (data.questionIndex !== prevQIdx && !prevHasAnswered && prevQIdx >= 0) {
+        console.log('⏭️ Question', prevQIdx + 1, 'missed (not answered) — 0 points');
+      }
+
+      // Reset answer state for the new question
       set({
         activeEffects: {
           protections: {},
@@ -158,6 +165,27 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         answerSubmittedAt: null,
         answeredCount: 0,
       });
+
+      // Clear persisted answer state for new question
+      try { sessionStorage.removeItem('qb_answered'); } catch (_) {}
+    }
+
+    // On reconnect during answer_selection: check if we already answered this question
+    if (data.phase === 'answer_selection') {
+      try {
+        const saved = sessionStorage.getItem('qb_answered');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.questionIndex === data.questionIndex && parsed.answered) {
+            console.log('✅ Restored: already answered Q', data.questionIndex + 1);
+            set({
+              hasAnswered: true,
+              selectedAnswer: parsed.selectedAnswer || null,
+              answerSubmittedAt: parsed.timestamp || null,
+            });
+          }
+        }
+      } catch (_) {}
     }
   },
 
@@ -425,6 +453,17 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       hasAnswered: true,
       answerSubmittedAt: timestamp,
     });
+
+    // Persist answer state so reconnecting player knows they already answered
+    try {
+      const { currentQuestionIndex } = get();
+      sessionStorage.setItem('qb_answered', JSON.stringify({
+        questionIndex: currentQuestionIndex,
+        answered: true,
+        selectedAnswer: answer,
+        timestamp,
+      }));
+    } catch (_) {}
   },
 
   resetForNextQuestion: () => {
