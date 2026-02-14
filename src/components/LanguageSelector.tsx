@@ -17,7 +17,10 @@ export const LanguageSelector: React.FC = () => {
       {LANGUAGES.map((lang) => (
         <button
           key={lang.code}
-          onClick={() => i18n.changeLanguage(lang.code)}
+          onClick={() => {
+            i18n.changeLanguage(lang.code);
+            localStorage.setItem('qb-user-lang', lang.code);
+          }}
           className={`px-2 py-1 rounded text-sm transition-all ${
             currentLang === lang.code
               ? 'bg-qb-cyan/20 text-qb-cyan font-bold'

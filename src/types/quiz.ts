@@ -32,7 +32,8 @@ export interface CommercialBreakConfig {
   enabled: boolean;
   numberOfPauses: number;           // 0-5
   breakDurationSeconds: number;     // 180, 300, 600, 900, 1200
-  promoMessage?: string;            // e.g. "Bières -15% !"
+  promoMessage?: string;            // Legacy: single message fallback
+  promoMessages?: string[];         // Per-pause messages (index 0 = pause 1, etc.)
 }
 
 // Calculated break schedule (stored in session settings)

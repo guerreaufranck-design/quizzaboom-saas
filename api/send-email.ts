@@ -246,132 +246,213 @@ function buildResultsEmail(player: PlayerResult, quizTitle: string, lang: Lang):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
   <title>QuizzaBoom Results</title>
+  <style>
+    :root { color-scheme: light only; }
+    [data-ogsc] body, [data-ogsb] body { background-color: #0a0a1a !important; }
+    u + .body { background-color: #0a0a1a !important; }
+  </style>
 </head>
-<body style="margin:0;padding:0;background-color:#0a0a1a;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+<body class="body" style="margin:0;padding:0;background-color:#0a0a1a;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
   <!--[if mso]><table width="600" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td><![endif]-->
-  <div style="max-width:600px;margin:0 auto;padding:20px;">
+  <div style="max-width:600px;margin:0 auto;padding:20px;background-color:#0a0a1a;">
     <!-- Header -->
-    <div style="text-align:center;padding:30px 20px;background:linear-gradient(135deg,#8B3FE8,#00D4FF);border-radius:16px 16px 0 0;">
-      <h1 style="color:#fff;font-size:32px;margin:0;letter-spacing:-1px;">QuizzaBoom</h1>
-      <p style="color:rgba(255,255,255,0.9);font-size:16px;margin:8px 0 0;">${t.subtitle}</p>
-    </div>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-radius:16px 16px 0 0;overflow:hidden;">
+      <tr>
+        <td style="text-align:center;padding:30px 20px;background-color:#7B2FD8;">
+          <h1 style="color:#ffffff;font-size:32px;margin:0;letter-spacing:-1px;">QuizzaBoom</h1>
+          <p style="color:#E0E0FF;font-size:16px;margin:8px 0 0;">${t.subtitle}</p>
+        </td>
+      </tr>
+    </table>
 
     <!-- Results Card -->
-    <div style="background:#1a1a2e;padding:30px;">
-      <div style="text-align:center;margin-bottom:24px;">
-        ${topBadge}
-        <div style="font-size:56px;margin-bottom:8px;">${medalEmoji}</div>
-        <h2 style="color:#fff;font-size:26px;margin:0 0 8px;">${t.hey(player.playerName)}</h2>
-        <p style="color:rgba(255,255,255,0.7);margin:0;font-size:16px;">${t.resultsFor(quizTitle)}</p>
-      </div>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="background-color:#1a1a2e;padding:30px;">
+          <div style="text-align:center;margin-bottom:24px;">
+            ${topBadge}
+            <div style="font-size:56px;margin-bottom:8px;">${medalEmoji}</div>
+            <h2 style="color:#ffffff;font-size:26px;margin:0 0 8px;">${t.hey(player.playerName)}</h2>
+            <p style="color:#B0B0C0;margin:0;font-size:16px;">${t.resultsFor(quizTitle)}</p>
+          </div>
 
-      <!-- Stats Grid — TABLE layout for iOS Mail compatibility -->
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
-        <tr>
-          <td width="33%" style="padding:0 4px 0 0;" valign="top">
-            <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;text-align:center;border:1px solid rgba(0,212,255,0.2);">
-              <div style="font-size:32px;font-weight:900;color:#00D4FF;">#${player.rank}</div>
-              <div style="color:rgba(255,255,255,0.6);font-size:12px;">${t.rank} / ${player.totalPlayers}</div>
-            </div>
-          </td>
-          <td width="33%" style="padding:0 2px;" valign="top">
-            <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;text-align:center;border:1px solid rgba(233,30,140,0.2);">
-              <div style="font-size:32px;font-weight:900;color:#E91E8C;">${player.score}</div>
-              <div style="color:rgba(255,255,255,0.6);font-size:12px;">${t.points}</div>
-            </div>
-          </td>
-          <td width="34%" style="padding:0 0 0 4px;" valign="top">
-            <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;text-align:center;border:1px solid rgba(255,215,0,0.2);">
-              <div style="font-size:32px;font-weight:900;color:#FFD700;">${player.accuracy}%</div>
-              <div style="color:rgba(255,255,255,0.6);font-size:12px;">${t.accuracy}</div>
-            </div>
-          </td>
-        </tr>
-      </table>
+          <!-- Stats Grid — TABLE layout for iOS Mail compatibility -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+            <tr>
+              <td width="33%" style="padding:0 4px 0 0;" valign="top">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="background-color:#12122a;border-radius:12px;padding:16px;text-align:center;border:1px solid #1a5a6a;">
+                      <div style="font-size:32px;font-weight:900;color:#00D4FF;">#${player.rank}</div>
+                      <div style="color:#9090A0;font-size:12px;">${t.rank} / ${player.totalPlayers}</div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+              <td width="33%" style="padding:0 2px;" valign="top">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="background-color:#12122a;border-radius:12px;padding:16px;text-align:center;border:1px solid #5a1a4a;">
+                      <div style="font-size:32px;font-weight:900;color:#E91E8C;">${player.score}</div>
+                      <div style="color:#9090A0;font-size:12px;">${t.points}</div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+              <td width="34%" style="padding:0 0 0 4px;" valign="top">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="background-color:#12122a;border-radius:12px;padding:16px;text-align:center;border:1px solid #5a5a1a;">
+                      <div style="font-size:32px;font-weight:900;color:#FFD700;">${player.accuracy}%</div>
+                      <div style="color:#9090A0;font-size:12px;">${t.accuracy}</div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
 
-      <!-- Detail stats — TABLE layout for iOS -->
-      <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;margin-bottom:24px;">
-        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-          <tr>
-            <td style="color:rgba(255,255,255,0.6);padding-bottom:8px;">${t.correctAnswers}</td>
-            <td style="color:#fff;font-weight:bold;text-align:right;padding-bottom:8px;">${player.correctAnswers}/${player.totalQuestions}</td>
-          </tr>
-          <tr>
-            <td style="color:rgba(255,255,255,0.6);">${t.bestStreak}</td>
-            <td style="color:#fff;font-weight:bold;text-align:right;">${player.bestStreak} ${t.inARow}</td>
-          </tr>
-        </table>
-      </div>
-    </div>
+          <!-- Detail stats — TABLE layout for iOS -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+            <tr>
+              <td style="background-color:#12122a;border-radius:12px;padding:16px;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="color:#9090A0;padding-bottom:8px;">${t.correctAnswers}</td>
+                    <td style="color:#ffffff;font-weight:bold;text-align:right;padding-bottom:8px;">${player.correctAnswers}/${player.totalQuestions}</td>
+                  </tr>
+                  <tr>
+                    <td style="color:#9090A0;">${t.bestStreak}</td>
+                    <td style="color:#ffffff;font-weight:bold;text-align:right;">${player.bestStreak} ${t.inARow}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
 
     <!-- 🔥 MARKETING SECTION — enthusiastic, salesy, multi-site focused -->
-    <div style="background:linear-gradient(180deg,#1a1a2e 0%,#0f0f23 100%);padding:32px 24px;border-top:3px solid #E91E8C;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="background-color:#151528;padding:32px 24px;border-top:3px solid #E91E8C;">
 
-      <!-- Headline -->
-      <div style="text-align:center;margin-bottom:24px;">
-        <h2 style="color:#fff;font-size:22px;margin:0 0 12px;line-height:1.4;">${t.ctaHeadline}</h2>
-        <p style="color:rgba(255,255,255,0.8);font-size:15px;margin:0;line-height:1.6;">${t.ctaSubline}</p>
-      </div>
+          <!-- Headline -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+            <tr>
+              <td style="text-align:center;">
+                <h2 style="color:#ffffff;font-size:22px;margin:0 0 12px;line-height:1.4;">${t.ctaHeadline}</h2>
+                <p style="color:#C0C0D0;font-size:15px;margin:0;line-height:1.6;">${t.ctaSubline}</p>
+              </td>
+            </tr>
+          </table>
 
-      <!-- Price highlight -->
-      <div style="text-align:center;margin-bottom:24px;padding:16px;background:linear-gradient(135deg,rgba(233,30,140,0.15),rgba(139,63,232,0.15));border-radius:12px;border:2px solid rgba(233,30,140,0.3);">
-        <p style="color:#FFD700;font-size:28px;font-weight:900;margin:0;">💰 $1.99</p>
-        <p style="color:rgba(255,255,255,0.7);font-size:13px;margin:4px 0 0;">${t.ctaPrice}</p>
-      </div>
+          <!-- Price highlight -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+            <tr>
+              <td style="text-align:center;padding:16px;background-color:#201040;border-radius:12px;border:2px solid #8B3FE8;">
+                <p style="color:#FFD700;font-size:28px;font-weight:900;margin:0;">💰 <span style="text-decoration:line-through;color:#FF6B6B;font-size:18px;">$3.99</span> $1.99</p>
+                <p style="color:#A0A0B8;font-size:13px;margin:4px 0 0;">${t.ctaPrice}</p>
+              </td>
+            </tr>
+          </table>
 
-      <!-- Use cases -->
-      <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:20px;margin-bottom:20px;border:1px solid rgba(255,255,255,0.08);">
-        <p style="color:#00D4FF;font-weight:bold;font-size:14px;margin:0 0 12px;text-align:center;text-transform:uppercase;letter-spacing:1px;">${t.useCaseTitle}</p>
-        <div style="color:rgba(255,255,255,0.85);font-size:14px;line-height:2;">
-          ${t.useCase1}<br>
-          ${t.useCase2}<br>
-          ${t.useCase3}<br>
-          ${t.useCase4}<br>
-          ${t.useCase5}<br>
-          ${t.useCase6}
-        </div>
-      </div>
+          <!-- Use cases -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+            <tr>
+              <td style="background-color:#12122a;border-radius:12px;padding:20px;border:1px solid #2a2a4a;">
+                <p style="color:#00D4FF;font-weight:bold;font-size:14px;margin:0 0 12px;text-align:center;text-transform:uppercase;letter-spacing:1px;">${t.useCaseTitle}</p>
+                <div style="color:#D0D0E0;font-size:14px;line-height:2;">
+                  ${t.useCase1}<br>
+                  ${t.useCase2}<br>
+                  ${t.useCase3}<br>
+                  ${t.useCase4}<br>
+                  ${t.useCase5}<br>
+                  ${t.useCase6}
+                </div>
+              </td>
+            </tr>
+          </table>
 
-      <!-- Multi-site callout -->
-      <div style="text-align:center;margin-bottom:20px;padding:16px;background:rgba(139,63,232,0.15);border-radius:12px;border:1px solid rgba(139,63,232,0.3);">
-        <p style="color:#8B3FE8;font-weight:900;font-size:16px;margin:0 0 6px;">🌍 ${t.multiSiteCallout}</p>
-        <p style="color:rgba(255,255,255,0.7);font-size:13px;margin:0;line-height:1.5;">${t.multiSiteDesc}</p>
-      </div>
+          <!-- Multi-site callout -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+            <tr>
+              <td style="text-align:center;padding:16px;background-color:#1a1040;border-radius:12px;border:1px solid #6B3FE8;">
+                <p style="color:#A06FFF;font-weight:900;font-size:16px;margin:0 0 6px;">🌍 ${t.multiSiteCallout}</p>
+                <p style="color:#A0A0B8;font-size:13px;margin:0;line-height:1.5;">${t.multiSiteDesc}</p>
+              </td>
+            </tr>
+          </table>
 
-      <!-- Features -->
-      <div style="margin-bottom:20px;">
-        <div style="color:rgba(255,255,255,0.9);font-size:14px;line-height:2.2;text-align:center;">
-          ${t.feat1}<br>
-          ${t.feat2}<br>
-          ${t.feat3}<br>
-          ${t.feat4}
-        </div>
-      </div>
+          <!-- Features -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+            <tr>
+              <td style="text-align:center;">
+                <div style="color:#D0D0E0;font-size:14px;line-height:2.2;text-align:center;">
+                  ${t.feat1}<br>
+                  ${t.feat2}<br>
+                  ${t.feat3}<br>
+                  ${t.feat4}
+                </div>
+              </td>
+            </tr>
+          </table>
 
-      <!-- Social proof -->
-      <div style="text-align:center;margin-bottom:24px;padding:12px;background:rgba(0,212,255,0.08);border-radius:8px;border:1px solid rgba(0,212,255,0.15);">
-        <p style="color:#00D4FF;font-size:13px;font-weight:bold;margin:0;">${t.socialProof}</p>
-      </div>
+          <!-- Social proof -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+            <tr>
+              <td style="text-align:center;padding:12px;background-color:#0a1a2a;border-radius:8px;border:1px solid #1a4a5a;">
+                <p style="color:#00D4FF;font-size:13px;font-weight:bold;margin:0;">${t.socialProof}</p>
+              </td>
+            </tr>
+          </table>
 
-      <!-- CTA Button — links to /offer -->
-      <div style="text-align:center;margin-bottom:12px;">
-        <a href="https://quizzaboom.com/offer" style="display:inline-block;padding:18px 48px;background:linear-gradient(135deg,#E91E8C,#8B3FE8);color:#fff;text-decoration:none;border-radius:12px;font-weight:900;font-size:18px;letter-spacing:0.5px;box-shadow:0 4px 20px rgba(233,30,140,0.4);">
-          ${t.ctaButton}
-        </a>
-      </div>
-      <p style="text-align:center;color:rgba(255,255,255,0.5);font-size:13px;margin:0;">
-        ${t.ctaPrice}
-      </p>
-    </div>
+          <!-- CTA Button — links to /offer -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px;">
+            <tr>
+              <td style="text-align:center;">
+                <!--[if mso]>
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="https://quizzaboom.app/offer" style="height:56px;v-text-anchor:middle;width:300px;" arcsize="21%" fill="true" stroke="f">
+                  <v:fill type="gradient" color="#E91E8C" color2="#8B3FE8" />
+                  <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:18px;font-weight:bold;">${t.ctaButton}</center>
+                </v:roundrect>
+                <![endif]-->
+                <!--[if !mso]><!-->
+                <a href="https://quizzaboom.app/offer" style="display:inline-block;padding:18px 48px;background-color:#C91E7C;color:#ffffff;text-decoration:none;border-radius:12px;font-weight:900;font-size:18px;letter-spacing:0.5px;">
+                  ${t.ctaButton}
+                </a>
+                <!--<![endif]-->
+              </td>
+            </tr>
+          </table>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="text-align:center;">
+                <p style="color:#8080A0;font-size:13px;margin:0;">
+                  ${t.ctaPrice}
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
 
     <!-- Footer -->
-    <div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:11px;border-radius:0 0 16px 16px;background:#0f0f23;">
-      <p style="margin:0 0 8px;">${t.tagline}</p>
-      <p style="margin:0;">
-        <a href="https://quizzaboom.com/unsubscribe" style="color:rgba(255,255,255,0.4);">${t.unsubscribe}</a>
-      </p>
-    </div>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-radius:0 0 16px 16px;overflow:hidden;">
+      <tr>
+        <td style="text-align:center;padding:20px;background-color:#0a0a1a;">
+          <p style="color:#6060A0;font-size:11px;margin:0 0 8px;">${t.tagline}</p>
+          <p style="margin:0;">
+            <a href="https://quizzaboom.app/unsubscribe" style="color:#6060A0;font-size:11px;">${t.unsubscribe}</a>
+          </p>
+        </td>
+      </tr>
+    </table>
   </div>
   <!--[if mso]></td></tr></table><![endif]-->
 </body>

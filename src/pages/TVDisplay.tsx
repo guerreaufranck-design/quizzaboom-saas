@@ -193,6 +193,59 @@ export const TVDisplay: React.FC = () => {
     }
   }, [currentPhase, sessionId]);
 
+  // Fallback: if timer expired but phase didn't change (broadcast missed), poll DB for current phase
+  useEffect(() => {
+    // Only activate when timer has reached 0 and we have a session
+    if (displaySeconds > 0 || !sessionId || !currentPhase) return;
+    // Don't poll during waiting/instructions or quiz_complete
+    if (currentPhase === 'quiz_complete' || !phaseEndTime) return;
+
+    let active = true;
+    const pollPhaseFromDB = async () => {
+      try {
+        const { data: session } = await supabase
+          .from('quiz_sessions')
+          .select('settings')
+          .eq('id', sessionId)
+          .single();
+
+        if (!active || !session?.settings) return;
+
+        const settings = session.settings as Record<string, unknown>;
+        const dbPhase = settings.currentPhase as Record<string, unknown> | undefined;
+
+        if (dbPhase?.phase && dbPhase.phase !== currentPhase && dbPhase.phaseEndTime) {
+          console.log('🔄 TV fallback: phase mismatch detected, syncing from DB:', dbPhase.phase);
+          useStrategicQuizStore.getState().setPhaseData(dbPhase as never);
+        }
+      } catch (err) {
+        console.error('TV fallback poll error:', err);
+      }
+    };
+
+    // Start polling after a 2s grace period (give broadcast time to arrive)
+    const timeout = setTimeout(() => {
+      if (!active) return;
+      pollPhaseFromDB();
+      // Then poll every 3s until phase changes
+      const interval = setInterval(pollPhaseFromDB, 3000);
+      const cleanup = () => clearInterval(interval);
+      if (!active) cleanup();
+      else {
+        // Store cleanup for when effect re-runs
+        cleanupRef.current = cleanup;
+      }
+    }, 2000);
+
+    const cleanupRef = { current: () => {} };
+
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+      cleanupRef.current();
+    };
+  }, [displaySeconds, sessionId, currentPhase, phaseEndTime]);
+
   // ═══════════════════════════════════════════════════════════════
   // PHASE 0: Instructions Screen — compact, fits 1080p
   // ═══════════════════════════════════════════════════════════════
@@ -304,16 +357,16 @@ export const TVDisplay: React.FC = () => {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // COMMERCIAL BREAK: Promo screen — constrained for viewport
+  // COMMERCIAL BREAK: Promo screen — text logo + scrolling marquee
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'commercial_break') {
     const breakMinutes = Math.floor(displaySeconds / 60);
     const breakSeconds = displaySeconds % 60;
     const breakTimeDisplay = `${breakMinutes}:${breakSeconds.toString().padStart(2, '0')}`;
 
-    const promoTextClass = breakPromoMessage
-      ? getAdaptiveTextSize(breakPromoMessage, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' })
-      : '';
+    // Build the scrolling text — repeat it for seamless loop
+    const marqueeText = breakPromoMessage || t('tv.breakPause');
+    const marqueeRepeat = `${marqueeText}     ✦     ${marqueeText}     ✦     ${marqueeText}     ✦     `;
 
     return (
       <div className="h-screen bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 p-4 overflow-hidden relative">
@@ -323,14 +376,30 @@ export const TVDisplay: React.FC = () => {
           <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-red-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }} />
         </div>
 
+        {/* Marquee CSS animation */}
+        <style>{`
+          @keyframes marquee-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          .marquee-track {
+            animation: marquee-scroll 15s linear infinite;
+          }
+          .marquee-track:hover {
+            animation-play-state: paused;
+          }
+        `}</style>
+
         <div className="max-w-5xl mx-auto flex flex-col items-center justify-between h-full relative z-10">
-          {/* Top: Logo — constrained */}
-          <div className="text-center w-full max-h-20 overflow-hidden">
-            <AnimatedLogo banner className="mx-auto max-w-3xl" />
+          {/* Top: Text logo — clean, no video */}
+          <div className="text-center w-full pt-4">
+            <h1 className="text-5xl font-black bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text text-transparent drop-shadow-lg tracking-tight">
+              QuizzaBoom
+            </h1>
           </div>
 
-          {/* Middle: Promo + countdown */}
-          <div className="flex-1 flex flex-col items-center justify-center w-full space-y-4 min-h-0">
+          {/* Middle: Promo marquee + countdown */}
+          <div className="flex-1 flex flex-col items-center justify-center w-full space-y-6 min-h-0">
             {breakNumber > 0 && totalBreaks > 0 && (
               <div className="bg-black/30 backdrop-blur-xl rounded-2xl px-6 py-2 border border-white/20">
                 <p className="text-2xl text-white font-bold uppercase tracking-wider">
@@ -339,11 +408,14 @@ export const TVDisplay: React.FC = () => {
               </div>
             )}
 
+            {/* Scrolling promo message marquee */}
             {breakPromoMessage ? (
-              <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-6 border-4 border-yellow-300/60 shadow-2xl shadow-yellow-500/20 w-full max-w-4xl">
-                <p className={`font-bold text-yellow-300 text-center leading-tight ${promoTextClass}`}>
-                  {breakPromoMessage}
-                </p>
+              <div className="w-full max-w-5xl overflow-hidden rounded-3xl bg-black/40 backdrop-blur-xl border-4 border-yellow-300/60 shadow-2xl shadow-yellow-500/20 py-6">
+                <div className="marquee-track whitespace-nowrap">
+                  <span className="text-5xl md:text-6xl font-black text-yellow-300 px-4">
+                    {marqueeRepeat}
+                  </span>
+                </div>
               </div>
             ) : (
               <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-6 border-2 border-white/20 w-full max-w-4xl">
@@ -366,10 +438,10 @@ export const TVDisplay: React.FC = () => {
           </div>
 
           {/* Bottom: Branding */}
-          <div className="text-center w-full">
+          <div className="text-center w-full pb-2">
             <div className="inline-block bg-black/40 backdrop-blur-xl rounded-2xl px-8 py-2 border border-white/20">
               <p className="text-lg text-white font-bold">
-                {t('tv.poweredBy')} <span className="text-yellow-300">QuizzaBoom</span> · contact@quizzaboom.app
+                {t('tv.poweredBy')} <span className="text-yellow-300">QuizzaBoom</span> · quizzaboom.app
               </p>
             </div>
           </div>

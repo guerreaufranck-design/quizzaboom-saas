@@ -242,7 +242,7 @@ function emailShell(content: string, tagline: string, unsubscribe: string): stri
     </div>
     <div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:11px;">
       <p style="margin:0 0 8px;">${tagline}</p>
-      <p style="margin:0;"><a href="https://quizzaboom.com/unsubscribe" style="color:rgba(255,255,255,0.4);">${unsubscribe}</a></p>
+      <p style="margin:0;"><a href="https://quizzaboom.app/unsubscribe" style="color:rgba(255,255,255,0.4);">${unsubscribe}</a></p>
     </div>
   </div>
 </body>
@@ -270,7 +270,7 @@ function buildJ3Email(playerName: string, lang: Lang): { subject: string; html: 
       </div>
 
       <div style="text-align:center;">
-        <a href="https://quizzaboom.com/pricing" style="display:inline-block;padding:18px 48px;background:linear-gradient(135deg,#E91E8C,#8B3FE8);color:#fff;text-decoration:none;border-radius:12px;font-weight:900;font-size:17px;letter-spacing:0.5px;box-shadow:0 4px 20px rgba(233,30,140,0.4);">
+        <a href="https://quizzaboom.app/offer" style="display:inline-block;padding:18px 48px;background:linear-gradient(135deg,#E91E8C,#8B3FE8);color:#fff;text-decoration:none;border-radius:12px;font-weight:900;font-size:17px;letter-spacing:0.5px;box-shadow:0 4px 20px rgba(233,30,140,0.4);">
           ${t.j3Cta}
         </a>
       </div>`;
@@ -302,7 +302,7 @@ function buildJ7Email(playerName: string, lang: Lang): { subject: string; html: 
       </div>
 
       <div style="text-align:center;margin-bottom:16px;">
-        <a href="https://quizzaboom.com/pricing" style="display:inline-block;padding:18px 48px;background:linear-gradient(135deg,#E91E8C,#8B3FE8);color:#fff;text-decoration:none;border-radius:12px;font-weight:900;font-size:17px;letter-spacing:0.5px;box-shadow:0 4px 20px rgba(233,30,140,0.4);">
+        <a href="https://quizzaboom.app/offer" style="display:inline-block;padding:18px 48px;background:linear-gradient(135deg,#E91E8C,#8B3FE8);color:#fff;text-decoration:none;border-radius:12px;font-weight:900;font-size:17px;letter-spacing:0.5px;box-shadow:0 4px 20px rgba(233,30,140,0.4);">
           ${t.j7Cta}
         </a>
       </div>
@@ -349,7 +349,7 @@ function buildJ14Email(playerName: string, lang: Lang): { subject: string; html:
       </div>
 
       <div style="text-align:center;margin-bottom:16px;">
-        <a href="https://quizzaboom.com/pricing" style="display:inline-block;padding:18px 48px;background:linear-gradient(135deg,#FFD700,#FFA500);color:#1a1a2e;text-decoration:none;border-radius:12px;font-weight:900;font-size:17px;letter-spacing:0.5px;box-shadow:0 4px 20px rgba(255,215,0,0.3);">
+        <a href="https://quizzaboom.app/offer" style="display:inline-block;padding:18px 48px;background:linear-gradient(135deg,#FFD700,#FFA500);color:#1a1a2e;text-decoration:none;border-radius:12px;font-weight:900;font-size:17px;letter-spacing:0.5px;box-shadow:0 4px 20px rgba(255,215,0,0.3);">
           ${t.j14Cta}
         </a>
       </div>

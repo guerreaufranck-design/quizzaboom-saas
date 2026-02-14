@@ -21,8 +21,11 @@ i18n
       escapeValue: false,
     },
     detection: {
-      order: ['navigator', 'localStorage', 'htmlTag'],
-      caches: ['localStorage'],
+      // 1. Check if user explicitly chose a language (saved by LanguageSelector)
+      // 2. Detect browser language for new visitors
+      order: ['localStorage', 'navigator', 'htmlTag'],
+      lookupLocalStorage: 'qb-user-lang',
+      caches: [],  // Don't auto-cache — only LanguageSelector saves explicitly
     },
   });
 

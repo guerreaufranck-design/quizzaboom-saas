@@ -305,7 +305,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
           breaks: Array.from({ length: commercialBreaks.numberOfPauses }, (_, i) => ({
             afterQuestionIndex: Math.round(interval * (i + 1)) - 1, // 0-based
             durationSeconds: commercialBreaks.breakDurationSeconds,
-            promoMessage: commercialBreaks.promoMessage || undefined,
+            promoMessage: commercialBreaks.promoMessages?.[i] || commercialBreaks.promoMessage || undefined,
           })),
         };
         console.log('📋 Break schedule:', breakSchedule);

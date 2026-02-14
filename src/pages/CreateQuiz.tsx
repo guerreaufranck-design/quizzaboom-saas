@@ -76,6 +76,7 @@ export const CreateQuiz: React.FC = () => {
     numberOfPauses: 2,
     breakDurationSeconds: 300,
     promoMessage: '',
+    promoMessages: ['', ''],
   });
 
   const [generationStep, setGenerationStep] = useState<string>('');
@@ -449,7 +450,11 @@ export const CreateQuiz: React.FC = () => {
                         <button
                           key={n}
                           type="button"
-                          onClick={() => setCommercialBreaks({ ...commercialBreaks, numberOfPauses: n })}
+                          onClick={() => {
+                            const currentMessages = commercialBreaks.promoMessages || [];
+                            const newMessages = Array.from({ length: n }, (_, i) => currentMessages[i] || '');
+                            setCommercialBreaks({ ...commercialBreaks, numberOfPauses: n, promoMessages: newMessages });
+                          }}
                           disabled={isLoading}
                           className={`w-12 h-12 rounded-lg border-2 font-bold text-lg transition-all ${
                             commercialBreaks.numberOfPauses === n
@@ -485,21 +490,35 @@ export const CreateQuiz: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Promo message */}
+                  {/* Promo messages — one per pause */}
                   <div>
                     <label className="block text-sm text-white/80 mb-2 flex items-center gap-2">
                       <MessageSquare className="w-4 h-4" />
-                      {t('create.promoMessage')}
+                      {t('create.promoMessages')}
                     </label>
-                    <input
-                      type="text"
-                      value={commercialBreaks.promoMessage || ''}
-                      onChange={(e) => setCommercialBreaks({ ...commercialBreaks, promoMessage: e.target.value })}
-                      placeholder={t('create.promoMessagePlaceholder')}
-                      disabled={isLoading}
-                      maxLength={200}
-                      className="w-full px-4 py-3 bg-qb-darker border border-white/20 rounded-lg text-white placeholder:text-white/40 focus:border-qb-yellow focus:outline-none"
-                    />
+                    <p className="text-xs text-white/50 mb-3">{t('create.promoMessagesHint')}</p>
+                    <div className="space-y-3">
+                      {Array.from({ length: commercialBreaks.numberOfPauses }, (_, i) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-qb-yellow/20 border border-qb-yellow/40 flex items-center justify-center">
+                            <span className="text-qb-yellow font-bold text-sm">{i + 1}</span>
+                          </div>
+                          <input
+                            type="text"
+                            value={(commercialBreaks.promoMessages || [])[i] || ''}
+                            onChange={(e) => {
+                              const newMessages = [...(commercialBreaks.promoMessages || Array(commercialBreaks.numberOfPauses).fill(''))];
+                              newMessages[i] = e.target.value;
+                              setCommercialBreaks({ ...commercialBreaks, promoMessages: newMessages });
+                            }}
+                            placeholder={t('create.promoMessagePlaceholderN', { n: i + 1 })}
+                            disabled={isLoading}
+                            maxLength={200}
+                            className="flex-1 px-4 py-3 bg-qb-darker border border-white/20 rounded-lg text-white placeholder:text-white/40 focus:border-qb-yellow focus:outline-none text-lg"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Break preview */}
