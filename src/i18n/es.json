@@ -738,6 +738,13 @@
     "streakKing": "Rey de la Racha",
     "socialButterfly": "Mariposa Social"
   },
+  "support": {
+    "title": "Soporte QuizzaBoom",
+    "welcomeMessage": "Hola! Soy el asistente de QuizzaBoom. Como puedo ayudarte? Puedo responder preguntas sobre como crear quiz, unirte a partidas, precios y mucho mas!",
+    "placeholder": "Haz tu pregunta...",
+    "errorMessage": "Ups, algo fallo. Intentalo de nuevo o escribenos a support@quizzaboom.app",
+    "emailEscalation": "Necesitas mas ayuda? Escribe a support@quizzaboom.app"
+  },
   "settings": {
     "title": "Configuración",
     "subscription": "Suscripción y Facturación",

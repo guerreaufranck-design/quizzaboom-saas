@@ -311,9 +311,25 @@ PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
    - Bad: Question "What is the capital of Japan?" → image_search_term: "Tokyo" (gives away the answer!)
    - If the question is about a specific thing (e.g., a painting, an animal species), show the CATEGORY not the specific item
 
+9. TRANSLATION & LANGUAGE QUALITY (CRITICAL for non-English quizzes):
+   - Language: ${fullLanguage}
+   - ALL content MUST be written NATIVELY in ${fullLanguage} — do NOT translate from English
+   - Write as a NATIVE ${fullLanguage} speaker would naturally phrase things
+   - Questions must be grammatically perfect, clear, and unambiguous in ${fullLanguage}
+   - Answer options must use idiomatic ${fullLanguage} phrasing — no awkward literal translations
+   - NEVER use anglicisms or loan words when a proper ${fullLanguage} word exists
+   - For proper nouns (city names, person names), use the ${fullLanguage} convention:
+     * French: "Londres" not "London", "Pékin" not "Beijing"
+     * German: "Mailand" not "Milan", "Lissabon" not "Lisbon"
+     * Spanish: "Londres" not "London", "Pekín" not "Beijing"
+   - Explanations and fun facts must feel natural, not machine-translated
+   - If a concept doesn't translate well, ADAPT it to the ${fullLanguage} cultural context
+   - Units and formats must match ${fullLanguage} conventions (dates, numbers, measurements)
+   - Stage themes must be idiomatic in ${fullLanguage} — not literal translations of English phrases
+
 REQUIREMENTS:
 - Difficulty: ${difficulty}
-- Language: ${fullLanguage} (questions, answers, explanations — everything in this language)
+- Language: ${fullLanguage} — write NATIVELY, not translated
 - Return ONLY valid JSON, no markdown, no commentary
 
 {

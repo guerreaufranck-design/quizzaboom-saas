@@ -18,6 +18,7 @@ import { SpecialOffer } from './pages/SpecialOffer';
 import { Settings } from './pages/Settings';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { SupportChat } from './components/SupportChat';
 
 function PlayRoute() {
   const { isHost } = useQuizStore();
@@ -75,6 +76,7 @@ function App() {
       <Route path="/offer" element={<SpecialOffer />} />
       <Route path="*" element={<HomePage />} />
     </Routes>
+    <SupportChat />
     </ErrorBoundary>
   );
 }

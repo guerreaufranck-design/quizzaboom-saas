@@ -738,6 +738,13 @@
     "streakKing": "Roi de la Série",
     "socialButterfly": "Papillon Social"
   },
+  "support": {
+    "title": "Support QuizzaBoom",
+    "welcomeMessage": "Bonjour ! Je suis l'assistant QuizzaBoom. Comment puis-je vous aider ? Je peux repondre a vos questions sur la creation de quiz, comment rejoindre une partie, les tarifs, et bien plus !",
+    "placeholder": "Posez votre question...",
+    "errorMessage": "Oups, quelque chose n'a pas fonctionne. Reessayez ou ecrivez-nous a support@quizzaboom.app",
+    "emailEscalation": "Besoin d'aide ? Ecrivez a support@quizzaboom.app"
+  },
   "settings": {
     "title": "Paramètres",
     "subscription": "Abonnement & Facturation",

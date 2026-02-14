@@ -738,6 +738,13 @@
     "streakKing": "Streak King",
     "socialButterfly": "Social Butterfly"
   },
+  "support": {
+    "title": "QuizzaBoom Support",
+    "welcomeMessage": "Hi! I'm QuizzaBoom's assistant. How can I help you? I can answer questions about creating quizzes, joining games, pricing, and more!",
+    "placeholder": "Ask me anything...",
+    "errorMessage": "Oops, something went wrong. Please try again or email us at support@quizzaboom.app",
+    "emailEscalation": "Need more help? Email support@quizzaboom.app"
+  },
   "settings": {
     "title": "Settings",
     "subscription": "Subscription & Billing",
