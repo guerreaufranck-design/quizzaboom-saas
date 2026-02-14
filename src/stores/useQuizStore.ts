@@ -4,6 +4,23 @@ import { supabase } from '../services/supabase/client';
 import { generateMultiStageQuiz } from '../services/gemini';
 import { v4 as uuidv4 } from 'uuid';
 
+// Simple MD5-like hash for question deduplication (browser-compatible)
+function simpleHash(str: string): string {
+  let hash = 0;
+  const s = str.trim().toLowerCase();
+  for (let i = 0; i < s.length; i++) {
+    const char = s.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  // Convert to hex and pad to ensure consistency
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+function computeQuestionHash(questionText: string, correctAnswer: string): string {
+  return simpleHash(`${questionText}||${correctAnswer}`);
+}
+
 const VIEW_TO_PATH: Record<string, string> = {
   home: '/',
   pricing: '/pricing',
@@ -176,12 +193,14 @@ export const useQuizStore = create<QuizState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       console.log('🎨 Generating quiz with AI...');
-      const aiResponse = await generateMultiStageQuiz(request);
-      
-      console.log('✅ AI generation complete, saving to DB...');
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       const creatorId = user?.id || uuidv4();
+
+      // Pass creatorId for deduplication of previously generated questions
+      const aiResponse = await generateMultiStageQuiz(request, creatorId);
+
+      console.log('✅ AI generation complete, saving to DB...');
       
       const quizId = uuidv4();
       
@@ -235,6 +254,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
           fun_fact: q.fun_fact,
           points: q.points || 100,
           time_limit: q.time_limit || 20,
+          question_hash: computeQuestionHash(q.question_text, q.correct_answer),
           created_at: new Date().toISOString(),
         }))
       );

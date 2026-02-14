@@ -1,9 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { createClient } from '@supabase/supabase-js';
 import { setCorsHeaders } from './_cors';
 import { checkRateLimit } from './_rateLimit';
+import { createHash } from 'crypto';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 const SECONDS_PER_QUESTION = 41;
@@ -33,6 +37,41 @@ function calculateFromDuration(durationMinutes: number) {
 }
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// --- Deduplication helpers ---
+function computeQuestionHash(questionText: string, correctAnswer: string): string {
+  const normalized = `${questionText.trim().toLowerCase()}||${correctAnswer.trim().toLowerCase()}`;
+  return createHash('md5').update(normalized).digest('hex');
+}
+
+async function fetchRecentQuestionTexts(creatorId?: string): Promise<string[]> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !creatorId) return [];
+  try {
+    const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    // Fetch the last 200 questions from this creator's quizzes
+    const { data: quizzes } = await sb
+      .from('ai_generated_quizzes')
+      .select('id')
+      .eq('creator_id', creatorId)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (!quizzes || quizzes.length === 0) return [];
+
+    const quizIds = quizzes.map(q => q.id);
+    const { data: questions } = await sb
+      .from('ai_questions')
+      .select('question_text')
+      .in('quiz_id', quizIds)
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    return questions?.map(q => q.question_text) || [];
+  } catch (err) {
+    console.warn('⚠️ Failed to fetch recent questions for dedup:', err);
+    return [];
+  }
+}
 
 interface BatchResult {
   title: string;
@@ -75,6 +114,7 @@ function buildBatchPrompt(
   difficulty: string,
   fullLanguage: string,
   previousThemes: string[],
+  previousQuestions: string[] = [],
 ): string {
   const randomSeed = Math.floor(Math.random() * 1000000);
   const currentYear = new Date().getFullYear();
@@ -87,6 +127,14 @@ function buildBatchPrompt(
   const previousThemesWarning = previousThemes.length > 0
     ? `\nIMPORTANT: Previous batches already covered these themes/sub-topics: ${previousThemes.join(', ')}.
 Use COMPLETELY DIFFERENT sub-topics and angles. DO NOT repeat any questions or themes from previous batches.`
+    : '';
+
+  // Anti-duplication: include up to 50 recent questions to avoid
+  const dedupWarning = previousQuestions.length > 0
+    ? `\n⚠️ DUPLICATE PREVENTION (CRITICAL):
+The following questions have ALREADY been used in previous quizzes. You MUST NOT repeat them or ask very similar questions.
+Generate COMPLETELY NEW and DIFFERENT questions:
+${previousQuestions.slice(0, 50).map((q, i) => `${i + 1}. "${q}"`).join('\n')}\n`
     : '';
 
   // Detect mode from theme string
@@ -167,6 +215,7 @@ Each stage has ${QUESTIONS_PER_STAGE} questions (last stage may have fewer).
 
 UNIQUE SEED: ${randomSeed}
 ${previousThemesWarning}
+${dedupWarning}
 ${modeInstructions}
 
 ═══════════════════════════════════════════════════
@@ -270,6 +319,7 @@ async function generateBatchWithRetry(
   difficulty: string,
   fullLanguage: string,
   previousThemes: string[],
+  previousQuestions: string[] = [],
 ): Promise<BatchResult> {
   const batchStageCount = Math.ceil(batchQuestionCount / QUESTIONS_PER_STAGE);
 
@@ -278,6 +328,7 @@ async function generateBatchWithRetry(
       const prompt = buildBatchPrompt(
         theme, batchIndex, totalBatches, batchQuestionCount,
         batchStageCount, startStageNumber, difficulty, fullLanguage, previousThemes,
+        previousQuestions,
       );
 
       const result = await model.generateContent(prompt);
@@ -373,7 +424,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { theme, duration, questionCount, difficulty, language } = req.body;
+    const { theme, duration, questionCount, difficulty, language, creatorId } = req.body;
 
     if (!theme || !difficulty || !language) {
       return res.status(400).json({ error: 'Missing required fields: theme, difficulty, language' });
@@ -404,12 +455,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const fullLanguage = languageMap[language] || 'French';
 
+    // --- Deduplication: fetch recent questions from this creator ---
+    const previousQuestions = await fetchRecentQuestionTexts(creatorId);
+    if (previousQuestions.length > 0) {
+      console.log(`🔍 Found ${previousQuestions.length} previous questions for dedup`);
+    }
+
     // Calculate batches
     const batchCount = Math.ceil(totalQuestions / BATCH_SIZE);
     console.log(`🎯 Generating ${totalQuestions} questions in ${batchCount} batch(es) for theme: ${theme}`);
 
     const allBatchResults: BatchResult[] = [];
     const collectedThemes: string[] = [];
+    // Track all generated question texts across batches for within-quiz dedup
+    const generatedQuestionTexts: string[] = [...previousQuestions];
 
     // Process batches in parallel chunks of MAX_CONCURRENCY
     for (let chunkStart = 0; chunkStart < batchCount; chunkStart += MAX_CONCURRENCY) {
@@ -426,22 +485,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           startStageNumber, difficulty, fullLanguage,
           // Only first batch of each chunk gets the collected themes from previous chunks
           [...collectedThemes],
+          generatedQuestionTexts,
         );
       });
 
       const chunkResults = await Promise.all(chunkPromises);
       allBatchResults.push(...chunkResults);
 
-      // Collect themes from this chunk for future batches
+      // Collect themes and questions from this chunk for future batches
       for (const result of chunkResults) {
         for (const stage of result.stages) {
           if (stage.theme) collectedThemes.push(stage.theme);
+          for (const q of stage.questions || []) {
+            generatedQuestionTexts.push(q.question_text);
+          }
         }
       }
     }
 
     // Merge all batch results
     const mergedStages = mergeAndRenumberStages(allBatchResults);
+
+    // --- Post-generation dedup: remove exact duplicates within the quiz ---
+    const seenHashes = new Set<string>();
+    for (const stage of mergedStages) {
+      stage.questions = stage.questions.filter(q => {
+        const hash = computeQuestionHash(q.question_text, q.correct_answer);
+        if (seenHashes.has(hash)) {
+          console.log(`🗑️ Removed duplicate question: "${q.question_text.substring(0, 50)}..."`);
+          return false;
+        }
+        seenHashes.add(hash);
+        return true;
+      });
+    }
     const estimatedDuration = Math.ceil((totalQuestions * SECONDS_PER_QUESTION) / 60);
 
     const finalResponse = {

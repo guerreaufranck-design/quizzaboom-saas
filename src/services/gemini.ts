@@ -34,6 +34,7 @@ export const calculateQuizStructure = (durationMinutes: number) => {
 
 export const generateMultiStageQuiz = async (
   request: QuizGenRequest,
+  creatorId?: string,
 ): Promise<AIQuizResponse> => {
   const response = await fetch('/api/generate-quiz', {
     method: 'POST',
@@ -44,6 +45,7 @@ export const generateMultiStageQuiz = async (
       duration: request.duration,  // backward compat
       difficulty: request.difficulty,
       language: request.language,
+      creatorId,
     }),
   });
 
