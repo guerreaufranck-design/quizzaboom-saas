@@ -6,7 +6,7 @@ import { Card } from '../components/ui/Card';
 import { useAuthStore } from '../stores/useAuthStore';
 import { signOut } from '../services/auth';
 import { supabase } from '../services/supabase/client';
-import { Plus, LogOut, CreditCard, Trophy, Loader2, BookOpen, Building2 } from 'lucide-react';
+import { Plus, LogOut, CreditCard, Trophy, Loader2, BookOpen, Building2, Settings } from 'lucide-react';
 import { useAppNavigate } from '../hooks/useAppNavigate';
 import { useOrganizationStore } from '../stores/useOrganizationStore';
 
@@ -122,13 +122,22 @@ export const Dashboard: React.FC = () => {
               <h1 className="text-5xl font-bold text-white mb-2">{t('dashboard.title')}</h1>
               <p className="text-white/70">{t('dashboard.welcomeBack', { email: user?.email })}</p>
             </div>
-            <Button
-              variant="ghost"
-              onClick={handleSignOut}
-              icon={<LogOut />}
-            >
-              {t('common.signOut')}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('settings')}
+                icon={<Settings />}
+              >
+                {t('settings.title')}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={handleSignOut}
+                icon={<LogOut />}
+              >
+                {t('common.signOut')}
+              </Button>
+            </div>
           </div>
 
           {/* Payment processing banner */}

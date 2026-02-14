@@ -16,6 +16,7 @@ const VIEW_TO_PATH: Record<string, string> = {
   results: '/results',
   'pro-signup': '/pro-signup',
   'pro-dashboard': '/pro-dashboard',
+  settings: '/settings',
 };
 
 let _navigateCallback: ((path: string) => void) | null = null;
