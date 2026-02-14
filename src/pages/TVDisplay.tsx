@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { supabase } from '../services/supabase/client';
 import { Card } from '../components/ui/Card';
+import { QRCodeDisplay } from '../components/ui/QRCodeDisplay';
 import { Clock, Trophy, Star, Lightbulb, Users, Award } from 'lucide-react';
 import type { Player } from '../types/quiz';
 import { calculateTeamScores, getMVP } from '../utils/teamScores';
@@ -250,90 +251,107 @@ export const TVDisplay: React.FC = () => {
   // PHASE 0: Instructions Screen — compact, fits 1080p
   // ═══════════════════════════════════════════════════════════════
   if (showInstructions || !isReady || allQuestions.length === 0) {
+    const joinUrl = `${window.location.origin}/join?code=${sessionCode}`;
+
     return (
       <div className="h-screen bg-gradient-to-br from-qb-purple via-qb-dark to-qb-cyan p-3 overflow-hidden">
-        <div className="max-w-5xl mx-auto h-full flex flex-col">
-          {/* Header — no logo, saves ~120px */}
+        <div className="max-w-7xl mx-auto h-full flex flex-col">
+          {/* Header */}
           <div className="text-center mb-1">
             <h1 className="text-3xl font-bold text-white">{t('tv.howToPlay')}</h1>
             <p className="text-lg text-yellow-300 font-bold">{t('tv.followSteps')}</p>
           </div>
 
-          {/* Steps - Ultra compact for 720p */}
-          <div className="space-y-1.5 flex-1 min-h-0">
-            {/* Step 1: Join */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-xl p-2.5 border border-white/30">
-              <div className="flex items-center gap-3">
-                <div className="text-2xl">📱</div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-bold text-white">{t('tv.step1Title')}</h2>
-                  <p className="text-base text-white/90">
-                    {t('tv.step1DescQR')} <span className="text-yellow-300 font-bold">{t('tv.step1DescCode')}</span>
-                  </p>
+          {/* Main layout: QR code left + Instructions right */}
+          <div className="flex gap-4 flex-1 min-h-0">
+            {/* LEFT: QR Code + Session Code */}
+            <div className="flex flex-col items-center justify-center w-[320px] shrink-0">
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-yellow-300/50 flex flex-col items-center">
+                <p className="text-lg font-bold text-yellow-300 mb-2">{t('tv.scanToJoin')}</p>
+                <QRCodeDisplay value={joinUrl} size={200} className="rounded-xl" />
+                <div className="mt-3 text-center">
+                  <p className="text-sm text-white/70">quizzaboom.app/join</p>
+                  <p className="text-3xl font-mono font-black text-yellow-300 tracking-widest mt-1">{sessionCode}</p>
                 </div>
               </div>
             </div>
 
-            {/* Step 2: Email */}
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-2.5 border border-yellow-300 shadow-lg shadow-yellow-500/50 animate-pulse">
-              <div className="flex items-center gap-3">
-                <div className="text-2xl animate-bounce">📧</div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-bold text-gray-900">{t('tv.step2Title')}</h2>
-                  <p className="text-base text-gray-900 font-bold">
-                    {t('tv.step2Desc')}
-                    <span className="ml-2">{t('tv.step2Ranking')}</span>
-                    <span className="ml-2">{t('tv.step2Statistics')}</span>
-                    <span className="ml-2">{t('tv.step2Certificate')}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 3: Jokers */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-xl p-2.5 border border-purple-400">
-              <div className="flex items-center gap-3">
-                <div className="text-2xl">🎯</div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-bold text-white">{t('tv.step3Title')}</h2>
-                  <div className="flex items-center gap-3">
-                    <p className="text-sm text-white/90">
-                      {t('tv.step3During')}
+            {/* RIGHT: Instructions */}
+            <div className="space-y-1.5 flex-1 min-h-0">
+              {/* Step 1: Join */}
+              <div className="bg-white/10 backdrop-blur-xl rounded-xl p-2.5 border border-white/30">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">📱</div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-bold text-white">{t('tv.step1Title')}</h2>
+                    <p className="text-base text-white/90">
+                      {t('tv.step1DescQR')} <span className="text-yellow-300 font-bold">{t('tv.step1DescCode')}</span>
                     </p>
-                    <div className="flex gap-1.5">
-                      <div className="bg-blue-500/30 rounded px-1.5 py-0.5 text-center">
-                        <span className="text-base">🛡️</span>
-                        <span className="text-xs text-white ml-1">{t('tv.jokerProtection')}</span>
-                      </div>
-                      <div className="bg-red-500/30 rounded px-1.5 py-0.5 text-center">
-                        <span className="text-base">🚫</span>
-                        <span className="text-xs text-white ml-1">{t('tv.jokerBlock')}</span>
-                      </div>
-                      <div className="bg-yellow-500/30 rounded px-1.5 py-0.5 text-center">
-                        <span className="text-base">💰</span>
-                        <span className="text-xs text-white ml-1">{t('tv.jokerSteal')}</span>
-                      </div>
-                      <div className="bg-green-500/30 rounded px-1.5 py-0.5 text-center">
-                        <span className="text-base">⭐</span>
-                        <span className="text-xs text-white ml-1">{t('tv.jokerDouble')}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2: Email */}
+              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-2.5 border border-yellow-300 shadow-lg shadow-yellow-500/50 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl animate-bounce">📧</div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-bold text-gray-900">{t('tv.step2Title')}</h2>
+                    <p className="text-base text-gray-900 font-bold">
+                      {t('tv.step2Desc')}
+                      <span className="ml-2">{t('tv.step2Ranking')}</span>
+                      <span className="ml-2">{t('tv.step2Statistics')}</span>
+                      <span className="ml-2">{t('tv.step2Certificate')}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 3: Jokers */}
+              <div className="bg-white/10 backdrop-blur-xl rounded-xl p-2.5 border border-purple-400">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">🎯</div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-bold text-white">{t('tv.step3Title')}</h2>
+                    <div className="flex items-center gap-3">
+                      <p className="text-sm text-white/90">
+                        {t('tv.step3During')}
+                      </p>
+                      <div className="flex gap-1.5">
+                        <div className="bg-blue-500/30 rounded px-1.5 py-0.5 text-center">
+                          <span className="text-base">🛡️</span>
+                          <span className="text-xs text-white ml-1">{t('tv.jokerProtection')}</span>
+                        </div>
+                        <div className="bg-red-500/30 rounded px-1.5 py-0.5 text-center">
+                          <span className="text-base">🚫</span>
+                          <span className="text-xs text-white ml-1">{t('tv.jokerBlock')}</span>
+                        </div>
+                        <div className="bg-yellow-500/30 rounded px-1.5 py-0.5 text-center">
+                          <span className="text-base">💰</span>
+                          <span className="text-xs text-white ml-1">{t('tv.jokerSteal')}</span>
+                        </div>
+                        <div className="bg-green-500/30 rounded px-1.5 py-0.5 text-center">
+                          <span className="text-base">⭐</span>
+                          <span className="text-xs text-white ml-1">{t('tv.jokerDouble')}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Step 4: Phases */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-xl p-2.5 border border-cyan-400">
-              <div className="flex items-center gap-3">
-                <div className="text-2xl">⏱️</div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-bold text-white">{t('tv.step4Title')}</h2>
-                  <div className="grid grid-cols-2 gap-1 text-sm text-white/90">
-                    <div className="bg-purple-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseTheme')}</div>
-                    <div className="bg-blue-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseQuestion')}</div>
-                    <div className="bg-cyan-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseAnswer')}</div>
-                    <div className="bg-green-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseResults')}</div>
+              {/* Step 4: Phases */}
+              <div className="bg-white/10 backdrop-blur-xl rounded-xl p-2.5 border border-cyan-400">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">⏱️</div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-bold text-white">{t('tv.step4Title')}</h2>
+                    <div className="grid grid-cols-2 gap-1 text-sm text-white/90">
+                      <div className="bg-purple-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseTheme')}</div>
+                      <div className="bg-blue-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseQuestion')}</div>
+                      <div className="bg-cyan-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseAnswer')}</div>
+                      <div className="bg-green-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseResults')}</div>
+                    </div>
                   </div>
                 </div>
               </div>
