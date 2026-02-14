@@ -191,18 +191,29 @@ RULES:
 `;
   } else {
     modeInstructions = `
-📚 STANDARD MODE — PROFESSIONAL TRIVIA WITH A "DID YOU KNOW?" TWIST:
-You are writing questions for a professional Trivia night at a bar/restaurant.
-Think: Trivial Pursuit meets "Ripley's Believe It or Not" — factual, but FASCINATING.
+📚 STANDARD MODE — SERIOUS COMPETITION TRIVIA:
+You are writing questions for a PROFESSIONAL quiz competition — like Trivial Pursuit, Who Wants to Be a Millionaire, or a national quiz championship.
 
-RULES:
-- Every question must be FACTUAL, VERIFIABLE, and INTERESTING
-- 50% classic pub quiz questions (history, science, geography, culture, sports)
-- 50% "insolite" / surprising questions where the real answer is unexpected or counter-intuitive
-- Insolite examples: unusual world records, surprising origins, counter-intuitive statistics, strange real laws, bizarre animal abilities, unexpected historical connections
-- Questions should make players think "Oh, I should have known that!" or "No way, is that really true?!"
-- All 4 answer options must be realistic and plausible
-- Professional but engaging tone — suitable for all audiences
+ABSOLUTE RULES:
+- 100% of questions must be FACTUAL, VERIFIED, and SOURCED from encyclopedias, official records, or well-documented facts
+- NEVER speculate — if you are not 100% certain of a fact, DO NOT include it
+- NEVER invent "unusual" or "surprising" angles — write STRAIGHT, CLASSIC trivia questions
+- NEVER use words like "insolite", "surprising", "believe it or not", "bizarre" in stage themes or questions
+- Stage themes must be CLASSIC and DIRECT: "European Capitals", "Olympic History", "Classical Music", "World Geography" — NOT "Surprising Facts About X" or "X Edition Insolite"
+- Questions must test REAL KNOWLEDGE, not trick the player
+- This is a COMPETITION — questions must have ONE objectively correct answer, no ambiguity
+- All 4 answer options must be realistic, plausible, and from the same category
+- Tone: Professional, neutral, authoritative — like a TV quiz show host
+- Respect the chosen themes strictly — if the player chose "Geography, Sport, Art", write ONLY about those topics
+
+QUESTION STYLE:
+- "What is the capital of...?"
+- "In what year did...?"
+- "Who painted / composed / invented...?"
+- "Which country holds the record for...?"
+- "What is the chemical symbol for...?"
+- "How many... are there in...?"
+- Classic, direct, unambiguous questions that test knowledge
 `;
   }
 
@@ -239,13 +250,14 @@ PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
 3. QUESTION VARIETY (mix ALL these types across the quiz):
    - Factual: "What is / Who was / Where is...?"
    - Numeric: "How many / What percentage / In what year...?"
-   - Myth-busting: "Which of these is actually TRUE/FALSE?"
    - Ranking: "Which is the largest / fastest / oldest...?"
-   - Origin: "Where does the word/tradition/invention X come from?"
+   - Chronological: "In what year / What came first...?"
+   - Identification: "Which country / Who composed / What element...?"
 
 4. STAGE THEMES:
    - Each stage needs a distinct sub-topic within the main theme
-   - Stage theme = 2-4 words, clear and engaging (e.g., "Ocean Giants", "Space Records", "Food Origins")
+   - Stage theme = 2-4 words, CLASSIC and DIRECT (e.g., "European Capitals", "Olympic Champions", "Famous Paintings", "World Rivers")
+   - NEVER use "surprising", "unusual", "insolite", "bizarre" in stage theme names
    - NEVER repeat a sub-topic across stages
 
 5. DIFFICULTY DISTRIBUTION for "${difficulty}":
