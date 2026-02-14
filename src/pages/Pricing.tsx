@@ -1,20 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useOrganizationStore } from '../stores/useOrganizationStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Check, AlertCircle, Building2, Users, Crown, Shield, ArrowLeft, Gift, Loader2 } from 'lucide-react';
+import { Check, AlertCircle, Building2, Users, Crown, Shield, ArrowLeft, Gift, Loader2, Briefcase } from 'lucide-react';
 
 export const Pricing: React.FC = () => {
   const routerNavigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const { currentOrganization, fetchOrganization } = useOrganizationStore();
   const [showB2B, setShowB2B] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoResult, setPromoResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Fetch organization to check if user is a verified business
+  useEffect(() => {
+    if (user) {
+      fetchOrganization(user.id);
+    }
+  }, [user, fetchOrganization]);
 
   const handleCheckout = async (priceId: string, planName: string) => {
     // Require auth before checkout
@@ -390,6 +399,80 @@ export const Pricing: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Business Pass — One-time B2B plan */}
+                <Card className="mb-10 p-8 max-w-3xl mx-auto ring-4 ring-qb-cyan/50 bg-gradient-to-r from-qb-cyan/5 to-qb-purple/5 border-qb-cyan/30 relative">
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <div className="bg-gradient-to-r from-qb-cyan to-qb-purple px-6 py-2 rounded-full">
+                      <span className="text-sm font-bold text-white">{t('pricing.businessPass.badge')}</span>
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-8 items-center">
+                    <div className="text-center md:text-left">
+                      <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
+                        <Briefcase className="w-10 h-10 text-qb-cyan" />
+                        <h3 className="text-3xl font-bold text-white">Business Pass</h3>
+                      </div>
+                      <div className="flex items-baseline gap-1 justify-center md:justify-start mb-2">
+                        <span className="text-5xl font-bold text-qb-cyan">$19.90</span>
+                      </div>
+                      <p className="text-white/70">{t('pricing.oneTime')}</p>
+                      <p className="text-qb-cyan font-bold text-lg mt-1">{t('pricing.businessPass.players')}</p>
+                      <p className="text-white/50 text-sm mt-2">{t('pricing.businessPass.desc')}</p>
+                    </div>
+                    <div>
+                      <ul className="space-y-3 mb-6">
+                        {[
+                          t('pricing.oneQuizSession'),
+                          t('pricing.businessPass.players'),
+                          t('pricing.allGameModes'),
+                          t('pricing.strategicJokers'),
+                          t('pricing.realtimeLeaderboard'),
+                          t('pricing.emailResults'),
+                          t('pricing.businessPass.verified'),
+                        ].map((feature, idx) => (
+                          <li key={idx} className="flex items-start gap-3 text-white/90">
+                            <Check className="w-5 h-5 text-qb-cyan shrink-0 mt-0.5" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {currentOrganization ? (
+                        <Button
+                          fullWidth
+                          size="lg"
+                          gradient
+                          onClick={() => handleCheckout(
+                            import.meta.env.VITE_STRIPE_PRICE_BUSINESS_PASS,
+                            'Business Pass'
+                          )}
+                          loading={loading === import.meta.env.VITE_STRIPE_PRICE_BUSINESS_PASS}
+                          disabled={!!loading}
+                        >
+                          {loading === import.meta.env.VITE_STRIPE_PRICE_BUSINESS_PASS
+                            ? t('pricing.processing')
+                            : t('pricing.buyNow')}
+                        </Button>
+                      ) : (
+                        <div>
+                          <Button
+                            fullWidth
+                            size="lg"
+                            gradient
+                            onClick={() => routerNavigate('/pro-signup')}
+                          >
+                            {t('pricing.businessPass.verifyFirst')}
+                          </Button>
+                          <p className="text-white/50 text-xs mt-2 text-center">
+                            {t('pricing.businessPass.verifyHint')}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Subscription plans */}
+                <h3 className="text-2xl font-bold text-white/70 text-center mb-8">{t('pricing.businessPass.orSubscription')}</h3>
                 <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
                   {b2bPlans.map((plan) => (
                     <Card key={plan.name} className="p-8 bg-white/5 border-white/10">

@@ -124,6 +124,15 @@
       "trialBadge": "Essai gratuit de 30 jours inclus !",
       "noTrialWarning": "Pas d'essai gratuit"
     },
+    "businessPass": {
+      "badge": "MEILLEUR RAPPORT QUALITE-PRIX PRO",
+      "players": "Jusqu'a 250 joueurs",
+      "desc": "Paiement unique, sans abonnement. Parfait pour une soiree quiz pro avec capacite maximale.",
+      "verified": "Compte entreprise verifie",
+      "verifyFirst": "Verifiez votre entreprise d'abord",
+      "verifyHint": "Verification d'entreprise requise avant l'achat",
+      "orSubscription": "Ou choisissez un abonnement mensuel"
+    },
     "error": {
       "checkoutFailed": "Échec de la création de la session de paiement",
       "unknown": "Erreur inconnue",

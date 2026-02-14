@@ -124,6 +124,15 @@
       "trialBadge": "30-day free trial included!",
       "noTrialWarning": "No free trial"
     },
+    "businessPass": {
+      "badge": "BEST VALUE FOR BUSINESSES",
+      "players": "Up to 250 Players",
+      "desc": "One-time payment, no subscription. Perfect for a single professional quiz night with maximum capacity.",
+      "verified": "Business-verified account",
+      "verifyFirst": "Verify Your Business First",
+      "verifyHint": "Business verification required before purchase",
+      "orSubscription": "Or choose a monthly subscription"
+    },
     "error": {
       "checkoutFailed": "Failed to create checkout session",
       "unknown": "Unknown error",

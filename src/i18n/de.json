@@ -124,6 +124,15 @@
       "trialBadge": "30 Tage kostenlose Testphase inklusive!",
       "noTrialWarning": "Keine kostenlose Testphase"
     },
+    "businessPass": {
+      "badge": "BESTES PREIS-LEISTUNGS-VERHALTNIS",
+      "players": "Bis zu 250 Spieler",
+      "desc": "Einmalige Zahlung, kein Abo. Perfekt fur einen professionellen Quizabend mit maximaler Kapazitat.",
+      "verified": "Verifiziertes Unternehmenskonto",
+      "verifyFirst": "Zuerst Unternehmen verifizieren",
+      "verifyHint": "Unternehmensverifizierung vor dem Kauf erforderlich",
+      "orSubscription": "Oder wahlen Sie ein monatliches Abonnement"
+    },
     "error": {
       "checkoutFailed": "Checkout-Sitzung konnte nicht erstellt werden",
       "unknown": "Unbekannter Fehler",
