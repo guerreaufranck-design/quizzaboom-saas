@@ -16,6 +16,7 @@ import { ProSignup } from './pages/ProSignup';
 import { ProDashboard } from './pages/ProDashboard';
 import { SpecialOffer } from './pages/SpecialOffer';
 import { Settings } from './pages/Settings';
+import { Tutorial } from './pages/Tutorial';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SupportChat } from './components/SupportChat';
@@ -73,6 +74,7 @@ function App() {
       <Route path="/pro-dashboard" element={<ProtectedRoute><ProDashboard /></ProtectedRoute>} />
       <Route path="/guide" element={<Navigate to="/" replace />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/tutorial" element={<Tutorial />} />
       <Route path="/offer" element={<SpecialOffer />} />
       <Route path="*" element={<HomePage />} />
     </Routes>

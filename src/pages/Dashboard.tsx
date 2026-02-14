@@ -307,7 +307,7 @@ export const Dashboard: React.FC = () => {
                 size="lg"
                 variant="ghost"
                 icon={<BookOpen />}
-                onClick={() => navigate('home')}
+                onClick={() => navigate('tutorial')}
               >
                 {t('dashboard.viewGuide')}
               </Button>
