@@ -118,6 +118,7 @@ export interface QuizSession {
   unlimited_players: boolean;
   settings: Record<string, any>;
   party_mode: boolean;
+  team_mode?: boolean;
   total_players: number;
   active_players: number;
   peak_concurrent_players: number;
@@ -144,6 +145,7 @@ export interface Player {
   email?: string;
   avatar_emoji: string;
   player_color: string;
+  team_name?: string | null;
   total_score: number;
   current_stage: number;
   questions_answered: number;

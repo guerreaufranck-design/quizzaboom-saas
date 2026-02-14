@@ -4,7 +4,8 @@ import { useQuizStore } from '../stores/useQuizStore';
 import { useAppNavigate } from '../hooks/useAppNavigate';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { ArrowLeft, QrCode, UserCircle } from 'lucide-react';
+import { ArrowLeft, QrCode, UserCircle, Users } from 'lucide-react';
+import { supabase } from '../services/supabase/client';
 
 export const JoinQuiz: React.FC = () => {
   const { t } = useTranslation();
@@ -16,6 +17,14 @@ export const JoinQuiz: React.FC = () => {
   const [email, setEmail] = useState('');
   const [emailConsent, setEmailConsent] = useState(false);
   const [selectedEmoji, setSelectedEmoji] = useState('😀');
+  const [showTeamSelection, setShowTeamSelection] = useState(false);
+  const [teamNames, setTeamNames] = useState<string[]>([]);
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
+
+  const TEAM_COLORS = [
+    'bg-blue-500', 'bg-red-500', 'bg-green-500', 'bg-yellow-500',
+    'bg-purple-500', 'bg-pink-500', 'bg-orange-500', 'bg-cyan-500',
+  ];
 
   // Check URL params for code
   useEffect(() => {
@@ -31,8 +40,36 @@ export const JoinQuiz: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Check if session has team mode enabled
+      const { data: session } = await supabase
+        .from('quiz_sessions')
+        .select('settings, team_mode')
+        .eq('session_code', code.toUpperCase())
+        .single();
+
+      const settings = (session?.settings as Record<string, unknown>) || {};
+      const isTeamMode = session?.team_mode || settings.teamMode;
+      const sessionTeamNames = (settings.teamNames as string[]) || [];
+
+      if (isTeamMode && sessionTeamNames.length > 0 && !selectedTeam) {
+        setTeamNames(sessionTeamNames);
+        setShowTeamSelection(true);
+        return;
+      }
+
       const playerEmail = (email && emailConsent) ? email : undefined;
-      await joinSession(code.toUpperCase(), playerName, playerEmail, selectedEmoji);
+      await joinSession(code.toUpperCase(), playerName, playerEmail, selectedEmoji, selectedTeam || undefined);
+      navigate('lobby');
+    } catch (err) {
+      console.error('Failed to join session:', err);
+    }
+  };
+
+  const handleTeamJoin = async () => {
+    if (!selectedTeam) return;
+    try {
+      const playerEmail = (email && emailConsent) ? email : undefined;
+      await joinSession(code.toUpperCase(), playerName, playerEmail, selectedEmoji, selectedTeam);
       navigate('lobby');
     } catch (err) {
       console.error('Failed to join session:', err);
@@ -202,6 +239,59 @@ export const JoinQuiz: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Team Selection Modal */}
+      {showTeamSelection && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <Card className="max-w-lg w-full p-8 bg-qb-darker border-2 border-qb-cyan">
+            <div className="text-center mb-6">
+              <Users className="w-12 h-12 text-qb-cyan mx-auto mb-3" />
+              <h2 className="text-2xl font-bold text-white">{t('join.selectTeam')}</h2>
+            </div>
+            <div className="space-y-3">
+              {teamNames.map((team, idx) => (
+                <button
+                  key={team}
+                  type="button"
+                  onClick={() => setSelectedTeam(team)}
+                  className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${
+                    selectedTeam === team
+                      ? 'border-white scale-105 shadow-lg'
+                      : 'border-white/20 hover:border-white/50'
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-full ${TEAM_COLORS[idx % TEAM_COLORS.length]}`} />
+                  <span className="text-white font-bold text-lg">{team}</span>
+                  {selectedTeam === team && (
+                    <span className="ml-auto text-qb-cyan font-bold">&#10003;</span>
+                  )}
+                </button>
+              ))}
+            </div>
+            <div className="mt-6 flex gap-3">
+              <Button
+                fullWidth
+                variant="ghost"
+                onClick={() => {
+                  setShowTeamSelection(false);
+                  setSelectedTeam(null);
+                }}
+              >
+                {t('common.back')}
+              </Button>
+              <Button
+                fullWidth
+                gradient
+                disabled={!selectedTeam}
+                loading={isLoading}
+                onClick={handleTeamJoin}
+              >
+                {isLoading ? t('join.joining') : `🎮 ${t('join.joinBattle')}`}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

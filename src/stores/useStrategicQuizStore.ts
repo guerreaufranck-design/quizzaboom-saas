@@ -58,10 +58,11 @@ interface StrategicQuizState {
   selectedAnswer: string | null;
   hasAnswered: boolean;
   answerSubmittedAt: number | null;
-  
+  answeredCount: number;
+
   showTargetSelector: boolean;
   pendingJokerType: 'block' | 'steal' | null;
-  
+
   loadQuestions: (quizId: string) => Promise<void>;
   setPhaseData: (data: PhaseData) => void;
   executeJokerAction: (jokerType: JokerType, targetPlayerId?: string) => Promise<void>;
@@ -100,6 +101,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   selectedAnswer: null,
   hasAnswered: false,
   answerSubmittedAt: null,
+  answeredCount: 0,
   showTargetSelector: false,
   pendingJokerType: null,
 
@@ -154,6 +156,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         selectedAnswer: null,
         hasAnswered: false,
         answerSubmittedAt: null,
+        answeredCount: 0,
       });
     }
   },
@@ -348,7 +351,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
       if (updatedPlayer) {
         console.log('✅ New total score:', updatedPlayer.total_score);
-        
+
         useQuizStore.setState((state) => {
           if (state.currentPlayer) {
             return {
@@ -364,12 +367,52 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         });
       }
 
+      // Update streak
+      const { data: streakData } = await supabase
+        .from('session_players')
+        .select('current_streak, best_streak')
+        .eq('id', playerId)
+        .single();
+
+      if (streakData) {
+        const newStreak = isCorrect ? streakData.current_streak + 1 : 0;
+        const newBestStreak = Math.max(streakData.best_streak, newStreak);
+
+        await supabase
+          .from('session_players')
+          .update({
+            current_streak: newStreak,
+            best_streak: newBestStreak,
+          })
+          .eq('id', playerId);
+
+        // Update local state
+        useQuizStore.setState((state) => {
+          if (state.currentPlayer) {
+            return {
+              currentPlayer: {
+                ...state.currentPlayer,
+                current_streak: newStreak,
+                best_streak: newBestStreak,
+              }
+            };
+          }
+          return state;
+        });
+      }
+
       // Broadcaster
       if (sessionCode && globalRealtimeChannel) {
         await globalRealtimeChannel.send({
           type: 'broadcast',
           event: 'score_updated',
           payload: { playerId, timestamp }
+        });
+
+        await globalRealtimeChannel.send({
+          type: 'broadcast',
+          event: 'answer_submitted',
+          payload: { playerId: currentPlayer?.id }
         });
       }
 
@@ -414,6 +457,9 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         if (sessionId) {
           useQuizStore.getState().loadPlayers(sessionId);
         }
+      })
+      .on('broadcast', { event: 'answer_submitted' }, () => {
+        set(state => ({ answeredCount: state.answeredCount + 1 }));
       })
       .subscribe((status: string) => {
         console.log('📡 Realtime status:', status);

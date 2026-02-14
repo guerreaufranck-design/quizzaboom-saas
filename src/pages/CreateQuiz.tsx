@@ -5,7 +5,7 @@ import { useAppNavigate } from '../hooks/useAppNavigate';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Select } from '../components/ui/Select';
-import { ArrowLeft, Sparkles, Hash, Target, Globe, Zap, Loader2, X, Shield, Ban, Repeat, Gem, Coffee, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Sparkles, Hash, Target, Globe, Zap, Loader2, X, Shield, Ban, Repeat, Gem, Coffee, MessageSquare, Users, Plus, Trash2 } from 'lucide-react';
 import { calculateQuizStructureFromCount } from '../services/gemini';
 import { THEMES, THEME_MODES, type ThemeCategory, type ThemeMode } from '../types/themes';
 import type { QuizGenRequest, CommercialBreakConfig } from '../types/quiz';
@@ -38,6 +38,8 @@ export const CreateQuiz: React.FC = () => {
     steal: true,
     double_points: true,
   });
+  const [teamMode, setTeamMode] = useState(false);
+  const [teamNames, setTeamNames] = useState<string[]>(['Table 1', 'Table 2']);
   const [formData, setFormData] = useState({
     questionCount: 25,
     difficulty: 'medium' as 'easy' | 'medium' | 'hard',
@@ -122,6 +124,8 @@ export const CreateQuiz: React.FC = () => {
         quiz.id,
         formData.includeJokers ? enabledJokers : undefined,
         commercialBreaks.enabled ? commercialBreaks : undefined,
+        teamMode,
+        teamMode ? teamNames.filter(n => n.trim()) : undefined,
       );
 
       setGenerationStep(t('create.generationSteps.ready'));
@@ -614,6 +618,72 @@ export const CreateQuiz: React.FC = () => {
               )}
             </Card>
 
+            {/* Team Mode */}
+            <Card gradient className="p-6">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={teamMode}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTeamMode(e.target.checked)}
+                  disabled={isLoading}
+                  className="w-6 h-6 rounded accent-qb-cyan"
+                />
+                <div className="flex-1">
+                  <div className="text-white font-bold flex items-center gap-2">
+                    <Users className="w-5 h-5 text-qb-cyan" />
+                    {t('create.teamMode')}
+                  </div>
+                  <p className="text-sm text-white/70 mt-1">
+                    {t('create.teamModeDesc')}
+                  </p>
+                </div>
+              </label>
+
+              {teamMode && (
+                <div className="mt-4 space-y-3">
+                  <label className="block text-sm text-white/80 mb-2">{t('create.teamNames')}</label>
+                  {teamNames.map((name, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => {
+                          const updated = [...teamNames];
+                          updated[idx] = e.target.value;
+                          setTeamNames(updated);
+                        }}
+                        placeholder={t('create.teamNamePlaceholder')}
+                        disabled={isLoading}
+                        maxLength={30}
+                        className="flex-1 px-4 py-2 bg-qb-darker border border-white/20 rounded-lg text-white placeholder:text-white/40 focus:border-qb-cyan focus:outline-none"
+                      />
+                      {teamNames.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => setTeamNames(teamNames.filter((_, i) => i !== idx))}
+                          disabled={isLoading}
+                          className="p-2 text-red-400 hover:text-red-300 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {teamNames.length < 8 && (
+                    <button
+                      type="button"
+                      onClick={() => setTeamNames([...teamNames, `Table ${teamNames.length + 1}`])}
+                      disabled={isLoading}
+                      className="flex items-center gap-2 text-sm text-qb-cyan hover:text-qb-cyan/80 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {t('create.addTeam')}
+                    </button>
+                  )}
+                </div>
+              )}
+            </Card>
+
             {/* Submit */}
             <Button
               type="submit"
@@ -645,6 +715,9 @@ export const CreateQuiz: React.FC = () => {
               <p><strong>{t('create.strategicGameplay')}</strong> {formData.includeJokers ? t('create.enabled') : t('create.disabled')}</p>
               {commercialBreaks.enabled && breakPreview.length > 0 && (
                 <p><strong>{t('create.commercialBreaks')}:</strong> {commercialBreaks.numberOfPauses}x {Math.floor(commercialBreaks.breakDurationSeconds / 60)} min</p>
+              )}
+              {teamMode && (
+                <p><strong>{t('create.teamMode')}:</strong> {teamNames.filter(n => n.trim()).join(', ')}</p>
               )}
             </div>
           </Card>

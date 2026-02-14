@@ -20,7 +20,8 @@
     "tip": "Tipp",
     "on": "AN",
     "off": "AUS",
-    "errorUnknown": "Unbekannter Fehler"
+    "errorUnknown": "Unbekannter Fehler",
+    "rateLimited": "Zu viele Anfragen. Bitte warte eine Minute."
   },
   "home": {
     "title": "QuizzaBoom",
@@ -133,6 +134,10 @@
       "verifyHint": "Unternehmensverifizierung vor dem Kauf erforderlich",
       "orSubscription": "Oder wahlen Sie ein monatliches Abonnement"
     },
+    "alreadyOwned": "Guthaben bereits vorhanden",
+    "alreadyOwnedDesc": "Du hast bereits ein ungenutztes Guthaben für diesen Plan. Trotzdem ein weiteres kaufen?",
+    "buyAnyway": "Trotzdem kaufen",
+    "cancel": "Abbrechen",
     "error": {
       "checkoutFailed": "Checkout-Sitzung konnte nicht erstellt werden",
       "unknown": "Unbekannter Fehler",
@@ -156,7 +161,9 @@
     "chooseAvatar": "Wahle deinen Avatar",
     "joinBattle": "Der Schlacht beitreten!",
     "joining": "Beitritt...",
-    "connectionTip": "Stelle sicher, dass du mit dem Internet verbunden bist und der Host die Sitzung gestartet hat!"
+    "connectionTip": "Stelle sicher, dass du mit dem Internet verbunden bist und der Host die Sitzung gestartet hat!",
+    "selectTeam": "Wähle dein Team",
+    "yourTeam": "Dein Team"
   },
   "create": {
     "title": "Erstelle dein Quiz",
@@ -229,7 +236,13 @@
     "jokerProtection": "Schutz",
     "jokerBlock": "Blockieren",
     "jokerSteal": "Stehlen",
-    "jokerDoublePoints": "Doppelte Punkte"
+    "jokerDoublePoints": "Doppelte Punkte",
+    "teamMode": "Team-Modus",
+    "teamModeDesc": "Spieler treten in Teams an (z.B. Tisch 1 vs Tisch 2)",
+    "teamNames": "Teamnamen",
+    "addTeam": "Team hinzufügen",
+    "removeTeam": "Entfernen",
+    "teamNamePlaceholder": "Teamname"
   },
   "auth": {
     "welcome": "Willkommen!",
@@ -317,7 +330,12 @@
     "noQuestionData": "Keine Fragendaten",
     "questionsProgressLabel": "Fragen",
     "kickPlayer": "Spieler entfernen",
-    "kickConfirm": "Möchtest du {{name}} wirklich aus dem Quiz entfernen?"
+    "kickConfirm": "Möchtest du {{name}} wirklich aus dem Quiz entfernen?",
+    "teamScores": "Team-Ergebnisse",
+    "teamRanking": "Team-Rangliste",
+    "exportCSV": "CSV exportieren",
+    "exportResults": "Ergebnisse exportieren",
+    "answeredCount": "{{count}}/{{total}} haben geantwortet"
   },
   "proDashboard": {
     "noAccount": "Kein Geschaftskonto",
@@ -594,7 +612,13 @@
     "jokerProtection": "Schutz",
     "jokerBlock": "Blockieren",
     "jokerSteal": "Stehlen",
-    "jokerDouble": "Doppelte Punkte"
+    "jokerDouble": "Doppelte Punkte",
+    "team": "Team",
+    "teamMembers": "{{count}} Mitglieder",
+    "previewQuestions": "Fragen ansehen",
+    "previewTitle": "Quiz-Vorschau",
+    "correctAnswer": "Richtige Antwort",
+    "closePreview": "Vorschau schließen"
   },
   "offer": {
     "badge": "EXKLUSIVES ANGEBOT",
@@ -649,7 +673,10 @@
     "answersTitle": "Antworten",
     "answersSelectNow": "✅ Jetzt auswahlen!",
     "answersWaitTime": "🔒 Warte auf die Antwortzeit",
-    "answerSubmitted": "Antwort gesendet!"
+    "answerSubmitted": "Antwort gesendet!",
+    "yourTeam": "Team: {{team}}",
+    "streakBadge": "Serie x{{count}}!",
+    "streakFire": "Auf Feuer!"
   },
   "tv": {
     "howToPlay": "So wird gespielt",
@@ -692,7 +719,21 @@
     "nextQuestionIn": "Nächste Frage in...",
     "displayMode": "TV-Anzeigemodus",
     "displayModeWaiting": "Warte auf Quiz-Daten...",
-    "funFact": "Wusstest du?"
+    "funFact": "Wusstest du?",
+    "teamLeaderboard": "Team-Rangliste",
+    "teamScore": "{{score}} Pkt",
+    "mvp": "MVP",
+    "mvpPlayer": "Bester Spieler",
+    "answeredCount": "{{count}}/{{total}} haben geantwortet",
+    "playersAnswered": "Spieler haben geantwortet",
+    "badgeTitle": "Auszeichnungen",
+    "badges": "Auszeichnungen"
+  },
+  "badges": {
+    "quizMaster": "Quiz-Meister",
+    "speedDemon": "Blitz",
+    "streakKing": "Serien-König",
+    "socialButterfly": "Geselliger Schmetterling"
   },
   "settings": {
     "title": "Einstellungen",
@@ -700,7 +741,7 @@
     "subscriptionDesc": "Verwalten Sie Ihr Abonnement, aktualisieren Sie Zahlungsmethoden oder kündigen Sie Ihren Plan über das Stripe-Kundenportal.",
     "manageSubscription": "Abonnement verwalten",
     "privacyPolicy": "Datenschutzerklärung",
-    "privacyIntro": "QuizzaBoom (\u201Ewir\u201C, \u201Eunser\u201C) verpflichtet sich, Ihre persönlichen Daten gemäß der DSGVO und den geltenden Datenschutzgesetzen zu schützen.",
+    "privacyIntro": "QuizzaBoom („wir“, „unser“) verpflichtet sich, Ihre persönlichen Daten gemäß der DSGVO und den geltenden Datenschutzgesetzen zu schützen.",
     "dataCollectedTitle": "Erhobene Daten",
     "dataEmail": "E-Mail-Adresse (für Authentifizierung und Versand der Quiz-Ergebnisse)",
     "dataQuiz": "Quiz-Sitzungsdaten (Punkte, Antworten, Spielernamen)",
@@ -722,7 +763,7 @@
     "termsPaymentTitle": "Zahlungen & Erstattungen",
     "termsPayment": "Alle Zahlungen werden über Stripe abgewickelt. Verwendete Quiz-Guthaben sind nicht erstattungsfähig. Ungenutzte Guthaben können innerhalb von 14 Tagen nach dem Kauf erstattet werden. B2B-Abonnements können jederzeit über das Kundenportal gekündigt werden.",
     "termsLiabilityTitle": "Haftungsbeschränkung",
-    "termsLiability": "QuizzaBoom wird \u201Ewie besehen\u201C bereitgestellt. Wir haften nicht für Dienstunterbrechungen, Datenverluste oder Schäden, die aus der Nutzung unseres Dienstes entstehen. Wir behalten uns das Recht vor, den Dienst jederzeit zu ändern oder einzustellen.",
+    "termsLiability": "QuizzaBoom wird „wie besehen“ bereitgestellt. Wir haften nicht für Dienstunterbrechungen, Datenverluste oder Schäden, die aus der Nutzung unseres Dienstes entstehen. Wir behalten uns das Recht vor, den Dienst jederzeit zu ändern oder einzustellen.",
     "contact": "Kontakt",
     "contactDesc": "Für Fragen, Support oder datenbezogene Anfragen kontaktieren Sie uns unter:",
     "dangerZone": "Gefahrenzone",

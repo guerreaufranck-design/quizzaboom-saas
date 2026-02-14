@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuizStore } from '../stores/useQuizStore';
+import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { useAppNavigate } from '../hooks/useAppNavigate';
 import { useUserEntitlement } from '../hooks/useUserEntitlement';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { QRCodeDisplay } from '../components/ui/QRCodeDisplay';
-import { ArrowLeft, Users, Play, Copy, Check, Share2, Clock, AlertTriangle, Loader2, Monitor } from 'lucide-react';
+import { ArrowLeft, Users, Play, Copy, Check, Share2, Clock, AlertTriangle, Loader2, Monitor, Users2, Eye, X, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../services/supabase/client';
 
 export const QuizLobby: React.FC = () => {
@@ -27,11 +28,20 @@ export const QuizLobby: React.FC = () => {
     setCurrentView,
   } = useQuizStore();
 
+  const { allQuestions, loadQuestions } = useStrategicQuizStore();
   const [copied, setCopied] = useState(false);
   const [copiedTV, setCopiedTV] = useState(false);
   const [showStartWarning, setShowStartWarning] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Load questions for preview (host only)
+  useEffect(() => {
+    if (isHost && currentQuiz?.id && allQuestions.length === 0) {
+      loadQuestions(currentQuiz.id);
+    }
+  }, [isHost, currentQuiz?.id]);
 
   useEffect(() => {
     // Load players immediately
@@ -132,6 +142,34 @@ export const QuizLobby: React.FC = () => {
     }
   };
 
+  const TEAM_COLORS = [
+    'bg-blue-500/20 border-blue-500/50',
+    'bg-red-500/20 border-red-500/50',
+    'bg-green-500/20 border-green-500/50',
+    'bg-yellow-500/20 border-yellow-500/50',
+    'bg-purple-500/20 border-purple-500/50',
+    'bg-pink-500/20 border-pink-500/50',
+    'bg-orange-500/20 border-orange-500/50',
+    'bg-cyan-500/20 border-cyan-500/50',
+  ];
+
+  const TEAM_HEADER_COLORS = [
+    'text-blue-400', 'text-red-400', 'text-green-400', 'text-yellow-400',
+    'text-purple-400', 'text-pink-400', 'text-orange-400', 'text-cyan-400',
+  ];
+
+  const sessionSettings = (currentSession?.settings as Record<string, unknown>) || {};
+  const isTeamMode = currentSession?.team_mode || sessionSettings.teamMode;
+  const teamNamesList = (sessionSettings.teamNames as string[]) || [];
+
+  // Group players by team
+  const playersByTeam = isTeamMode
+    ? teamNamesList.reduce<Record<string, typeof players>>((acc, teamName) => {
+        acc[teamName] = players.filter(p => p.team_name === teamName);
+        return acc;
+      }, {})
+    : {};
+
   if (!currentSession || !currentQuiz) {
     return (
       <div className="min-h-screen bg-qb-dark flex items-center justify-center">
@@ -177,25 +215,54 @@ export const QuizLobby: React.FC = () => {
               <h3 className="text-2xl font-bold text-white mb-6 text-center">
                 {t('lobby.playersInLobby', { count: players.length })}
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {players.map((player) => (
-                  <div
-                    key={player.id}
-                    className="p-4 bg-qb-darker rounded-xl text-center"
-                  >
-                    <div className="text-4xl mb-2">{player.avatar_emoji}</div>
-                    <div className="font-bold text-white text-sm truncate">
-                      {player.player_name}
-                    </div>
+              {isTeamMode && teamNamesList.length > 0 ? (
+                <div className="space-y-4">
+                  {teamNamesList.map((teamName, idx) => {
+                    const teamPlayers = playersByTeam[teamName] || [];
+                    return (
+                      <div key={teamName} className={`rounded-xl border p-4 ${TEAM_COLORS[idx % TEAM_COLORS.length]}`}>
+                        <div className={`font-bold mb-3 flex items-center gap-2 ${TEAM_HEADER_COLORS[idx % TEAM_HEADER_COLORS.length]}`}>
+                          <Users2 className="w-4 h-4" />
+                          <span>{t('lobby.team')}: {teamName}</span>
+                          <span className="text-xs text-white/50 ml-auto">{t('lobby.teamMembers', { count: teamPlayers.length })}</span>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {teamPlayers.map((player) => (
+                            <div key={player.id} className="p-3 bg-qb-darker rounded-xl text-center">
+                              <div className="text-3xl mb-1">{player.avatar_emoji}</div>
+                              <div className="font-bold text-white text-sm truncate">{player.player_name}</div>
+                              <div
+                                className="w-2 h-2 rounded-full mx-auto mt-1"
+                                style={{ backgroundColor: player.is_connected ? '#10B981' : '#EF4444' }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {players.map((player) => (
                     <div
-                      className="w-2 h-2 rounded-full mx-auto mt-2"
-                      style={{
-                        backgroundColor: player.is_connected ? '#10B981' : '#EF4444',
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
+                      key={player.id}
+                      className="p-4 bg-qb-darker rounded-xl text-center"
+                    >
+                      <div className="text-4xl mb-2">{player.avatar_emoji}</div>
+                      <div className="font-bold text-white text-sm truncate">
+                        {player.player_name}
+                      </div>
+                      <div
+                        className="w-2 h-2 rounded-full mx-auto mt-2"
+                        style={{
+                          backgroundColor: player.is_connected ? '#10B981' : '#EF4444',
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
 
             {/* Quiz Details */}
@@ -251,15 +318,24 @@ export const QuizLobby: React.FC = () => {
               </div>
             </div>
 
-            <Button
-              size="xl"
-              gradient
-              onClick={handleStartQuiz}
-              icon={<Play />}
-              disabled={players.length === 0}
-            >
-              {t('lobby.startQuiz')}
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => setShowPreview(true)}
+                icon={<Eye />}
+              >
+                {t('lobby.previewQuestions')}
+              </Button>
+              <Button
+                size="xl"
+                gradient
+                onClick={handleStartQuiz}
+                icon={<Play />}
+                disabled={players.length === 0}
+              >
+                {t('lobby.startQuiz')}
+              </Button>
+            </div>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8">
@@ -377,6 +453,33 @@ export const QuizLobby: React.FC = () => {
                       {t('lobby.shareToStart')}
                     </p>
                   </div>
+                ) : isTeamMode && teamNamesList.length > 0 ? (
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {teamNamesList.map((teamName, idx) => {
+                      const teamPlayers = playersByTeam[teamName] || [];
+                      return (
+                        <div key={teamName} className={`rounded-xl border p-3 ${TEAM_COLORS[idx % TEAM_COLORS.length]}`}>
+                          <div className={`font-bold text-sm mb-2 flex items-center gap-2 ${TEAM_HEADER_COLORS[idx % TEAM_HEADER_COLORS.length]}`}>
+                            <Users2 className="w-4 h-4" />
+                            {teamName}
+                            <span className="text-xs text-white/50 ml-auto">{t('lobby.teamMembers', { count: teamPlayers.length })}</span>
+                          </div>
+                          {teamPlayers.map((player) => (
+                            <div key={player.id} className="flex items-center gap-3 p-2 bg-qb-darker/50 rounded-lg mb-1">
+                              <div className="text-2xl">{player.avatar_emoji}</div>
+                              <div className="flex-1">
+                                <div className="font-bold text-white text-sm">{player.player_name}</div>
+                              </div>
+                              <div
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: player.is_connected ? '#10B981' : '#EF4444' }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
                 ) : (
                   <div className="space-y-3 max-h-96 overflow-y-auto">
                     {players.map((player) => (
@@ -473,6 +576,92 @@ export const QuizLobby: React.FC = () => {
               {isStarting ? t('common.loading') : t('lobby.confirmStart')}
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Preview Questions Modal */}
+      <Modal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        title={t('lobby.previewTitle')}
+        size="lg"
+      >
+        <div className="max-h-[70vh] overflow-y-auto space-y-4 pr-2">
+          {allQuestions.length === 0 ? (
+            <div className="text-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-qb-cyan mb-3" />
+              <p className="text-white/70">{t('common.loading')}</p>
+            </div>
+          ) : (
+            (() => {
+              // Group questions by stage
+              const stages: Record<string, typeof allQuestions> = {};
+              allQuestions.forEach(q => {
+                const stage = q.stage_id || 'General';
+                if (!stages[stage]) stages[stage] = [];
+                stages[stage].push(q);
+              });
+
+              return Object.entries(stages).map(([stageName, questions]) => (
+                <div key={stageName}>
+                  <div className="sticky top-0 bg-qb-dark/95 backdrop-blur-sm py-2 z-10">
+                    <h3 className="text-lg font-bold text-qb-cyan flex items-center gap-2">
+                      <span>🎯</span> {stageName}
+                    </h3>
+                  </div>
+                  <div className="space-y-3">
+                    {questions.map((q, idx) => (
+                      <Card key={q.id} className="p-4 bg-qb-darker/50">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-qb-purple/30 flex items-center justify-center shrink-0">
+                            <span className="text-sm font-bold text-qb-purple">{idx + 1}</span>
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <p className="text-white font-medium">{q.question_text}</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {(q.options || []).map((option, optIdx) => (
+                                <div
+                                  key={optIdx}
+                                  className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 ${
+                                    option === q.correct_answer
+                                      ? 'bg-green-500/20 border border-green-500/50 text-green-400'
+                                      : 'bg-white/5 border border-white/10 text-white/70'
+                                  }`}
+                                >
+                                  <span className="font-bold text-xs">{['A', 'B', 'C', 'D'][optIdx]}</span>
+                                  <span className="flex-1">{option}</span>
+                                  {option === q.correct_answer && (
+                                    <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                            {q.fun_fact && (
+                              <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-400/20 rounded-lg">
+                                <p className="text-xs text-yellow-300">
+                                  <span className="font-bold">💡 </span>{q.fun_fact}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ));
+            })()
+          )}
+        </div>
+        <div className="mt-4 pt-4 border-t border-white/10">
+          <Button
+            fullWidth
+            variant="ghost"
+            onClick={() => setShowPreview(false)}
+            icon={<X />}
+          >
+            {t('lobby.closePreview')}
+          </Button>
         </div>
       </Modal>
     </div>

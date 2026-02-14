@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { supabase } from '../services/supabase/client';
 import { Card } from '../components/ui/Card';
-import { Clock, Trophy, Star, Lightbulb } from 'lucide-react';
+import { Clock, Trophy, Star, Lightbulb, Users, Award } from 'lucide-react';
 import type { Player } from '../types/quiz';
+import { calculateTeamScores, getMVP } from '../utils/teamScores';
+import { calculateBadges } from '../utils/badges';
 import { useQuizAudio } from '../hooks/useQuizAudio';
 import { useCountdown } from '../hooks/useCountdown';
 import { AnimatedLogo } from '../components/AnimatedLogo';
@@ -49,14 +51,19 @@ export const TVDisplay: React.FC = () => {
     breakPromoMessage,
     breakNumber,
     totalBreaks,
+    answeredCount,
   } = useStrategicQuizStore();
   const { stopAll, onPhaseChange } = useQuizAudio();
   const displaySeconds = useCountdown(phaseEndTime);
 
   const [sessionCode, setSessionCode] = useState<string>('');
+  const [sessionId, setSessionId] = useState<string>('');
   const [topPlayers, setTopPlayers] = useState<Player[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+  const [isTeamMode, setIsTeamMode] = useState(false);
+  const preloadedRef = useRef(false);
 
   useEffect(() => {
     const initTVDisplay = async () => {
@@ -85,6 +92,12 @@ export const TVDisplay: React.FC = () => {
 
       console.log('✅ Session loaded:', session.id);
 
+      // Detect team mode
+      const settings = (session.settings as Record<string, unknown>) || {};
+      if (session.team_mode || settings.teamMode) {
+        setIsTeamMode(true);
+      }
+
       const { data: quiz, error: quizError } = await supabase
         .from('ai_generated_quizzes')
         .select('*')
@@ -104,6 +117,7 @@ export const TVDisplay: React.FC = () => {
       listenToPhaseChanges(tvCode);
       console.log('✅ Listening to phase changes');
 
+      setSessionId(session.id);
       loadTopPlayers(session.id);
       console.log('✅ Players loaded');
 
@@ -112,6 +126,26 @@ export const TVDisplay: React.FC = () => {
 
     initTVDisplay();
   }, []);
+
+  // Preload all question images when questions are loaded
+  useEffect(() => {
+    if (allQuestions.length > 0 && !preloadedRef.current) {
+      preloadedRef.current = true;
+      allQuestions.forEach(q => {
+        if (q.image_url) {
+          const img = new Image();
+          img.onload = () => {
+            setLoadedImages(prev => new Set(prev).add(q.image_url!));
+          };
+          img.onerror = () => {
+            // Mark as loaded (will be hidden by onError handler in render)
+            setLoadedImages(prev => new Set(prev).add(q.image_url!));
+          };
+          img.src = q.image_url;
+        }
+      });
+    }
+  }, [allQuestions]);
 
   useEffect(() => {
     // Hide instructions as soon as the host starts the quiz (any phase with a valid phaseEndTime)
@@ -134,46 +168,30 @@ export const TVDisplay: React.FC = () => {
     };
   }, []);
 
-  const loadTopPlayers = async (sessionId: string) => {
-    const { data: players } = await supabase
+  const loadTopPlayers = async (sid: string) => {
+    const { data: playersData } = await supabase
       .from('session_players')
       .select('*')
-      .eq('session_id', sessionId)
-      .order('total_score', { ascending: false })
-      .limit(10);
+      .eq('session_id', sid)
+      .order('total_score', { ascending: false });
 
-    if (players) {
-      setTopPlayers(players as Player[]);
+    if (playersData) {
+      setTopPlayers(playersData as Player[]);
     }
   };
 
   // Refresh leaderboard during results, intermission, commercial_break, and quiz_complete phases
   useEffect(() => {
-    if ((currentPhase === 'results' || currentPhase === 'intermission' || currentPhase === 'commercial_break' || currentPhase === 'quiz_complete') && sessionCode) {
+    if ((currentPhase === 'results' || currentPhase === 'intermission' || currentPhase === 'commercial_break' || currentPhase === 'quiz_complete') && sessionId) {
       // Fetch immediately on phase entry
-      (async () => {
-        const { data: session } = await supabase
-          .from('quiz_sessions')
-          .select('id')
-          .eq('session_code', sessionCode)
-          .single();
-        if (session) loadTopPlayers(session.id);
-      })();
+      loadTopPlayers(sessionId);
 
-      const interval = setInterval(async () => {
-        const { data: session } = await supabase
-          .from('quiz_sessions')
-          .select('id')
-          .eq('session_code', sessionCode)
-          .single();
-
-        if (session) {
-          loadTopPlayers(session.id);
-        }
-      }, 3000);
+      const interval = setInterval(() => {
+        loadTopPlayers(sessionId);
+      }, 6000);
       return () => clearInterval(interval);
     }
-  }, [currentPhase, sessionCode]);
+  }, [currentPhase, sessionId]);
 
   // ═══════════════════════════════════════════════════════════════
   // PHASE 0: Instructions Screen — compact, fits 1080p
@@ -364,6 +382,10 @@ export const TVDisplay: React.FC = () => {
   // QUIZ COMPLETE: Top 5 final leaderboard — fits viewport
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'quiz_complete') {
+    const teamScores = isTeamMode ? calculateTeamScores(topPlayers) : [];
+    const mvp = isTeamMode ? getMVP(topPlayers) : null;
+    const badges = calculateBadges(topPlayers);
+
     return (
       <div className="h-screen bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 p-4 overflow-hidden relative">
         {/* Animated background glow */}
@@ -383,8 +405,61 @@ export const TVDisplay: React.FC = () => {
             </p>
           </div>
 
-          {/* Final Leaderboard — top 5 only */}
-          {topPlayers.length > 0 && (
+          {/* Team Mode: Team Leaderboard + MVP */}
+          {isTeamMode && teamScores.length > 0 ? (
+            <div className="bg-black/30 backdrop-blur-xl rounded-2xl p-4 border-2 border-yellow-400/50 flex-1 min-h-0">
+              <h2 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-3">
+                <Trophy className="w-7 h-7 text-yellow-300" />
+                {t('tv.teamLeaderboard')}
+                <Trophy className="w-7 h-7 text-yellow-300" />
+              </h2>
+              <div className="space-y-1.5">
+                {teamScores.map((team, index) => (
+                  <div
+                    key={team.teamName}
+                    className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${
+                      index === 0
+                        ? 'bg-yellow-500/40 border-2 border-yellow-300 scale-[1.02] shadow-lg shadow-yellow-500/30'
+                        : index === 1
+                        ? 'bg-gray-400/20 border border-gray-300'
+                        : index === 2
+                        ? 'bg-orange-700/30 border border-orange-500'
+                        : 'bg-white/10 border border-white/20'
+                    }`}
+                  >
+                    <div className="text-2xl font-bold text-white/80 w-12 text-center">
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                    </div>
+                    <div className="text-2xl"><Users className="w-6 h-6 text-white" /></div>
+                    <div className="flex-1">
+                      <div className="text-xl font-bold text-white">{team.teamName}</div>
+                      <div className="text-sm text-white/70">
+                        {team.playerCount} {t('lobby.teamMembers', { count: team.playerCount })} &middot; {team.correctAnswers} {t('tv.correctAnswersShort', 'correct')}
+                      </div>
+                    </div>
+                    <div className="text-xl font-bold text-yellow-300">
+                      {t('tv.teamScore', { score: team.totalScore })}
+                      {index === 0 && <Star className="inline w-6 h-6 ml-2 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* MVP */}
+              {mvp && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-purple-500/30 border-2 border-purple-400 mt-3">
+                  <div className="text-2xl">⭐</div>
+                  <div className="text-2xl">{mvp.avatar_emoji}</div>
+                  <div className="flex-1">
+                    <div className="text-sm font-bold text-purple-300">{t('tv.mvpPlayer')}</div>
+                    <div className="text-xl font-bold text-white">{mvp.player_name}</div>
+                  </div>
+                  <div className="text-xl font-bold text-purple-300">{mvp.total_score} pts</div>
+                </div>
+              )}
+            </div>
+          ) : topPlayers.length > 0 ? (
+            /* Individual Leaderboard — top 5 only */
             <div className="bg-black/30 backdrop-blur-xl rounded-2xl p-4 border-2 border-yellow-400/50 flex-1 min-h-0">
               <h2 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-3">
                 <Trophy className="w-7 h-7 text-yellow-300" />
@@ -420,6 +495,27 @@ export const TVDisplay: React.FC = () => {
                     <div className="text-xl font-bold text-yellow-300">
                       {player.total_score}
                       {index === 0 && <Star className="inline w-6 h-6 ml-2 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Badges */}
+          {badges.length > 0 && (
+            <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-3 border border-purple-400/30 mt-2">
+              <h3 className="text-lg font-bold text-white mb-2 flex items-center justify-center gap-2">
+                <Award className="w-5 h-5 text-purple-300" />
+                {t('tv.badgeTitle')}
+              </h3>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {badges.map((badge) => (
+                  <div key={badge.key} className="flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-xl border border-white/20">
+                    <span className="text-xl">{badge.emoji}</span>
+                    <div>
+                      <div className="text-xs text-purple-300 font-bold">{t(`badges.${badge.key}`)}</div>
+                      <div className="text-sm text-white font-medium">{badge.playerEmoji} {badge.playerName}</div>
                     </div>
                   </div>
                 ))}
@@ -487,11 +583,16 @@ export const TVDisplay: React.FC = () => {
           {!hasImage && <div className="text-6xl mb-4">📖</div>}
           {hasImage && (
             <div className="mb-4 w-full flex justify-center">
-              <img
-                src={currentQuestion!.image_url}
-                alt=""
-                className="max-h-[40vh] max-w-full object-contain rounded-2xl shadow-2xl"
-              />
+              {!loadedImages.has(currentQuestion!.image_url!) ? (
+                <div className="w-64 h-48 bg-white/10 rounded-2xl animate-pulse" />
+              ) : (
+                <img
+                  src={currentQuestion!.image_url}
+                  alt=""
+                  className="max-h-[40vh] max-w-full object-contain rounded-2xl shadow-2xl transition-opacity duration-300"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              )}
             </div>
           )}
           <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-8 mb-6 w-full">
@@ -532,16 +633,38 @@ export const TVDisplay: React.FC = () => {
                 {displaySeconds}
               </span>
             </div>
+            {/* Live answer counter */}
+            <div className="mt-3 flex items-center justify-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-2 bg-qb-purple/30 rounded-full">
+                <Users className="w-5 h-5 text-qb-yellow" />
+                <span className="text-white font-bold text-lg">
+                  {t('tv.answeredCount', { count: answeredCount, total: topPlayers.length })}
+                </span>
+              </div>
+              {topPlayers.length > 0 && (
+                <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min((answeredCount / topPlayers.length) * 100, 100)}%` }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           <Card className="p-6 bg-gradient-to-br from-qb-purple/30 to-qb-cyan/30 border-white/20 flex-1 min-h-0 my-4">
             {hasImage && (
               <div className="flex justify-center mb-3">
-                <img
-                  src={currentQuestion!.image_url}
-                  alt=""
-                  className="max-h-[25vh] max-w-full object-contain rounded-xl"
-                />
+                {!loadedImages.has(currentQuestion!.image_url!) ? (
+                  <div className="w-48 h-32 bg-white/10 rounded-xl animate-pulse" />
+                ) : (
+                  <img
+                    src={currentQuestion!.image_url}
+                    alt=""
+                    className="max-h-[25vh] max-w-full object-contain rounded-xl transition-opacity duration-300"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
               </div>
             )}
             <h2 className={`font-bold text-white text-center mb-4 ${answerQuestionClass}`}>
@@ -581,12 +704,13 @@ export const TVDisplay: React.FC = () => {
 
     return (
       <div className="h-screen bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 p-8 overflow-hidden relative">
-        {hasImage && (
+        {hasImage && loadedImages.has(currentQuestion!.image_url!) && (
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <img
               src={currentQuestion!.image_url}
               alt=""
               className="w-full h-full object-cover opacity-20 blur-sm"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
           </div>
         )}
@@ -624,18 +748,65 @@ export const TVDisplay: React.FC = () => {
   // PHASE 5: Intermission — Top 3 Leaderboard
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'intermission') {
+    const teamScores = isTeamMode ? calculateTeamScores(topPlayers) : [];
+    const mvp = isTeamMode ? getMVP(topPlayers) : null;
+
     return (
       <div className="h-screen bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 p-6 overflow-hidden">
         <div className="max-w-6xl mx-auto h-full flex flex-col justify-between">
           <div className="text-center">
             <h1 className="text-5xl font-bold text-white mb-2 flex items-center justify-center gap-4">
               <Trophy className="w-10 h-10 text-yellow-300" />
-              {t('tv.leaderboard')}
+              {isTeamMode ? t('tv.teamLeaderboard') : t('tv.leaderboard')}
               <Trophy className="w-10 h-10 text-yellow-300" />
             </h1>
           </div>
 
-          {topPlayers.length > 0 ? (
+          {isTeamMode && teamScores.length > 0 ? (
+            <div className="space-y-3 flex-1 min-h-0 my-4">
+              {teamScores.slice(0, 4).map((team, index) => (
+                <div
+                  key={team.teamName}
+                  className={`flex items-center gap-4 p-4 rounded-2xl ${
+                    index === 0
+                      ? 'bg-yellow-500/30 border-4 border-yellow-400 scale-105'
+                      : index === 1
+                      ? 'bg-gray-400/20 border-2 border-gray-300'
+                      : index === 2
+                      ? 'bg-orange-700/20 border-2 border-orange-600'
+                      : 'bg-white/10 border-2 border-white/20'
+                  }`}
+                >
+                  <div className="text-4xl font-bold text-white/80 w-16 text-center">
+                    {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                  </div>
+                  <div className="text-3xl"><Users className="w-8 h-8 text-white" /></div>
+                  <div className="flex-1">
+                    <div className="text-2xl font-bold text-white">{team.teamName}</div>
+                    <div className="text-lg text-white/70">
+                      {team.playerCount} {t('lobby.teamMembers', { count: team.playerCount })}
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold text-yellow-300">
+                    {t('tv.teamScore', { score: team.totalScore })}
+                    {index === 0 && <Star className="inline w-8 h-8 ml-3 text-yellow-400" />}
+                  </div>
+                </div>
+              ))}
+
+              {mvp && (
+                <div className="flex items-center gap-4 p-3 rounded-2xl bg-purple-500/20 border-2 border-purple-400 mt-2">
+                  <div className="text-3xl">⭐</div>
+                  <div className="text-2xl">{mvp.avatar_emoji}</div>
+                  <div className="flex-1">
+                    <div className="text-lg font-bold text-purple-300">{t('tv.mvpPlayer')}</div>
+                    <div className="text-xl font-bold text-white">{mvp.player_name}</div>
+                  </div>
+                  <div className="text-2xl font-bold text-purple-300">{mvp.total_score}</div>
+                </div>
+              )}
+            </div>
+          ) : topPlayers.length > 0 ? (
             <div className="space-y-3 flex-1 min-h-0 my-4">
               {topPlayers.slice(0, 3).map((player, index) => (
                 <div

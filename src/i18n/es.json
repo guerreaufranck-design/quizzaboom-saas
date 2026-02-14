@@ -20,7 +20,8 @@
     "tip": "Consejo",
     "on": "ON",
     "off": "OFF",
-    "errorUnknown": "Error desconocido"
+    "errorUnknown": "Error desconocido",
+    "rateLimited": "Demasiadas solicitudes. Por favor espera un minuto."
   },
   "home": {
     "title": "QuizzaBoom",
@@ -133,6 +134,10 @@
       "verifyHint": "Verificacion de empresa requerida antes de la compra",
       "orSubscription": "O elige una suscripcion mensual"
     },
+    "alreadyOwned": "Crédito ya disponible",
+    "alreadyOwnedDesc": "Ya tienes un crédito sin usar para este plan. ¿Comprar otro de todos modos?",
+    "buyAnyway": "Comprar de todos modos",
+    "cancel": "Cancelar",
     "error": {
       "checkoutFailed": "Error al crear la sesión de pago",
       "unknown": "Error desconocido",
@@ -156,7 +161,9 @@
     "chooseAvatar": "Elige tu avatar",
     "joinBattle": "Unirse a la batalla!",
     "joining": "Uniendose...",
-    "connectionTip": "Asegurate de estar conectado a internet y de que el anfitrion haya iniciado la sesion!"
+    "connectionTip": "Asegurate de estar conectado a internet y de que el anfitrion haya iniciado la sesion!",
+    "selectTeam": "Elige tu equipo",
+    "yourTeam": "Tu equipo"
   },
   "create": {
     "title": "Crea tu Quiz",
@@ -229,7 +236,13 @@
     "jokerProtection": "Protección",
     "jokerBlock": "Bloqueo",
     "jokerSteal": "Robo",
-    "jokerDoublePoints": "Puntos Dobles"
+    "jokerDoublePoints": "Puntos Dobles",
+    "teamMode": "Modo Equipo",
+    "teamModeDesc": "Los jugadores se unen a equipos (ej: Mesa 1 vs Mesa 2)",
+    "teamNames": "Nombres de equipos",
+    "addTeam": "Añadir equipo",
+    "removeTeam": "Eliminar",
+    "teamNamePlaceholder": "Nombre del equipo"
   },
   "auth": {
     "welcome": "Bienvenido!",
@@ -317,7 +330,12 @@
     "noQuestionData": "Sin datos de pregunta",
     "questionsProgressLabel": "Preguntas",
     "kickPlayer": "Expulsar jugador",
-    "kickConfirm": "¿Seguro que quieres expulsar a {{name}} del quiz?"
+    "kickConfirm": "¿Seguro que quieres expulsar a {{name}} del quiz?",
+    "teamScores": "Puntuaciones por equipo",
+    "teamRanking": "Clasificación de equipos",
+    "exportCSV": "Exportar CSV",
+    "exportResults": "Exportar resultados",
+    "answeredCount": "{{count}}/{{total}} han respondido"
   },
   "proDashboard": {
     "noAccount": "Sin cuenta de empresa",
@@ -594,7 +612,13 @@
     "jokerProtection": "Protección",
     "jokerBlock": "Bloqueo",
     "jokerSteal": "Robo",
-    "jokerDouble": "Puntos Dobles"
+    "jokerDouble": "Puntos Dobles",
+    "team": "Equipo",
+    "teamMembers": "{{count}} miembros",
+    "previewQuestions": "Ver preguntas",
+    "previewTitle": "Vista previa del quiz",
+    "correctAnswer": "Respuesta correcta",
+    "closePreview": "Cerrar vista previa"
   },
   "offer": {
     "badge": "OFERTA EXCLUSIVA",
@@ -649,7 +673,10 @@
     "answersTitle": "Respuestas",
     "answersSelectNow": "✅ Selecciona ahora!",
     "answersWaitTime": "🔒 Espera el tiempo de respuesta",
-    "answerSubmitted": "Respuesta enviada!"
+    "answerSubmitted": "Respuesta enviada!",
+    "yourTeam": "Equipo: {{team}}",
+    "streakBadge": "Racha x{{count}}!",
+    "streakFire": "En llamas!"
   },
   "tv": {
     "howToPlay": "Cómo jugar",
@@ -692,7 +719,21 @@
     "nextQuestionIn": "Siguiente pregunta en...",
     "displayMode": "Modo pantalla TV",
     "displayModeWaiting": "Esperando datos del quiz...",
-    "funFact": "¿Sabías que?"
+    "funFact": "¿Sabías que?",
+    "teamLeaderboard": "Clasificación por equipos",
+    "teamScore": "{{score}} pts",
+    "mvp": "MVP",
+    "mvpPlayer": "Mejor jugador",
+    "answeredCount": "{{count}}/{{total}} han respondido",
+    "playersAnswered": "jugadores han respondido",
+    "badgeTitle": "Premios",
+    "badges": "Premios"
+  },
+  "badges": {
+    "quizMaster": "Maestro del Quiz",
+    "speedDemon": "Rayo",
+    "streakKing": "Rey de la Racha",
+    "socialButterfly": "Mariposa Social"
   },
   "settings": {
     "title": "Configuración",

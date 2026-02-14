@@ -20,7 +20,8 @@
     "tip": "Tip",
     "on": "ON",
     "off": "OFF",
-    "errorUnknown": "Unknown error"
+    "errorUnknown": "Unknown error",
+    "rateLimited": "Too many requests. Please wait a minute."
   },
   "home": {
     "title": "QuizzaBoom",
@@ -133,6 +134,10 @@
       "verifyHint": "Business verification required before purchase",
       "orSubscription": "Or choose a monthly subscription"
     },
+    "alreadyOwned": "Credit Already Available",
+    "alreadyOwnedDesc": "You already have an unused credit for this plan. Buy another one anyway?",
+    "buyAnyway": "Buy Anyway",
+    "cancel": "Cancel",
     "error": {
       "checkoutFailed": "Failed to create checkout session",
       "unknown": "Unknown error",
@@ -156,7 +161,9 @@
     "chooseAvatar": "Choose Your Avatar",
     "joinBattle": "Join the Battle!",
     "joining": "Joining...",
-    "connectionTip": "Make sure you're connected to the internet and the host has started the session!"
+    "connectionTip": "Make sure you're connected to the internet and the host has started the session!",
+    "selectTeam": "Choose Your Team",
+    "yourTeam": "Your Team"
   },
   "create": {
     "title": "Create Your Quiz",
@@ -229,7 +236,13 @@
     "jokerProtection": "Protection",
     "jokerBlock": "Block",
     "jokerSteal": "Steal",
-    "jokerDoublePoints": "Double Points"
+    "jokerDoublePoints": "Double Points",
+    "teamMode": "Team Mode",
+    "teamModeDesc": "Players join teams (e.g. Table 1 vs Table 2)",
+    "teamNames": "Team Names",
+    "addTeam": "Add Team",
+    "removeTeam": "Remove",
+    "teamNamePlaceholder": "Team name"
   },
   "auth": {
     "welcome": "Welcome!",
@@ -317,7 +330,12 @@
     "noQuestionData": "No question data",
     "questionsProgressLabel": "Questions",
     "kickPlayer": "Kick Player",
-    "kickConfirm": "Are you sure you want to kick {{name}} from the quiz?"
+    "kickConfirm": "Are you sure you want to kick {{name}} from the quiz?",
+    "teamScores": "Team Scores",
+    "teamRanking": "Team Ranking",
+    "exportCSV": "Export CSV",
+    "exportResults": "Export Results",
+    "answeredCount": "{{count}}/{{total}} answered"
   },
   "proDashboard": {
     "noAccount": "No Business Account",
@@ -594,7 +612,13 @@
     "jokerProtection": "Protection",
     "jokerBlock": "Block",
     "jokerSteal": "Steal",
-    "jokerDouble": "Double Points"
+    "jokerDouble": "Double Points",
+    "team": "Team",
+    "teamMembers": "{{count}} members",
+    "previewQuestions": "Preview Questions",
+    "previewTitle": "Quiz Preview",
+    "correctAnswer": "Correct answer",
+    "closePreview": "Close Preview"
   },
   "offer": {
     "badge": "EXCLUSIVE OFFER",
@@ -649,7 +673,10 @@
     "answersTitle": "Answers",
     "answersSelectNow": "✅ Select Now!",
     "answersWaitTime": "🔒 Wait for answer time",
-    "answerSubmitted": "Answer Submitted!"
+    "answerSubmitted": "Answer Submitted!",
+    "yourTeam": "Team: {{team}}",
+    "streakBadge": "Streak x{{count}}!",
+    "streakFire": "On Fire!"
   },
   "tv": {
     "howToPlay": "How to Play",
@@ -692,7 +719,21 @@
     "nextQuestionIn": "Next question in...",
     "displayMode": "TV Display Mode",
     "displayModeWaiting": "Waiting for quiz data...",
-    "funFact": "Did You Know?"
+    "funFact": "Did You Know?",
+    "teamLeaderboard": "Team Rankings",
+    "teamScore": "{{score}} pts",
+    "mvp": "MVP",
+    "mvpPlayer": "Best Player",
+    "answeredCount": "{{count}}/{{total}} answered",
+    "playersAnswered": "players answered",
+    "badgeTitle": "Awards",
+    "badges": "Awards"
+  },
+  "badges": {
+    "quizMaster": "Quiz Master",
+    "speedDemon": "Speed Demon",
+    "streakKing": "Streak King",
+    "socialButterfly": "Social Butterfly"
   },
   "settings": {
     "title": "Settings",

@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/useAuthStore';
+import { supabase } from '../services/supabase/client';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Check, ArrowLeft, Gift, Globe, Clock, Zap, Users, Shield, Loader2 } from 'lucide-react';
+import { Modal } from '../components/ui/Modal';
+import { Check, ArrowLeft, Gift, Globe, Clock, Zap, Users, Shield, Loader2, AlertCircle } from 'lucide-react';
 
 export const SpecialOffer: React.FC = () => {
   const routerNavigate = useNavigate();
@@ -14,6 +16,41 @@ export const SpecialOffer: React.FC = () => {
   const [promoCode, setPromoCode] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoResult, setPromoResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [unusedPurchases, setUnusedPurchases] = useState<Array<{ plan_name: string }>>([]);
+  const [showAlreadyOwnedModal, setShowAlreadyOwnedModal] = useState(false);
+  const [pendingCheckout, setPendingCheckout] = useState<{ priceId: string; planName: string } | null>(null);
+
+  // Fetch unused purchases to check for duplicates
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('user_purchases')
+        .select('plan_name')
+        .eq('user_id', user.id)
+        .eq('used', false)
+        .then(({ data }) => {
+          if (data) setUnusedPurchases(data);
+        });
+    }
+  }, [user]);
+
+  const handleCheckoutWithCheck = (priceId: string, planName: string) => {
+    const alreadyOwned = unusedPurchases.some(p => p.plan_name === planName);
+    if (alreadyOwned) {
+      setPendingCheckout({ priceId, planName });
+      setShowAlreadyOwnedModal(true);
+      return;
+    }
+    handleCheckout(priceId, planName);
+  };
+
+  const handleConfirmDuplicatePurchase = () => {
+    setShowAlreadyOwnedModal(false);
+    if (pendingCheckout) {
+      handleCheckout(pendingCheckout.priceId, pendingCheckout.planName);
+      setPendingCheckout(null);
+    }
+  };
 
   const handleCheckout = async (priceId: string, planName: string) => {
     if (!user) {
@@ -288,7 +325,7 @@ export const SpecialOffer: React.FC = () => {
                   size="lg"
                   gradient={plan.popular}
                   variant={plan.popular ? 'primary' : 'secondary'}
-                  onClick={() => handleCheckout(plan.priceId, plan.name)}
+                  onClick={() => handleCheckoutWithCheck(plan.priceId, plan.name)}
                   loading={loading === plan.priceId}
                   disabled={!!loading}
                   className="text-lg"
@@ -356,6 +393,39 @@ export const SpecialOffer: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Already Owned Modal */}
+      <Modal
+        isOpen={showAlreadyOwnedModal}
+        onClose={() => setShowAlreadyOwnedModal(false)}
+        title={t('pricing.alreadyOwned')}
+        size="sm"
+      >
+        <div className="text-center">
+          <div className="w-16 h-16 bg-qb-yellow/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-qb-yellow" />
+          </div>
+          <p className="text-white/80 text-lg mb-6">
+            {t('pricing.alreadyOwnedDesc')}
+          </p>
+          <div className="flex gap-3">
+            <Button
+              fullWidth
+              variant="ghost"
+              onClick={() => setShowAlreadyOwnedModal(false)}
+            >
+              {t('pricing.cancel')}
+            </Button>
+            <Button
+              fullWidth
+              gradient
+              onClick={handleConfirmDuplicatePurchase}
+            >
+              {t('pricing.buyAnyway')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

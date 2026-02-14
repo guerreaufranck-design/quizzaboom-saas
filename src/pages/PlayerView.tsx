@@ -4,9 +4,9 @@ import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Shield, Ban, Coins, Star, Clock, X, Trophy } from 'lucide-react';
+import { Shield, Ban, Coins, Star, Clock, X, Trophy, Flame } from 'lucide-react';
 import { useCountdown } from '../hooks/useCountdown';
-import { useSoundEffects } from '../hooks/useSoundEffects';
+import { useQuizAudio } from '../hooks/useQuizAudio';
 import { supabase } from '../services/supabase/client';
 
 export const PlayerView: React.FC = () => {
@@ -32,7 +32,7 @@ export const PlayerView: React.FC = () => {
     closeTargetSelector,
   } = useStrategicQuizStore();
   const displaySeconds = useCountdown(phaseEndTime);
-  const { playCorrect, playIncorrect } = useSoundEffects();
+  const { playCorrectSound, playWrongSound, playApplause } = useQuizAudio();
 
   const wakeLockRef = useRef<any>(null);
   const [playerRank, setPlayerRank] = useState(0);
@@ -150,8 +150,13 @@ export const PlayerView: React.FC = () => {
     document.addEventListener('touchstart', handleInteraction, { passive: true });
     document.addEventListener('click', handleInteraction);
 
-    // === Polling périodique de la phase depuis la DB (filet de sécurité) ===
-    pollIntervalRef.current = setInterval(pollPhaseFromDB, 3000);
+    // === Polling périodique de la phase depuis la DB (filet de sécurité — fallback only) ===
+    pollIntervalRef.current = setInterval(() => {
+      // Skip polling if Realtime channel is healthy
+      const channelState = getChannelState();
+      if (channelState === 'SUBSCRIBED') return;
+      pollPhaseFromDB();
+    }, 10000);
 
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
@@ -180,7 +185,7 @@ export const PlayerView: React.FC = () => {
       loadPlayers(currentSession.id);
       const interval = setInterval(() => {
         loadPlayers(currentSession.id);
-      }, 2000);
+      }, 8000);
       return () => clearInterval(interval);
     }
   }, [currentSession?.id]);
@@ -210,9 +215,10 @@ export const PlayerView: React.FC = () => {
         const correctAnswer = currentQuestion.correct_answer;
         const wasCorrect = selectedAnswer === correctAnswer;
         if (wasCorrect) {
-          playCorrect();
+          playCorrectSound();
+          setTimeout(() => playApplause(), 300);
         } else {
-          playIncorrect();
+          playWrongSound();
         }
       }
     }
@@ -315,6 +321,11 @@ export const PlayerView: React.FC = () => {
               <div className="text-4xl">{currentPlayer.avatar_emoji}</div>
               <div>
                 <div className="text-white font-bold text-xl">{currentPlayer.player_name}</div>
+                {currentPlayer.team_name && (
+                  <div className="inline-block px-2 py-0.5 bg-qb-cyan/20 border border-qb-cyan/40 rounded-full text-qb-cyan text-xs font-bold mt-0.5">
+                    {t('player.yourTeam', { team: currentPlayer.team_name })}
+                  </div>
+                )}
                 <div className="text-qb-cyan text-xs">{t('player.sessionLabel', { code: sessionCode })}</div>
               </div>
             </div>
@@ -476,6 +487,18 @@ export const PlayerView: React.FC = () => {
             <div className="mt-4 p-3 bg-blue-500/20 border-2 border-blue-500 rounded-lg text-center">
               <div className="text-4xl mb-2">✅</div>
               <p className="text-lg font-bold text-blue-400">{t('player.answerSubmitted')}</p>
+            </div>
+          )}
+
+          {currentPhase === 'results' && currentPlayer && currentPlayer.current_streak >= 3 && (
+            <div className="mt-3 p-3 bg-orange-500/20 border-2 border-orange-400 rounded-lg text-center animate-pulse">
+              <div className="flex items-center justify-center gap-2">
+                <Flame className="w-6 h-6 text-orange-400" />
+                <span className="text-2xl font-bold text-orange-300">
+                  {t('player.streakBadge', { count: currentPlayer.current_streak })}
+                </span>
+                <Flame className="w-6 h-6 text-orange-400" />
+              </div>
             </div>
           )}
 

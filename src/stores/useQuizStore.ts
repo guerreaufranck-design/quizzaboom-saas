@@ -52,8 +52,8 @@ interface QuizState {
   setCurrentView: (view: string) => void;
   setError: (error: string | null) => void;
   generateQuiz: (request: QuizGenRequest) => Promise<Quiz>;
-  createSession: (quizId: string, enabledJokers?: { protection: boolean; block: boolean; steal: boolean; double_points: boolean }, commercialBreaks?: CommercialBreakConfig) => Promise<string>;
-  joinSession: (code: string, playerName: string, email?: string, avatarEmoji?: string) => Promise<void>;
+  createSession: (quizId: string, enabledJokers?: { protection: boolean; block: boolean; steal: boolean; double_points: boolean }, commercialBreaks?: CommercialBreakConfig, teamMode?: boolean, teamNames?: string[]) => Promise<string>;
+  joinSession: (code: string, playerName: string, email?: string, avatarEmoji?: string, teamName?: string) => Promise<void>;
   loadPlayers: (sessionId: string) => Promise<void>;
   startSession: () => Promise<void>;
   endSession: () => Promise<void>;
@@ -280,7 +280,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
     }
   },
 
-  createSession: async (quizId, enabledJokers, commercialBreaks) => {
+  createSession: async (quizId, enabledJokers, commercialBreaks, teamMode, teamNames) => {
     set({ isLoading: true, error: null });
     try {
       console.log('📝 Creating session for quiz:', quizId);
@@ -315,6 +315,8 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       if (enabledJokers) settings.enabledJokers = enabledJokers;
       if (breakSchedule) settings.breakSchedule = breakSchedule;
       if (commercialBreaks?.promoMessage) settings.promoMessage = commercialBreaks.promoMessage;
+      if (teamMode) settings.teamMode = true;
+      if (teamNames && teamNames.length > 0) settings.teamNames = teamNames;
 
       const session: Partial<QuizSession> = {
         id: sessionId,
@@ -327,6 +329,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         unlimited_players: true,
         settings,
         party_mode: false,
+        team_mode: teamMode || false,
         total_players: 0,
         active_players: 0,
         peak_concurrent_players: 0,
@@ -375,7 +378,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
     }
   },
 
-  joinSession: async (code, playerName, email, avatarEmoji) => {
+  joinSession: async (code, playerName, email, avatarEmoji, teamName) => {
     set({ isLoading: true, error: null });
     try {
       console.log('🎮 Joining session:', code);
@@ -404,6 +407,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         email,
         avatar_emoji: avatarEmoji || getRandomEmoji(),
         player_color: getRandomColor(),
+        team_name: teamName || null,
         total_score: 0,
         current_stage: 0,
         questions_answered: 0,

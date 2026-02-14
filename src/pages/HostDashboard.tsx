@@ -22,6 +22,7 @@ import {
   Coffee,
   Home,
   UserMinus,
+  Download,
 } from 'lucide-react';
 import { useQuizAudio } from '../hooks/useQuizAudio';
 import { useAppNavigate } from '../hooks/useAppNavigate';
@@ -30,11 +31,12 @@ import type { GamePhase } from '../types/gamePhases';
 import { PHASE_DURATIONS, PHASE_ORDER } from '../types/gamePhases';
 import type { Question, CommercialBreakSchedule } from '../types/quiz';
 import { supabase } from '../services/supabase/client';
+import { calculateTeamScores } from '../utils/teamScores';
 
 export const HostDashboard: React.FC = () => {
   const { t } = useTranslation();
   const { currentQuiz, currentSession, players, sessionCode, loadPlayers, endSession } = useQuizStore();
-  const { allQuestions, loadQuestions, broadcastPhaseChange } = useStrategicQuizStore();
+  const { allQuestions, loadQuestions, broadcastPhaseChange, answeredCount } = useStrategicQuizStore();
 
   const [currentPhaseState, setCurrentPhaseState] = useState<GamePhase>('theme_announcement');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -68,6 +70,19 @@ export const HostDashboard: React.FC = () => {
   const sessionSettings = (currentSession?.settings as Record<string, unknown>) || {};
   const breakSchedule = sessionSettings.breakSchedule as CommercialBreakSchedule | undefined;
   const promoMessage = sessionSettings.promoMessage as string | undefined;
+  const isTeamMode = !!(currentSession?.team_mode || sessionSettings.teamMode);
+  const teamScores = isTeamMode ? calculateTeamScores(players) : [];
+
+  const TEAM_PROGRESS_COLORS = [
+    'from-blue-500 to-blue-600',
+    'from-red-500 to-red-600',
+    'from-green-500 to-green-600',
+    'from-yellow-500 to-yellow-600',
+    'from-purple-500 to-purple-600',
+    'from-pink-500 to-pink-600',
+    'from-orange-500 to-orange-600',
+    'from-cyan-500 to-cyan-600',
+  ];
 
   useEffect(() => {
     if (currentQuiz?.id) {
@@ -339,6 +354,29 @@ export const HostDashboard: React.FC = () => {
 
   const playersWithEmail = players.filter(p => p.email);
 
+  const exportCSV = () => {
+    const sortedPlayers = [...players].sort((a, b) => b.total_score - a.total_score);
+    const headers = ['Rank', 'Name', 'Team', 'Score', 'Correct', 'Total', 'Accuracy%', 'Best Streak'];
+    const rows = sortedPlayers.map((p, i) => [
+      i + 1,
+      `"${p.player_name}"`,
+      `"${p.team_name || '-'}"`,
+      p.total_score,
+      p.correct_answers,
+      p.questions_answered,
+      p.questions_answered > 0 ? Math.round((p.correct_answers / p.questions_answered) * 100) : 0,
+      p.best_streak,
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `quizzaboom-results-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleSendResults = async () => {
     if (!currentSession || !currentQuiz) return;
     setEmailsSending(true);
@@ -438,6 +476,36 @@ export const HostDashboard: React.FC = () => {
             <p className="text-2xl text-white/70">{currentQuiz.title}</p>
           </Card>
 
+          {isTeamMode && teamScores.length > 0 && (
+            <Card gradient className="p-8">
+              <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                <Users className="w-8 h-8 text-qb-cyan" />
+                {t('host.teamRanking')}
+              </h2>
+              <div className="space-y-3">
+                {teamScores.map((team, idx) => {
+                  const maxScore = teamScores[0]?.totalScore || 1;
+                  const pct = Math.round((team.totalScore / maxScore) * 100);
+                  return (
+                    <div key={team.teamName}>
+                      <div className="flex justify-between text-white mb-1">
+                        <span className="font-bold text-lg">{idx === 0 ? '🥇 ' : idx === 1 ? '🥈 ' : idx === 2 ? '🥉 ' : `#${idx + 1} `}{team.teamName}</span>
+                        <span className="font-bold text-qb-cyan text-lg">{team.totalScore} pts</span>
+                      </div>
+                      <div className="h-4 bg-qb-darker rounded-full overflow-hidden">
+                        <div
+                          className={`h-full bg-gradient-to-r ${TEAM_PROGRESS_COLORS[idx % TEAM_PROGRESS_COLORS.length]} transition-all`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <div className="text-xs text-white/50 mt-1">{team.playerCount} players &middot; {team.correctAnswers} correct answers</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
+
           <Card gradient className="p-8">
             <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
               <Trophy className="w-8 h-8 text-yellow-400" />
@@ -467,6 +535,23 @@ export const HostDashboard: React.FC = () => {
                   <div className="text-2xl font-bold text-qb-cyan">{player.total_score}</div>
                 </div>
               ))}
+            </div>
+          </Card>
+
+          {/* Export CSV */}
+          <Card gradient className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Download className="w-5 h-5 text-white/70" />
+                <span className="text-white/70">{t('host.exportResults')}</span>
+              </div>
+              <Button
+                variant="secondary"
+                icon={<Download className="w-4 h-4" />}
+                onClick={exportCSV}
+              >
+                {t('host.exportCSV')}
+              </Button>
             </div>
           </Card>
 
@@ -576,6 +661,23 @@ export const HostDashboard: React.FC = () => {
                 <div className="text-xl text-white/90">
                   {t('host.questionProgress', { current: currentQuestionIndex + 1, total: allQuestions.length })}
                 </div>
+                {currentPhaseState === 'answer_selection' && (
+                  <div className="flex items-center justify-center gap-3 mt-2">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white/20 rounded-full">
+                      <span className="text-2xl font-bold text-white">
+                        {t('host.answeredCount', { count: answeredCount, total: players.length })}
+                      </span>
+                    </div>
+                    {players.length > 0 && (
+                      <div className="w-32 h-3 bg-white/20 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-white rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min((answeredCount / players.length) * 100, 100)}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
                 {currentQuestion && currentPhaseState !== 'commercial_break' && (
                   <div className="text-2xl text-yellow-300 font-bold">
                     {t('host.themePrefix', { theme: currentQuestion.stage_id })}
@@ -777,6 +879,36 @@ export const HostDashboard: React.FC = () => {
                 </div>
               </div>
             </Card>
+
+            {isTeamMode && teamScores.length > 0 && (
+              <Card gradient className="p-6">
+                <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-qb-cyan" />
+                  {t('host.teamRanking')}
+                </h3>
+                <div className="space-y-3">
+                  {teamScores.map((team, idx) => {
+                    const maxScore = teamScores[0]?.totalScore || 1;
+                    const pct = Math.round((team.totalScore / maxScore) * 100);
+                    return (
+                      <div key={team.teamName}>
+                        <div className="flex justify-between text-sm text-white mb-1">
+                          <span className="font-bold">{idx === 0 ? '🥇 ' : idx === 1 ? '🥈 ' : idx === 2 ? '🥉 ' : ''}{team.teamName}</span>
+                          <span className="text-qb-cyan">{team.totalScore} pts</span>
+                        </div>
+                        <div className="h-3 bg-qb-darker rounded-full overflow-hidden">
+                          <div
+                            className={`h-full bg-gradient-to-r ${TEAM_PROGRESS_COLORS[idx % TEAM_PROGRESS_COLORS.length]} transition-all`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-white/50 mt-0.5">{team.playerCount} players &middot; {team.correctAnswers} correct</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            )}
 
             <Card gradient className="p-6">
               <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
