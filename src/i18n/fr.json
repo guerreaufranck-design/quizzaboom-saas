@@ -315,7 +315,9 @@
     "explanationLabel": "Explication :",
     "funFactLabel": "Le saviez-vous :",
     "noQuestionData": "Aucune donnée de question",
-    "questionsProgressLabel": "Questions"
+    "questionsProgressLabel": "Questions",
+    "kickPlayer": "Expulser",
+    "kickConfirm": "Voulez-vous vraiment expulser {{name}} du quiz ?"
   },
   "proDashboard": {
     "noAccount": "Pas de compte pro",
@@ -532,7 +534,17 @@
     "viewGuide": "Voir le guide",
     "proDashboard": "Dashboard Pro",
     "proDashboardDesc": "Accedez a votre tableau de bord professionnel et gerez votre abonnement B2B.",
-    "upToPlayers": "Jusqu'à {{count}} joueurs"
+    "upToPlayers": "Jusqu'à {{count}} joueurs",
+    "totalQuizzes": "Quiz animés",
+    "totalPlayers": "Joueurs total",
+    "totalSpent": "Total dépensé",
+    "quickActions": "Actions rapides",
+    "joinQuiz": "Rejoindre un quiz",
+    "recentSessions": "Sessions récentes",
+    "noSessions": "Aucune session de quiz. Créez votre premier quiz !",
+    "players": "{{count}} joueurs",
+    "completed": "Terminé",
+    "inProgress": "En cours"
   },
   "lobby": {
     "startWarningTitle": "Attention",
@@ -679,7 +691,8 @@
     "getReady": "Préparez-vous !",
     "nextQuestionIn": "Prochaine question dans...",
     "displayMode": "Mode affichage TV",
-    "displayModeWaiting": "En attente des données du quiz..."
+    "displayModeWaiting": "En attente des données du quiz...",
+    "funFact": "Le saviez-vous ?"
   },
   "settings": {
     "title": "Paramètres",

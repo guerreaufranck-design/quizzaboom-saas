@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { supabase } from '../services/supabase/client';
 import { Card } from '../components/ui/Card';
-import { Clock, Trophy, Star } from 'lucide-react';
+import { Clock, Trophy, Star, Lightbulb } from 'lucide-react';
 import type { Player } from '../types/quiz';
 import { useQuizAudio } from '../hooks/useQuizAudio';
 import { useCountdown } from '../hooks/useCountdown';
@@ -598,6 +598,16 @@ export const TVDisplay: React.FC = () => {
               {correctAnswer}
             </p>
           </div>
+
+          {currentQuestion?.fun_fact && (
+            <div className="bg-yellow-500/10 backdrop-blur-xl border border-yellow-400/30 rounded-2xl p-5 mb-4 max-w-4xl">
+              <div className="flex items-center gap-2 mb-2">
+                <Lightbulb className="w-6 h-6 text-yellow-300" />
+                <span className="text-yellow-300 font-bold text-lg">{t('tv.funFact')}</span>
+              </div>
+              <p className="text-white/90 text-xl">{currentQuestion.fun_fact}</p>
+            </div>
+          )}
 
           <div className="inline-flex items-center gap-4 px-8 py-4 bg-white/10 rounded-3xl">
             <Clock className="w-10 h-10 text-white" />

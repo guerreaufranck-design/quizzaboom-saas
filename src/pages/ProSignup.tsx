@@ -246,10 +246,10 @@ export const ProSignup: React.FC = () => {
           <div className="mb-8">
             <Button
               variant="ghost"
-              onClick={() => navigate('/pricing')}
+              onClick={() => navigate('/dashboard')}
               icon={<ArrowLeft />}
             >
-              {t('proSignup.backToPricing')}
+              {t('common.backToHome')}
             </Button>
           </div>
 

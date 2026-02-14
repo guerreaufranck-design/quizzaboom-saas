@@ -156,7 +156,7 @@ export const CreateQuiz: React.FC = () => {
           <div className="flex items-center gap-4 mb-8">
             <Button
               variant="ghost"
-              onClick={() => navigate('home')}
+              onClick={() => navigate('dashboard')}
               icon={<ArrowLeft />}
               disabled={isLoading}
             >

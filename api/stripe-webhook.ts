@@ -85,6 +85,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (userId) {
+        // Check for duplicate webhook (idempotency)
+        const { data: existing } = await supabase
+          .from('user_purchases')
+          .select('id')
+          .eq('stripe_session_id', session.id)
+          .maybeSingle();
+
+        if (existing) {
+          console.log('⚠️ Duplicate webhook detected, skipping:', session.id);
+          return res.status(200).json({ received: true, duplicate: true });
+        }
+
         // Create purchase record linked to the authenticated user
         const { error: purchaseError } = await supabase
           .from('user_purchases')

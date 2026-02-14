@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Shield, Ban, Coins, Star, Clock, X, Trophy } from 'lucide-react';
 import { useCountdown } from '../hooks/useCountdown';
+import { useSoundEffects } from '../hooks/useSoundEffects';
 import { supabase } from '../services/supabase/client';
 
 export const PlayerView: React.FC = () => {
@@ -31,6 +32,7 @@ export const PlayerView: React.FC = () => {
     closeTargetSelector,
   } = useStrategicQuizStore();
   const displaySeconds = useCountdown(phaseEndTime);
+  const { playCorrect, playIncorrect } = useSoundEffects();
 
   const wakeLockRef = useRef<any>(null);
   const [playerRank, setPlayerRank] = useState(0);
@@ -200,6 +202,19 @@ export const PlayerView: React.FC = () => {
     if (currentPhase === 'theme_announcement' && lastPhaseRef.current !== 'theme_announcement') {
       console.log('🔓 Updating score to:', currentPlayer?.total_score);
       setFrozenScore(currentPlayer?.total_score || 0);
+    }
+
+    // Play sound on results phase (correct/incorrect feedback)
+    if (currentPhase === 'results' && lastPhaseRef.current !== 'results') {
+      if (hasAnswered && currentQuestion) {
+        const correctAnswer = currentQuestion.correct_answer;
+        const wasCorrect = selectedAnswer === correctAnswer;
+        if (wasCorrect) {
+          playCorrect();
+        } else {
+          playIncorrect();
+        }
+      }
     }
 
     lastPhaseRef.current = currentPhase;
@@ -461,6 +476,14 @@ export const PlayerView: React.FC = () => {
             <div className="mt-4 p-3 bg-blue-500/20 border-2 border-blue-500 rounded-lg text-center">
               <div className="text-4xl mb-2">✅</div>
               <p className="text-lg font-bold text-blue-400">{t('player.answerSubmitted')}</p>
+            </div>
+          )}
+
+          {currentPhase === 'results' && currentQuestion?.fun_fact && (
+            <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+              <p className="text-qb-yellow/80 text-sm italic">
+                💡 {currentQuestion.fun_fact}
+              </p>
             </div>
           )}
         </Card>

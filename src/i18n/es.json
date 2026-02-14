@@ -315,7 +315,9 @@
     "explanationLabel": "Explicación:",
     "funFactLabel": "Dato curioso:",
     "noQuestionData": "Sin datos de pregunta",
-    "questionsProgressLabel": "Preguntas"
+    "questionsProgressLabel": "Preguntas",
+    "kickPlayer": "Expulsar jugador",
+    "kickConfirm": "¿Seguro que quieres expulsar a {{name}} del quiz?"
   },
   "proDashboard": {
     "noAccount": "Sin cuenta de empresa",
@@ -532,7 +534,17 @@
     "viewGuide": "Ver guia",
     "proDashboard": "Dashboard Pro",
     "proDashboardDesc": "Accede a tu panel profesional y gestiona tu suscripcion B2B.",
-    "upToPlayers": "Hasta {{count}} jugadores"
+    "upToPlayers": "Hasta {{count}} jugadores",
+    "totalQuizzes": "Quizzes organizados",
+    "totalPlayers": "Jugadores total",
+    "totalSpent": "Total gastado",
+    "quickActions": "Acciones rápidas",
+    "joinQuiz": "Unirse a un quiz",
+    "recentSessions": "Sesiones recientes",
+    "noSessions": "Sin sesiones de quiz todavía. ¡Crea tu primer quiz!",
+    "players": "{{count}} jugadores",
+    "completed": "Completado",
+    "inProgress": "En curso"
   },
   "lobby": {
     "startWarningTitle": "Advertencia",
@@ -679,7 +691,8 @@
     "getReady": "¡Prepárate!",
     "nextQuestionIn": "Siguiente pregunta en...",
     "displayMode": "Modo pantalla TV",
-    "displayModeWaiting": "Esperando datos del quiz..."
+    "displayModeWaiting": "Esperando datos del quiz...",
+    "funFact": "¿Sabías que?"
   },
   "settings": {
     "title": "Configuración",

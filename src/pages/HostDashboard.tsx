@@ -21,6 +21,7 @@ import {
   VolumeX,
   Coffee,
   Home,
+  UserMinus,
 } from 'lucide-react';
 import { useQuizAudio } from '../hooks/useQuizAudio';
 import { useAppNavigate } from '../hooks/useAppNavigate';
@@ -375,6 +376,31 @@ export const HostDashboard: React.FC = () => {
       console.error('Failed to send results emails:', error);
     } finally {
       setEmailsSending(false);
+    }
+  };
+
+  const handleKickPlayer = async (playerId: string, playerName: string) => {
+    if (!confirm(t('host.kickConfirm', { name: playerName }))) return;
+    try {
+      await supabase
+        .from('session_players')
+        .delete()
+        .eq('id', playerId);
+
+      // Broadcast kick event so player gets notified
+      if (sessionCode) {
+        const channel = supabase.channel(`quiz:${sessionCode}`);
+        await channel.send({
+          type: 'broadcast',
+          event: 'player_kicked',
+          payload: { playerId },
+        });
+      }
+
+      // Refresh player list
+      if (currentSession?.id) loadPlayers(currentSession.id);
+    } catch (error) {
+      console.error('Failed to kick player:', error);
     }
   };
 
@@ -805,6 +831,13 @@ export const HostDashboard: React.FC = () => {
                       className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: player.is_connected ? '#10B981' : '#EF4444' }}
                     />
+                    <button
+                      onClick={() => handleKickPlayer(player.id, player.player_name)}
+                      className="text-red-400/50 hover:text-red-400 transition-colors p-1"
+                      title={t('host.kickPlayer')}
+                    >
+                      <UserMinus className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
               </div>

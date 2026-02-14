@@ -6,7 +6,10 @@ import { Card } from '../components/ui/Card';
 import { useAuthStore } from '../stores/useAuthStore';
 import { signOut } from '../services/auth';
 import { supabase } from '../services/supabase/client';
-import { Plus, LogOut, CreditCard, Trophy, Loader2, BookOpen, Building2, Settings } from 'lucide-react';
+import {
+  Plus, LogOut, CreditCard, Trophy, Loader2, BookOpen, Building2, Settings,
+  Gamepad2, Users, DollarSign, ArrowLeft, Zap, BarChart3, Clock,
+} from 'lucide-react';
 import { useAppNavigate } from '../hooks/useAppNavigate';
 import { useOrganizationStore } from '../stores/useOrganizationStore';
 
@@ -16,6 +19,17 @@ interface Purchase {
   max_players: number;
   created_at: string;
   used: boolean;
+  amount?: number;
+}
+
+interface QuizSession {
+  id: string;
+  session_code: string;
+  status: string;
+  created_at: string;
+  quiz_id: string;
+  player_count: number;
+  quiz_title?: string;
 }
 
 export const Dashboard: React.FC = () => {
@@ -25,6 +39,7 @@ export const Dashboard: React.FC = () => {
   const { currentOrganization, fetchOrganization } = useOrganizationStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [sessions, setSessions] = useState<QuizSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [waitingForPayment, setWaitingForPayment] = useState(false);
   const pollCountRef = useRef(0);
@@ -37,6 +52,7 @@ export const Dashboard: React.FC = () => {
     }
 
     loadPurchases();
+    loadSessions();
     fetchOrganization(user.id);
   }, [user]);
 
@@ -49,7 +65,7 @@ export const Dashboard: React.FC = () => {
 
     const pollInterval = setInterval(async () => {
       pollCountRef.current++;
-      console.log(`💳 Polling for new purchase (attempt ${pollCountRef.current})...`);
+      console.log(`Payment polling attempt ${pollCountRef.current}...`);
 
       const { data } = await supabase
         .from('user_purchases')
@@ -59,28 +75,22 @@ export const Dashboard: React.FC = () => {
 
       const currentCount = data?.length || 0;
 
-      // First poll: store initial count
       if (initialPurchaseCountRef.current === null) {
         initialPurchaseCountRef.current = purchases.length;
       }
 
-      // New purchase detected!
       if (currentCount > (initialPurchaseCountRef.current || 0)) {
-        console.log('✅ New purchase detected!');
         setPurchases(data || []);
         setWaitingForPayment(false);
-        setSearchParams({}, { replace: true }); // Clean URL
+        setSearchParams({}, { replace: true });
         clearInterval(pollInterval);
         return;
       }
 
-      // Timeout after 30 attempts (60 seconds)
       if (pollCountRef.current >= 30) {
-        console.log('⏱️ Payment polling timeout');
         setWaitingForPayment(false);
         setSearchParams({}, { replace: true });
         clearInterval(pollInterval);
-        // Reload one final time
         setPurchases(data || []);
       }
     }, 2000);
@@ -105,22 +115,78 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const loadSessions = async () => {
+    try {
+      const { data: sessionsData, error } = await supabase
+        .from('quiz_sessions')
+        .select('id, session_code, status, created_at, quiz_id')
+        .eq('host_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      if (!sessionsData || sessionsData.length === 0) {
+        setSessions([]);
+        return;
+      }
+
+      // Fetch player counts for each session
+      const enrichedSessions = await Promise.all(
+        sessionsData.map(async (session) => {
+          const { count } = await supabase
+            .from('session_players')
+            .select('*', { count: 'exact', head: true })
+            .eq('session_id', session.id);
+
+          // Get quiz title
+          const { data: quizData } = await supabase
+            .from('ai_generated_quizzes')
+            .select('title')
+            .eq('id', session.quiz_id)
+            .single();
+
+          return {
+            ...session,
+            player_count: count || 0,
+            quiz_title: quizData?.title || 'Quiz',
+          };
+        })
+      );
+
+      setSessions(enrichedSessions);
+    } catch (error) {
+      console.error('Load sessions error:', error);
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate('home');
   };
 
   const availableCredits = purchases.filter(p => !p.used).length;
+  const totalQuizzes = purchases.filter(p => p.used).length;
+  const totalPlayers = sessions.reduce((sum, s) => sum + s.player_count, 0);
+  const totalSpent = purchases.reduce((sum, p) => sum + (p.amount || 0), 0) / 100;
 
   return (
     <div className="min-h-screen bg-qb-dark py-12">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h1 className="text-5xl font-bold text-white mb-2">{t('dashboard.title')}</h1>
-              <p className="text-white/70">{t('dashboard.welcomeBack', { email: user?.email })}</p>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('home')}
+                icon={<ArrowLeft />}
+              >
+                {t('common.backToHome')}
+              </Button>
+              <div>
+                <h1 className="text-4xl font-bold text-white">{t('dashboard.title')}</h1>
+                <p className="text-white/70">{t('dashboard.welcomeBack', { email: user?.email })}</p>
+              </div>
             </div>
             <div className="flex gap-2">
               <Button
@@ -142,7 +208,7 @@ export const Dashboard: React.FC = () => {
 
           {/* Payment processing banner */}
           {waitingForPayment && (
-            <Card className="p-4 mb-8 bg-gradient-to-r from-green-500/20 to-qb-cyan/20 border border-green-500/50">
+            <Card className="p-4 mb-6 bg-gradient-to-r from-green-500/20 to-qb-cyan/20 border border-green-500/50">
               <div className="flex items-center gap-3 justify-center">
                 <Loader2 className="w-5 h-5 text-green-400 animate-spin" />
                 <span className="text-green-400 font-bold">{t('dashboard.paymentProcessing')}</span>
@@ -150,44 +216,64 @@ export const Dashboard: React.FC = () => {
             </Card>
           )}
 
-          {/* Stats */}
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
-            <Card gradient className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-qb-cyan/20 rounded-xl flex items-center justify-center">
-                  <CreditCard className="w-6 h-6 text-qb-cyan" />
+          {/* Stats Grid — 4 cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <Card gradient className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 bg-qb-cyan/20 rounded-xl flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-qb-cyan" />
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-white">{availableCredits}</div>
-                  <div className="text-white/70">{t('dashboard.availableCredits')}</div>
-                </div>
-              </div>
-              {availableCredits === 0 && purchases.length > 0 && (
-                <Button
-                  size="sm"
-                  gradient
-                  className="mt-4 w-full"
-                  onClick={() => navigate('pricing')}
-                  icon={<Plus />}
-                >
-                  {t('dashboard.buyMore')}
-                </Button>
-              )}
-            </Card>
-
-            <Card gradient className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-qb-purple/20 rounded-xl flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-qb-purple" />
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-white">{purchases.length}</div>
-                  <div className="text-white/70">{t('dashboard.totalPurchases')}</div>
+                  <div className="text-2xl font-bold text-white">{availableCredits}</div>
+                  <div className="text-white/60 text-sm">{t('dashboard.availableCredits')}</div>
                 </div>
               </div>
             </Card>
 
-            <Card gradient className="p-6">
+            <Card gradient className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 bg-qb-purple/20 rounded-xl flex items-center justify-center">
+                  <Gamepad2 className="w-5 h-5 text-qb-purple" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{totalQuizzes}</div>
+                  <div className="text-white/60 text-sm">{t('dashboard.totalQuizzes')}</div>
+                </div>
+              </div>
+            </Card>
+
+            <Card gradient className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 bg-qb-magenta/20 rounded-xl flex items-center justify-center">
+                  <Users className="w-5 h-5 text-qb-magenta" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{totalPlayers}</div>
+                  <div className="text-white/60 text-sm">{t('dashboard.totalPlayers')}</div>
+                </div>
+              </div>
+            </Card>
+
+            <Card gradient className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 bg-qb-yellow/20 rounded-xl flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-qb-yellow" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">${totalSpent.toFixed(0)}</div>
+                  <div className="text-white/60 text-sm">{t('dashboard.totalSpent')}</div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Quick Actions */}
+          <Card gradient className="p-6 mb-8">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <Zap className="w-5 h-5 text-qb-yellow" />
+              {t('dashboard.quickActions')}
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <Button
                 fullWidth
                 size="lg"
@@ -198,43 +284,50 @@ export const Dashboard: React.FC = () => {
               >
                 {t('dashboard.createQuiz')}
               </Button>
-              {availableCredits === 0 && (
-                <p className="text-xs text-white/60 mt-2 text-center">
-                  {t('dashboard.noCredits')}
-                </p>
-              )}
-            </Card>
-          </div>
-
-          {/* Guide */}
-          <Card gradient className="p-6 mb-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-qb-cyan/20 rounded-xl flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-qb-cyan" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">{t('dashboard.guideTitle')}</h3>
-                  <p className="text-white/60 text-sm">{t('dashboard.guideDesc')}</p>
-                </div>
-              </div>
-              <Button variant="secondary" onClick={() => navigate('home')}>
+              <Button
+                fullWidth
+                size="lg"
+                variant="secondary"
+                icon={<Gamepad2 />}
+                onClick={() => navigate('join')}
+              >
+                {t('dashboard.joinQuiz')}
+              </Button>
+              <Button
+                fullWidth
+                size="lg"
+                variant="secondary"
+                icon={<CreditCard />}
+                onClick={() => navigate('pricing')}
+              >
+                {t('dashboard.buyMore')}
+              </Button>
+              <Button
+                fullWidth
+                size="lg"
+                variant="ghost"
+                icon={<BookOpen />}
+                onClick={() => navigate('home')}
+              >
                 {t('dashboard.viewGuide')}
               </Button>
             </div>
+            {availableCredits === 0 && (
+              <p className="text-xs text-white/50 mt-2 text-center">{t('dashboard.noCredits')}</p>
+            )}
           </Card>
 
           {/* Pro Dashboard shortcut */}
           {currentOrganization && (
-            <Card gradient className="p-6 mb-8 bg-gradient-to-r from-qb-purple/10 to-qb-magenta/10 border border-qb-purple/30">
+            <Card gradient className="p-5 mb-8 bg-gradient-to-r from-qb-purple/10 to-qb-magenta/10 border border-qb-purple/30">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-qb-purple/20 rounded-xl flex items-center justify-center">
-                    <Building2 className="w-6 h-6 text-qb-purple" />
+                  <div className="w-11 h-11 bg-qb-purple/20 rounded-xl flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-qb-purple" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white">{t('dashboard.proDashboard')}</h3>
-                    <p className="text-white/60 text-sm">{t('dashboard.proDashboardDesc')}</p>
+                    <h3 className="text-lg font-bold text-white">{t('dashboard.proDashboard')}</h3>
+                    <p className="text-white/50 text-sm">{t('dashboard.proDashboardDesc')}</p>
                   </div>
                 </div>
                 <Button gradient onClick={() => navigate('pro-dashboard')}>
@@ -244,44 +337,102 @@ export const Dashboard: React.FC = () => {
             </Card>
           )}
 
-          {/* Purchases */}
-          <Card gradient className="p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">{t('dashboard.myPurchases')}</h2>
+          {/* Recent Sessions */}
+          <Card gradient className="p-6 mb-8">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-qb-cyan" />
+              {t('dashboard.recentSessions')}
+            </h2>
+            {sessions.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-5xl mb-3">🎯</div>
+                <p className="text-white/50">{t('dashboard.noSessions')}</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {sessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="text-3xl">
+                        {session.status === 'finished' || session.status === 'completed' ? '✅' : '🔄'}
+                      </div>
+                      <div>
+                        <div className="text-white font-bold">{session.quiz_title}</div>
+                        <div className="flex items-center gap-3 text-sm text-white/50">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {new Date(session.created_at).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            {t('dashboard.players', { count: session.player_count })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                        session.status === 'finished' || session.status === 'completed'
+                          ? 'bg-green-500/20 text-green-400'
+                          : session.status === 'playing'
+                          ? 'bg-qb-cyan/20 text-qb-cyan'
+                          : 'bg-white/10 text-white/50'
+                      }`}>
+                        {session.status === 'finished' || session.status === 'completed'
+                          ? t('dashboard.completed')
+                          : session.status === 'playing'
+                          ? t('dashboard.inProgress')
+                          : session.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* Purchases / Credits */}
+          <Card gradient className="p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-qb-yellow" />
+              {t('dashboard.myPurchases')}
+            </h2>
 
             {loading ? (
               <div className="text-center py-8 text-white/50">{t('common.loading')}</div>
             ) : purchases.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">🎮</div>
-                <p className="text-white/70 mb-6">{t('dashboard.noPurchases')}</p>
-                <Button
-                  gradient
-                  onClick={() => navigate('pricing')}
-                >
+              <div className="text-center py-8">
+                <div className="text-5xl mb-3">🎮</div>
+                <p className="text-white/50 mb-4">{t('dashboard.noPurchases')}</p>
+                <Button gradient onClick={() => navigate('pricing')}>
                   {t('dashboard.browsePlans')}
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {purchases.map((purchase) => (
                   <div
                     key={purchase.id}
-                    className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10"
+                    className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10"
                   >
                     <div>
-                      <div className="text-lg font-bold text-white">{purchase.plan_name}</div>
-                      <div className="text-sm text-white/60">
+                      <div className="text-white font-bold">{purchase.plan_name}</div>
+                      <div className="text-sm text-white/50">
                         {t('dashboard.upToPlayers', { count: purchase.max_players })} • {new Date(purchase.created_at).toLocaleDateString()}
                       </div>
                     </div>
                     <div>
                       {purchase.used ? (
-                        <span className="px-4 py-2 bg-white/5 text-white/50 rounded-lg">
+                        <span className="px-4 py-1.5 bg-white/5 text-white/40 rounded-lg text-sm">
                           {t('dashboard.used')}
                         </span>
                       ) : (
                         <Button
                           gradient
+                          size="sm"
                           onClick={() => navigate('create')}
                         >
                           {t('dashboard.useCredit')}
@@ -290,7 +441,7 @@ export const Dashboard: React.FC = () => {
                     </div>
                   </div>
                 ))}
-                <div className="mt-6 text-center">
+                <div className="mt-4 text-center">
                   <Button
                     gradient
                     onClick={() => navigate('pricing')}

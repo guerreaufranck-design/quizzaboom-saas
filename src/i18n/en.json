@@ -315,7 +315,9 @@
     "explanationLabel": "Explanation:",
     "funFactLabel": "Fun Fact:",
     "noQuestionData": "No question data",
-    "questionsProgressLabel": "Questions"
+    "questionsProgressLabel": "Questions",
+    "kickPlayer": "Kick Player",
+    "kickConfirm": "Are you sure you want to kick {{name}} from the quiz?"
   },
   "proDashboard": {
     "noAccount": "No Business Account",
@@ -532,7 +534,17 @@
     "viewGuide": "View Guide",
     "proDashboard": "Pro Dashboard",
     "proDashboardDesc": "Access your professional dashboard and manage your B2B subscription.",
-    "upToPlayers": "Up to {{count}} players"
+    "upToPlayers": "Up to {{count}} players",
+    "totalQuizzes": "Quizzes Hosted",
+    "totalPlayers": "Total Players",
+    "totalSpent": "Total Spent",
+    "quickActions": "Quick Actions",
+    "joinQuiz": "Join a Quiz",
+    "recentSessions": "Recent Quiz Sessions",
+    "noSessions": "No quiz sessions yet. Create your first quiz!",
+    "players": "{{count}} players",
+    "completed": "Completed",
+    "inProgress": "In Progress"
   },
   "lobby": {
     "startWarningTitle": "Warning",
@@ -679,7 +691,8 @@
     "getReady": "Get Ready!",
     "nextQuestionIn": "Next question in...",
     "displayMode": "TV Display Mode",
-    "displayModeWaiting": "Waiting for quiz data..."
+    "displayModeWaiting": "Waiting for quiz data...",
+    "funFact": "Did You Know?"
   },
   "settings": {
     "title": "Settings",

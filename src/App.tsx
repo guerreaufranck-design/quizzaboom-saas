@@ -17,6 +17,7 @@ import { ProDashboard } from './pages/ProDashboard';
 import { SpecialOffer } from './pages/SpecialOffer';
 import { Settings } from './pages/Settings';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function PlayRoute() {
   const { isHost } = useQuizStore();
@@ -56,6 +57,7 @@ function App() {
   }, []);
 
   return (
+    <ErrorBoundary>
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/pricing" element={<Pricing />} />
@@ -73,6 +75,7 @@ function App() {
       <Route path="/offer" element={<SpecialOffer />} />
       <Route path="*" element={<HomePage />} />
     </Routes>
+    </ErrorBoundary>
   );
 }
 

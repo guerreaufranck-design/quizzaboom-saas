@@ -240,7 +240,7 @@ export const QuizLobby: React.FC = () => {
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
-                onClick={() => navigate('home')}
+                onClick={() => navigate('dashboard')}
                 icon={<ArrowLeft />}
               >
                 {t('common.cancel')}
