@@ -95,123 +95,149 @@ Use COMPLETELY DIFFERENT sub-topics and angles. DO NOT repeat any questions or t
   let modeInstructions = '';
   if (isFunnyMode) {
     modeInstructions = `
-🤣 FUNNY MODE — CRITICAL INSTRUCTIONS:
-- This is COMEDY QUIZ TIME! Questions and answers MUST be HILARIOUS, QUIRKY, and SURPRISING
-- Focus on: absurd true facts, bizarre world records, ridiculous laws, funny historical anecdotes, weird animal behaviors, surprising food facts
-- Question phrasing should be PLAYFUL and WITTY — make players laugh just reading the question
-- Wrong answers should be FUNNY too — each option should make people smile
-- Explanations should be told like a comedy bit — short, punchy, unexpected punchline
-- Fun facts should make players say "No way, that's actually real?!"
-- Prioritize UNUSUAL and BIZARRE real facts over standard trivia
-- Include questions about: weird world records, absurd inventions, funny mistranslations, bizarre animal facts, ridiculous historical events
-- TONE: Like a stand-up comedian hosting a quiz night — fun, irreverent, surprising
-- ALL facts must still be TRUE and REAL — the humor comes from reality being stranger than fiction
+🎭 FUN MODE — "BELIEVE IT OR NOT" PROFESSIONAL TRIVIA:
+You are writing questions for a FUN pub quiz night — 100% real facts, but chosen because they are BIZARRE, SURPRISING, or COUNTER-INTUITIVE.
+
+GOLDEN RULE: Every question must be a REAL, VERIFIABLE FACT. The fun comes from reality being stranger than fiction — NOT from making things up.
+
+WHAT TO DO:
+- 80%+ of questions should have a correct answer that makes players say "Wait, REALLY?!"
+- Focus on: bizarre world records (Guinness), strange real laws, surprising statistics, unusual animal abilities, weird origins of everyday things, counter-intuitive science
+- Phrasing should be lively and engaging — set up the surprise
+- Wrong answers must be PLAUSIBLE and REALISTIC — they should be the "obvious" answers that are actually wrong
+- Explanations: short, punchy, "believe it or not" storytelling style
+- Fun facts: one more surprising nugget that makes players want to share
+
+GREAT QUESTION PATTERNS:
+- "Which country has the most X?" (where the answer is unexpected)
+- "What was X originally invented for?" (where the real origin is surprising)
+- "Which animal can X?" (where the ability is real but sounds made up)
+- "In which country is it illegal to X?" (real bizarre laws)
+- "What holds the world record for X?" (unexpected record holders)
+- "How long/fast/heavy is X actually?" (counter-intuitive measurements)
+
+WHAT NEVER TO DO:
+- NEVER invent fictional facts or scenarios
+- NEVER write hypothetical questions ("What would happen if...")
+- NEVER use obviously silly wrong answers ("a banana", "42", "never", "nobody knows")
+- NEVER include questions you are not CERTAIN are factually correct
+- ALL 4 answer options must look equally credible at first glance
 `;
   } else if (isKidsMode) {
     modeInstructions = `
-👶 KIDS MODE — CRITICAL INSTRUCTIONS (ages 6-12):
-- Questions must be FUN, COLORFUL, and ACCESSIBLE for children
-- Use SIMPLE, clear language — no complex vocabulary or abstract concepts
-- Topics kids LOVE: animals, dinosaurs, space, cartoons, superheroes, nature, food, sports, video games, fun science experiments
-- Make it EDUCATIONAL but ENTERTAINING — kids should learn while having a blast
-- Include visual/imaginative questions: "If a T-Rex tried to clap, what would happen?"
-- Wrong answers can be SILLY and IMAGINATIVE — kids love goofy options
-- Explanations should be like talking to a curious kid — "Did you know that..." style
-- Fun facts should trigger "WOW! Cool!" reactions
-- NEVER include: scary content, violence, complex politics, adult humor, or anything inappropriate
-- Difficulty should be AGE-APPROPRIATE: easy enough to feel good, challenging enough to learn
-- TONE: Like a fun teacher or a cool older sibling — enthusiastic, encouraging, playful
+👶 KIDS MODE — EDUCATIONAL & FUN (ages 6-12):
+You are writing questions for a children's quiz show — educational, age-appropriate, and exciting.
+
+RULES:
+- Use SIMPLE, clear language — short sentences, no jargon
+- Topics: animals, nature, space, the human body, geography, famous inventions, sports, music
+- Every question must teach something real and interesting
+- Wrong answers must be plausible for a child (not obviously silly)
+- Explanations: "Did you know that..." style, like a fun teacher
+- Fun facts should trigger genuine curiosity and wonder
+- NEVER include: violence, politics, scary content, adult themes
+- Difficulty: achievable but challenging — kids should get ~60-70% right
+- TONE: Enthusiastic, encouraging, like a science show host
 `;
   } else {
     modeInstructions = `
-📚 STANDARD MODE:
-- Classic quiz format with a good balance of education and entertainment
-- Questions should be interesting, informative, and engaging
-- Mix of well-known facts and surprising discoveries
-- Professional but accessible tone — suitable for all audiences
+📚 STANDARD MODE — PROFESSIONAL TRIVIA WITH A "DID YOU KNOW?" TWIST:
+You are writing questions for a professional Trivia night at a bar/restaurant.
+Think: Trivial Pursuit meets "Ripley's Believe It or Not" — factual, but FASCINATING.
+
+RULES:
+- Every question must be FACTUAL, VERIFIABLE, and INTERESTING
+- 50% classic pub quiz questions (history, science, geography, culture, sports)
+- 50% "insolite" / surprising questions where the real answer is unexpected or counter-intuitive
+- Insolite examples: unusual world records, surprising origins, counter-intuitive statistics, strange real laws, bizarre animal abilities, unexpected historical connections
+- Questions should make players think "Oh, I should have known that!" or "No way, is that really true?!"
+- All 4 answer options must be realistic and plausible
+- Professional but engaging tone — suitable for all audiences
 `;
   }
 
-  return `${batchContext}Create a HIGHLY ENGAGING quiz segment in ${fullLanguage} about: ${theme}
+  return `${batchContext}You are a PROFESSIONAL QUIZ WRITER for a Trivia night event.
 
-UNIQUE BATCH SEED: ${randomSeed} — Use this seed to ensure completely different questions.
+Your job: write ${batchQuestionCount} questions in ${fullLanguage} about: ${theme}
 
-Generate EXACTLY ${batchQuestionCount} questions organized in ${batchStageCount} stages.
-Stage numbers should start at ${startStageNumber + 1}.
+Organize into ${batchStageCount} stages, starting at stage ${startStageNumber + 1}.
 Each stage has ${QUESTIONS_PER_STAGE} questions (last stage may have fewer).
+
+UNIQUE SEED: ${randomSeed}
 ${previousThemesWarning}
 ${modeInstructions}
 
-🎯 ABSOLUTE DIVERSITY REQUIREMENTS:
+═══════════════════════════════════════════════════
+PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
+═══════════════════════════════════════════════════
 
-1. QUESTION UNIQUENESS (MOST IMPORTANT):
-   - This quiz MUST be 100% UNIQUE — assume players have already played quizzes on this topic
-   - NEVER use classic/common trivia questions (capitals, famous paintings, basic history dates)
-   - AVOID "standard quiz questions" that appear in every trivia game
-   - Dig DEEP into unusual, obscure, fascinating corners of the topic
-   - Mix time periods: ancient history, medieval, modern, AND current events from ${currentYear}
-   - Include at least 20% questions about recent events from ${currentMonth} ${currentYear} or last 2 years
-   - Mix question angles: statistics, records, origins, paradoxes, myths vs reality, surprising connections
+1. FACTUAL ACCURACY (NON-NEGOTIABLE):
+   - Every correct answer must be a VERIFIED, REAL fact
+   - If you are not 100% certain of a fact, DO NOT include it
+   - Prefer well-documented facts from encyclopedias, official records, scientific papers
+   - NEVER guess dates, numbers, or statistics — only use facts you are certain about
+   - Do NOT include questions about events after 2024
 
-2. QUESTION STYLE VARIETY (vary across ALL these types):
-   - "Which of these is TRUE/FALSE?" (myth-busting)
-   - "What year did X happen?" (chronology)
-   - "How many / What percentage?" (statistics & numbers)
-   - "What is the origin of X?" (etymology, history)
-   - "Which person/place holds the record for X?" (records)
-   - "What surprising connection exists between X and Y?" (unexpected links)
-   - "What was recently discovered about X?" (current events / science news)
+2. ANSWER QUALITY:
+   - All 4 options must be PLAUSIBLE and from the SAME CATEGORY
+   - Example: "Which city?" → all 4 must be real cities of similar prominence
+   - Example: "What year?" → all 4 must be years within a realistic range
+   - NEVER mix categories: no "Paris, 42, a banana, Napoleon" as options
+   - The correct answer position must be RANDOMLY distributed (roughly equal A/B/C/D)
 
-3. DIFFICULTY & DEPTH:
-   - All 4 options must be PLAUSIBLE — no obviously absurd answers
-   - Include questions where the intuitive answer is WRONG
-   - Balance "I learned something!" with "That was fun!"
+3. QUESTION VARIETY (mix ALL these types across the quiz):
+   - Factual: "What is / Who was / Where is...?"
+   - Numeric: "How many / What percentage / In what year...?"
+   - Myth-busting: "Which of these is actually TRUE/FALSE?"
+   - Ranking: "Which is the largest / fastest / oldest...?"
+   - Origin: "Where does the word/tradition/invention X come from?"
 
-4. EDUCATIONAL + FUN:
-   - Explanations must be engaging mini-stories, not dry facts
-   - Fun facts should be genuinely mind-blowing
+4. STAGE THEMES:
+   - Each stage needs a distinct sub-topic within the main theme
+   - Stage theme = 2-4 words, clear and engaging (e.g., "Ocean Giants", "Space Records", "Food Origins")
+   - NEVER repeat a sub-topic across stages
 
-5. ANSWER DESIGN:
-   - Randomize correct answer position (A/B/C/D equally distributed)
-   - Wrong answers should be tempting but clearly wrong once explained
+5. DIFFICULTY DISTRIBUTION for "${difficulty}":
+   ${difficulty === 'easy' ? '- 70% accessible (most adults know), 30% moderately challenging' :
+     difficulty === 'hard' ? '- 30% moderately challenging, 70% genuinely hard (expert-level)' :
+     '- 40% accessible, 40% moderately challenging, 20% hard (the "wow" questions)'}
 
-6. MICRO-THEME RULES:
-   - Micro_theme = GENERAL CATEGORY (2-4 words max)
-   - NEVER use specific terms from the answer — Be BROAD
+6. LENGTH CONSTRAINTS (CRITICAL — displayed on TV screens):
+   - question_text: MAX 120 characters, 1 clear sentence
+   - options: MAX 50 characters each
+   - explanation: MAX 200 characters, engaging mini-story
+   - fun_fact: MAX 150 characters, one surprising sentence
+   - Use direct phrasing: "What is...?", "Who was...?", "How many...?"
+   - NEVER use "Which of the following statements about X is correct?"
 
-7. LENGTH CONSTRAINTS (CRITICAL for TV screen readability):
-   - question_text: MAXIMUM 120 characters (1 short sentence, must be readable in 5 seconds)
-   - options: MAXIMUM 50 characters each (short, punchy, instantly scannable)
-   - explanation: MAXIMUM 200 characters (brief but engaging)
-   - fun_fact: MAXIMUM 150 characters (one mind-blowing sentence)
-   - NEVER use long compound sentences like "Which of the following statements about..."
-   - Prefer direct phrasing: "What is...?", "Who was...?", "How many...?"
+7. MICRO-THEME:
+   - 2-4 word general category (e.g., "Marine Biology", "European History")
+   - NEVER include the answer in the micro-theme
 
 REQUIREMENTS:
 - Difficulty: ${difficulty}
-- Language: ${fullLanguage}
-- Use REAL facts, REAL answers — accuracy is essential
+- Language: ${fullLanguage} (questions, answers, explanations — everything in this language)
+- Return ONLY valid JSON, no markdown, no commentary
 
-Return ONLY valid JSON (no markdown, no extra text):
 {
-  "title": "Engaging Quiz Title",
-  "description": "Intriguing description",
+  "title": "Engaging Quiz Title in ${fullLanguage}",
+  "description": "Compelling 1-sentence description in ${fullLanguage}",
   "stages": [
     {
       "stageNumber": ${startStageNumber + 1},
       "theme": "Stage Theme",
       "questions": [
         {
-          "question_text": "Engaging question?",
+          "question_text": "Clear factual question?",
           "question_type": "multiple_choice",
-          "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-          "correct_answer": "The actual correct answer",
-          "explanation": "Why this is correct + interesting context",
-          "fun_fact": "Surprising additional fact",
+          "options": ["Plausible A", "Plausible B", "Plausible C", "Plausible D"],
+          "correct_answer": "The verified correct answer",
+          "explanation": "Why + engaging context",
+          "fun_fact": "Surprising related fact",
           "points": 100,
           "time_limit": 20,
           "difficulty": "${difficulty}",
-          "micro_theme": "GENERAL category"
+          "micro_theme": "General Category"
         }
       ]
     }
@@ -353,7 +379,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.0-flash',
-      generationConfig: { temperature: 1.0, maxOutputTokens: 16384 },
+      generationConfig: { temperature: 0.8, maxOutputTokens: 16384 },
     });
 
     const fullLanguage = languageMap[language] || 'French';
