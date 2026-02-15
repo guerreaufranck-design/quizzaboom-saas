@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuizStore } from '../stores/useQuizStore';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
+import { generateCommentary, type AnswerStat, type JokerEvent } from '../utils/commentaryGenerator';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import {
@@ -46,6 +47,8 @@ export const HostDashboard: React.FC = () => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [emailsSending, setEmailsSending] = useState(false);
   const [emailsSent, setEmailsSent] = useState(false);
+  const answerStatsRef = useRef<AnswerStat[]>([]);
+  const jokerEventsRef = useRef<JokerEvent[]>([]);
   const { stopAll, onPhaseChange, toggleMute, isMuted } = useQuizAudio();
   const navigate = useAppNavigate();
 
@@ -99,6 +102,30 @@ export const HostDashboard: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [currentSession?.id]);
+
+  // Listen for answer_submitted and joker_used events for TV host commentary
+  useEffect(() => {
+    if (!sessionCode) return;
+    const channelName = `quiz_session_${sessionCode}`;
+    const hostListenerChannel = supabase.channel(`${channelName}_host_listener`);
+
+    hostListenerChannel
+      .on('broadcast', { event: 'answer_submitted' }, (msg: { payload: Record<string, unknown> }) => {
+        const p = msg.payload;
+        if (p.playerName) {
+          answerStatsRef.current.push(p as unknown as AnswerStat);
+        }
+      })
+      .on('broadcast', { event: 'joker_used' }, (msg: { payload: Record<string, unknown> }) => {
+        const p = msg.payload;
+        if (p.playerName) {
+          jokerEventsRef.current.push(p as unknown as JokerEvent);
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(hostListenerChannel); };
+  }, [sessionCode]);
 
   // Timer is now handled by useCountdown hook above (timestamp-based)
 
@@ -214,6 +241,12 @@ export const HostDashboard: React.FC = () => {
   };
 
   const changePhase = (newPhase: GamePhase, questionIndex: number) => {
+    // Reset stats when starting a new question cycle
+    if (newPhase === 'theme_announcement') {
+      answerStatsRef.current = [];
+      jokerEventsRef.current = [];
+    }
+
     const stageNumber = Math.floor(questionIndex / 5);
     const question = allQuestions[questionIndex];
 
@@ -224,6 +257,18 @@ export const HostDashboard: React.FC = () => {
     setPhaseEndTime(endTime);
     setPausedRemaining(null);
 
+    // Generate TV host commentary when entering results phase
+    const commentary = newPhase === 'results'
+      ? generateCommentary({
+          answerStats: answerStatsRef.current,
+          jokerEvents: jokerEventsRef.current,
+          totalPlayers: players.length,
+          correctAnswer: question?.correct_answer || '',
+          questionIndex,
+          language: currentQuiz?.language || 'en',
+        })
+      : undefined;
+
     const phaseData = {
       phase: newPhase,
       questionIndex: questionIndex,
@@ -232,6 +277,7 @@ export const HostDashboard: React.FC = () => {
       phaseEndTime: endTime,
       currentQuestion: question || null,
       themeTitle: question?.stage_id || t('host.defaultTheme'),
+      ...(commentary ? { commentary } : {}),
     };
 
     console.log('📤 Broadcasting phase change:', {

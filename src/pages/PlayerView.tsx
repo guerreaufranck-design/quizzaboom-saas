@@ -8,6 +8,7 @@ import { Shield, Ban, Coins, Star, Clock, X, Trophy, Flame } from 'lucide-react'
 import { useCountdown } from '../hooks/useCountdown';
 import { useQuizAudio } from '../hooks/useQuizAudio';
 import { supabase } from '../services/supabase/client';
+import { CommentaryPopupChain } from '../components/CommentaryPopupChain';
 
 export const PlayerView: React.FC = () => {
   const { t } = useTranslation();
@@ -30,6 +31,7 @@ export const PlayerView: React.FC = () => {
     showTargetSelector,
     pendingJokerType,
     closeTargetSelector,
+    commentaryPopups,
   } = useStrategicQuizStore();
   const displaySeconds = useCountdown(phaseEndTime);
   const { playCorrectSound, playWrongSound, playApplause } = useQuizAudio();
@@ -535,11 +537,17 @@ export const PlayerView: React.FC = () => {
             </div>
           )}
 
-          {currentPhase === 'results' && currentQuestion?.fun_fact && (
+          {currentPhase === 'results' && currentQuestion?.fun_fact && commentaryPopups.length === 0 && (
             <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
               <p className="text-qb-yellow/80 text-sm italic">
                 💡 {currentQuestion.fun_fact}
               </p>
+            </div>
+          )}
+
+          {currentPhase === 'results' && commentaryPopups.length > 0 && (
+            <div className="mt-4">
+              <CommentaryPopupChain popups={commentaryPopups} variant="player" />
             </div>
           )}
         </Card>

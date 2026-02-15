@@ -25,6 +25,15 @@ interface PhaseData {
   promoMessage?: string;
   breakNumber?: number;    // e.g. 1
   totalBreaks?: number;    // e.g. 3
+  // TV host commentary popups for results phase
+  commentary?: Array<{
+    id: string;
+    type: string;
+    emoji: string;
+    text: string;
+    delayMs: number;
+    durationMs: number;
+  }>;
 }
 
 interface StrategicQuizState {
@@ -62,6 +71,14 @@ interface StrategicQuizState {
 
   showTargetSelector: boolean;
   pendingJokerType: 'block' | 'steal' | null;
+  commentaryPopups: Array<{
+    id: string;
+    type: string;
+    emoji: string;
+    text: string;
+    delayMs: number;
+    durationMs: number;
+  }>;
 
   loadQuestions: (quizId: string) => Promise<void>;
   setPhaseData: (data: PhaseData) => void;
@@ -114,6 +131,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   answeredCount: 0,
   showTargetSelector: false,
   pendingJokerType: null,
+  commentaryPopups: [],
 
   loadQuestions: async (quizId) => {
     try {
@@ -153,6 +171,8 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       breakPromoMessage: data.promoMessage || '',
       breakNumber: data.breakNumber || 0,
       totalBreaks: data.totalBreaks || 0,
+      // Store commentary popups for results phase
+      commentaryPopups: data.commentary || [],
     });
 
     if (data.phase === 'theme_announcement') {
@@ -174,6 +194,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         hasAnswered: false,
         answerSubmittedAt: null,
         answeredCount: 0,
+        commentaryPopups: [],
       });
 
       // Clear persisted answer state for new question
@@ -293,6 +314,24 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
           get().closeTargetSelector();
         }
         break;
+    }
+
+    // Broadcast joker event for TV host commentary
+    const sessionCode = useQuizStore.getState().sessionCode;
+    if (sessionCode && globalRealtimeChannel) {
+      const allPlayers = useQuizStore.getState().players;
+      const targetPlayer = targetPlayerId ? allPlayers.find(p => p.id === targetPlayerId) : null;
+      await globalRealtimeChannel.send({
+        type: 'broadcast',
+        event: 'joker_used',
+        payload: {
+          jokerType,
+          playerName: currentPlayer?.player_name || '',
+          playerEmoji: currentPlayer?.avatar_emoji || '',
+          targetPlayerName: targetPlayer?.player_name || '',
+          targetPlayerEmoji: targetPlayer?.avatar_emoji || '',
+        },
+      });
     }
   },
 
@@ -439,7 +478,16 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         await globalRealtimeChannel.send({
           type: 'broadcast',
           event: 'answer_submitted',
-          payload: { playerId: currentPlayer?.id }
+          payload: {
+            playerId: currentPlayer?.id,
+            playerName: currentPlayer?.player_name,
+            avatarEmoji: currentPlayer?.avatar_emoji,
+            isCorrect,
+            answerText: answer,
+            timeTaken: timestamp - (get().phaseEndTime
+              ? get().phaseEndTime! - 24000  // answer_selection = 24s
+              : timestamp),
+          }
         });
       }
 

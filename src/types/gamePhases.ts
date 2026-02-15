@@ -11,7 +11,7 @@ export const PHASE_DURATIONS: Record<GamePhase, number> = {
   theme_announcement: 11,
   question_display: 15,
   answer_selection: 24,
-  results: 10,
+  results: 12,
   intermission: 7,
   commercial_break: 0, // Dynamic — set by break schedule
   quiz_complete: 0,

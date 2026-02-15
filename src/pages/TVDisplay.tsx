@@ -11,6 +11,7 @@ import { calculateBadges } from '../utils/badges';
 import { useQuizAudio } from '../hooks/useQuizAudio';
 import { useCountdown } from '../hooks/useCountdown';
 import { AnimatedLogo } from '../components/AnimatedLogo';
+import { CommentaryPopupChain } from '../components/CommentaryPopupChain';
 
 /**
  * Adaptive text sizing: returns a Tailwind class based on string length.
@@ -53,6 +54,7 @@ export const TVDisplay: React.FC = () => {
     breakNumber,
     totalBreaks,
     answeredCount,
+    commentaryPopups,
   } = useStrategicQuizStore();
   const { stopAll, onPhaseChange } = useQuizAudio();
   const displaySeconds = useCountdown(phaseEndTime);
@@ -813,13 +815,19 @@ export const TVDisplay: React.FC = () => {
             </p>
           </div>
 
-          {currentQuestion?.fun_fact && (
+          {currentQuestion?.fun_fact && commentaryPopups.length === 0 && (
             <div className="bg-yellow-500/10 backdrop-blur-xl border border-yellow-400/30 rounded-2xl p-5 mb-4 max-w-4xl">
               <div className="flex items-center gap-2 mb-2">
                 <Lightbulb className="w-6 h-6 text-yellow-300" />
                 <span className="text-yellow-300 font-bold text-lg">{t('tv.funFact')}</span>
               </div>
               <p className="text-white/90 text-xl">{currentQuestion.fun_fact}</p>
+            </div>
+          )}
+
+          {commentaryPopups.length > 0 && (
+            <div className="mb-4 max-w-4xl w-full">
+              <CommentaryPopupChain popups={commentaryPopups} variant="tv" />
             </div>
           )}
 
