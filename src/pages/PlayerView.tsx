@@ -32,6 +32,7 @@ export const PlayerView: React.FC = () => {
     pendingJokerType,
     closeTargetSelector,
     commentaryPopups,
+    initializeInventory,
   } = useStrategicQuizStore();
   const displaySeconds = useCountdown(phaseEndTime);
   const { playCorrectSound, playWrongSound, playApplause } = useQuizAudio();
@@ -205,6 +206,15 @@ export const PlayerView: React.FC = () => {
     if (sessionCode) listenToPhaseChanges(sessionCode);
     // Fetch current phase from DB immediately on mount (don't wait for first 3s poll)
     pollPhaseFromDB();
+
+    // Initialize joker inventory from session settings (configurable per quiz)
+    if (currentSession?.settings) {
+      const settings = currentSession.settings as Record<string, unknown>;
+      const customInventory = settings.jokerInventory as { protection: number; block: number; steal: number; double_points: number } | undefined;
+      if (customInventory) {
+        initializeInventory(customInventory);
+      }
+    }
   }, [currentQuiz?.id, sessionCode]);
 
   useEffect(() => {
@@ -441,7 +451,7 @@ export const PlayerView: React.FC = () => {
               >
                 <Shield className="w-8 h-8 mb-1" />
                 <span className="font-bold text-sm">{t('player.jokerProtection')}</span>
-                <span className="text-xs">{playerInventory.protection === 0 ? t('player.jokerUsed') : t('player.jokerReady')}</span>
+                <span className="text-xs">{playerInventory.protection === 0 ? t('player.jokerUsed') : playerInventory.protection > 1 ? `${playerInventory.protection}x` : t('player.jokerReady')}</span>
               </Button>
             )}
 
@@ -454,7 +464,7 @@ export const PlayerView: React.FC = () => {
               >
                 <Star className="w-8 h-8 mb-1" />
                 <span className="font-bold text-sm">{t('player.jokerDouble')}</span>
-                <span className="text-xs">{playerInventory.double_points === 0 ? t('player.jokerUsed') : t('player.jokerReady')}</span>
+                <span className="text-xs">{playerInventory.double_points === 0 ? t('player.jokerUsed') : playerInventory.double_points > 1 ? `${playerInventory.double_points}x` : t('player.jokerReady')}</span>
               </Button>
             )}
 
@@ -467,7 +477,7 @@ export const PlayerView: React.FC = () => {
               >
                 <Ban className="w-8 h-8 mb-1" />
                 <span className="font-bold text-sm">{t('player.jokerBlock')}</span>
-                <span className="text-xs">{playerInventory.block === 0 ? t('player.jokerUsed') : t('player.jokerReady')}</span>
+                <span className="text-xs">{playerInventory.block === 0 ? t('player.jokerUsed') : playerInventory.block > 1 ? `${playerInventory.block}x` : t('player.jokerReady')}</span>
               </Button>
             )}
 
@@ -480,7 +490,7 @@ export const PlayerView: React.FC = () => {
               >
                 <Coins className="w-8 h-8 mb-1" />
                 <span className="font-bold text-sm">{t('player.jokerSteal')}</span>
-                <span className="text-xs">{playerInventory.steal === 0 ? t('player.jokerUsed') : t('player.jokerReady')}</span>
+                <span className="text-xs">{playerInventory.steal === 0 ? t('player.jokerUsed') : playerInventory.steal > 1 ? `${playerInventory.steal}x` : t('player.jokerReady')}</span>
               </Button>
             )}
           </div>

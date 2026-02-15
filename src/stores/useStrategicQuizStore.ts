@@ -90,6 +90,7 @@ interface StrategicQuizState {
   getChannelState: () => string | null;
   broadcastPhaseChange: (sessionCode: string, data: PhaseData) => Promise<void>;
 
+  initializeInventory: (jokerInventory: { protection: number; block: number; steal: number; double_points: number }) => void;
   openTargetSelector: (jokerType: 'block' | 'steal') => void;
   closeTargetSelector: () => void;
 }
@@ -277,43 +278,64 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       },
     });
 
+    // Re-read activeEffects after inventory update (may have been updated by broadcasts)
+    const latestEffects = get().activeEffects;
+
     switch (jokerType) {
       case 'protection':
         set({
           activeEffects: {
-            ...activeEffects,
-            protections: { ...activeEffects.protections, [playerId]: true },
+            ...latestEffects,
+            protections: { ...latestEffects.protections, [playerId]: true },
           },
         });
         break;
-      
+
       case 'double_points':
         set({
           activeEffects: {
-            ...activeEffects,
-            doublePoints: { ...activeEffects.doublePoints, [playerId]: true },
+            ...latestEffects,
+            doublePoints: { ...latestEffects.doublePoints, [playerId]: true },
           },
         });
         break;
-      
+
       case 'block':
         if (targetPlayerId) {
+          // Check if target is protected — if so, joker is wasted (already consumed above)
+          if (latestEffects.protections[targetPlayerId]) {
+            console.log('🛡️ Block FAILED — target is protected! Joker wasted.');
+            get().closeTargetSelector();
+            break;
+          }
           set({
             activeEffects: {
-              ...activeEffects,
-              blocks: { ...activeEffects.blocks, [targetPlayerId]: true },
+              ...latestEffects,
+              blocks: { ...latestEffects.blocks, [targetPlayerId]: true },
             },
           });
           get().closeTargetSelector();
         }
         break;
-      
+
       case 'steal':
         if (targetPlayerId) {
+          // Check if target is protected — if so, joker is wasted (already consumed above)
+          if (latestEffects.protections[targetPlayerId]) {
+            console.log('🛡️ Steal FAILED — target is protected! Joker wasted.');
+            get().closeTargetSelector();
+            break;
+          }
+          // First-come-first-served: reject if already stolen
+          if (latestEffects.steals[targetPlayerId]) {
+            console.log('💰 Steal FAILED — target already stolen by someone else!');
+            get().closeTargetSelector();
+            break;
+          }
           set({
             activeEffects: {
-              ...activeEffects,
-              steals: { ...activeEffects.steals, [targetPlayerId]: playerId },
+              ...latestEffects,
+              steals: { ...latestEffects.steals, [targetPlayerId]: playerId },
             },
           });
           get().closeTargetSelector();
@@ -376,12 +398,44 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
     const isCorrect = answer === currentQuestion?.correct_answer;
     const timestamp = Date.now();
-    
+
+    const basePoints = 5;
+    const hasDoublePoints = activeEffects.doublePoints[playerId];
     let pointsToAdd = 0;
     if (isCorrect) {
-      const basePoints = 5;
-      const hasDoublePoints = activeEffects.doublePoints[playerId];
       pointsToAdd = hasDoublePoints ? basePoints * 2 : basePoints;
+    }
+
+    // ── STEAL: if this player is stolen, their points go to the thief ──
+    const thiefId = activeEffects.steals[playerId];
+    if (thiefId && pointsToAdd > 0) {
+      console.log('💰 STOLEN! Transferring', pointsToAdd, 'points from', playerId, 'to thief', thiefId);
+      // Give points to the thief instead
+      try {
+        const { error: stealRpcError } = await supabase.rpc('increment_player_score', {
+          p_player_id: thiefId,
+          p_points: pointsToAdd,
+          p_is_correct: false, // Not their answer — just a point transfer
+        });
+        if (stealRpcError) {
+          // Fallback: manual update for the thief
+          const { data: thiefData } = await supabase
+            .from('session_players')
+            .select('total_score')
+            .eq('id', thiefId)
+            .single();
+          if (thiefData) {
+            await supabase
+              .from('session_players')
+              .update({ total_score: thiefData.total_score + pointsToAdd })
+              .eq('id', thiefId);
+          }
+        }
+      } catch (err) {
+        console.error('❌ Steal transfer error:', err);
+      }
+      // Victim gets 0 points
+      pointsToAdd = 0;
     }
 
     console.log('📤 Submitting answer:', answer, 'Correct:', isCorrect, 'Points to add:', pointsToAdd);
@@ -539,6 +593,11 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     });
   },
 
+  initializeInventory: (jokerInventory) => {
+    console.log('🎯 Initializing joker inventory:', jokerInventory);
+    set({ playerInventory: jokerInventory });
+  },
+
   listenToPhaseChanges: (sessionCode) => {
     if (globalRealtimeChannel) {
       console.log('🔌 Closing previous channel');
@@ -570,14 +629,27 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         const currentEffects = get().activeEffects;
         console.log('🃏 Joker effect received:', jokerType, 'from', playerId, 'target', targetPlayerId);
 
-        if (jokerType === 'block' && targetPlayerId) {
-          set({ activeEffects: { ...currentEffects, blocks: { ...currentEffects.blocks, [targetPlayerId]: true } } });
-        } else if (jokerType === 'steal' && targetPlayerId) {
-          set({ activeEffects: { ...currentEffects, steals: { ...currentEffects.steals, [targetPlayerId]: playerId } } });
-        } else if (jokerType === 'protection') {
+        if (jokerType === 'protection') {
+          // Protection must be applied first (no conditions)
           set({ activeEffects: { ...currentEffects, protections: { ...currentEffects.protections, [playerId]: true } } });
         } else if (jokerType === 'double_points') {
           set({ activeEffects: { ...currentEffects, doublePoints: { ...currentEffects.doublePoints, [playerId]: true } } });
+        } else if (jokerType === 'block' && targetPlayerId) {
+          // Check protection: if target is protected, block fails silently
+          if (currentEffects.protections[targetPlayerId]) {
+            console.log('🛡️ Block effect ignored — target is protected');
+          } else {
+            set({ activeEffects: { ...currentEffects, blocks: { ...currentEffects.blocks, [targetPlayerId]: true } } });
+          }
+        } else if (jokerType === 'steal' && targetPlayerId) {
+          // Check protection + first-come-first-served
+          if (currentEffects.protections[targetPlayerId]) {
+            console.log('🛡️ Steal effect ignored — target is protected');
+          } else if (currentEffects.steals[targetPlayerId]) {
+            console.log('💰 Steal effect ignored — target already stolen');
+          } else {
+            set({ activeEffects: { ...currentEffects, steals: { ...currentEffects.steals, [targetPlayerId]: playerId } } });
+          }
         }
       })
       .subscribe((status: string) => {

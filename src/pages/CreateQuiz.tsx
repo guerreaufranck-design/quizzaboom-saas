@@ -38,6 +38,12 @@ export const CreateQuiz: React.FC = () => {
     steal: true,
     double_points: true,
   });
+  const [jokerUses, setJokerUses] = useState({
+    protection: 1,
+    block: 1,
+    steal: 1,
+    double_points: 1,
+  });
   const [teamMode, setTeamMode] = useState(false);
   const [teamNames, setTeamNames] = useState<string[]>(['Table 1', 'Table 2']);
   const [formData, setFormData] = useState({
@@ -127,6 +133,7 @@ export const CreateQuiz: React.FC = () => {
         commercialBreaks.enabled ? commercialBreaks : undefined,
         teamMode,
         teamMode ? teamNames.filter(n => n.trim()) : undefined,
+        formData.includeJokers ? jokerUses : undefined,
       );
 
       setGenerationStep(t('create.generationSteps.ready'));
@@ -633,6 +640,34 @@ export const CreateQuiz: React.FC = () => {
                       </span>
                     </button>
                   ))}
+
+                  {/* Joker uses per player */}
+                  <div className="col-span-2 mt-3 p-3 bg-white/5 rounded-lg border border-white/10">
+                    <p className="text-sm font-bold text-white/80 mb-2">{t('create.jokerUsesPerPlayer')}</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {[1, 2, 3, 5].map((count) => (
+                        <button
+                          key={count}
+                          type="button"
+                          onClick={() => setJokerUses({
+                            protection: count,
+                            block: count,
+                            steal: count,
+                            double_points: count,
+                          })}
+                          disabled={isLoading}
+                          className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                            jokerUses.protection === count
+                              ? 'bg-qb-magenta text-white'
+                              : 'bg-white/10 text-white/60 hover:bg-white/20'
+                          }`}
+                        >
+                          {count}x
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-white/50 mt-1">{t('create.jokerUsesHint')}</p>
+                  </div>
                 </div>
               )}
             </Card>

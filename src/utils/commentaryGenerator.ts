@@ -35,16 +35,37 @@ interface CommentaryInput {
   language: string;
 }
 
-const PRAISE_COUNT = 10;
-const ROAST_COUNT = 15;
+// Variant counts per category
+const VARIANT_COUNTS = {
+  nobodyAnswered: 4,
+  allCorrect: 4,
+  nobodyCorrect: 4,
+  correctCount: 4,
+  wrongAnswerPopular: 4,
+  fastestPlayer: 8,
+  slowestPlayer: 8,
+  jokerSteal: 4,
+  jokerBlock: 4,
+  jokerDouble: 4,
+  jokerProtection: 4,
+  praise: 10,
+  roast: 15,
+};
 
 function t(key: string, params?: Record<string, string | number>): string {
   return i18next.t(key, params) as string;
 }
 
-function pickTemplate(prefix: string, count: number, seed: number): string {
-  const idx = (seed % count) + 1;
-  return `commentary.${prefix}_${idx}`;
+/**
+ * Pick a random variant using a seed that changes per question.
+ * Uses a prime-based hash to avoid repetitive patterns across questions.
+ */
+function pickVariant(prefix: string, count: number, seed: number, params?: Record<string, string | number>): string {
+  // Use a different prime multiplier per popup type to avoid correlated selections
+  const hash = Math.abs(seed * 31 + prefix.length * 17) % count;
+  const idx = hash + 1;
+  const key = `commentary.${prefix}_${idx}`;
+  return params ? t(key, params) : t(key);
 }
 
 // Each popup stays on screen for 4s, with 500ms gap between them
@@ -65,13 +86,16 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
   const correctCount = correctStats.length;
   const answeredCount = answerStats.length;
 
+  // Seed varies per question + player count for maximum diversity
+  const seed = questionIndex * 13 + answeredCount * 7 + totalPlayers * 3;
+
   // ── Popup 1: Stats overview ──
   if (answeredCount === 0) {
     popups.push({
       id: `c-${questionIndex}-${popupIndex++}`,
       type: 'stat',
       emoji: '😴',
-      text: t('commentary.nobodyAnswered'),
+      text: pickVariant('nobodyAnswered', VARIANT_COUNTS.nobodyAnswered, seed),
       delayMs: nextDelay(popups.length),
       durationMs: POPUP_DURATION,
     });
@@ -80,7 +104,7 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
       id: `c-${questionIndex}-${popupIndex++}`,
       type: 'stat',
       emoji: '🤯',
-      text: t('commentary.allCorrect'),
+      text: pickVariant('allCorrect', VARIANT_COUNTS.allCorrect, seed),
       delayMs: nextDelay(popups.length),
       durationMs: POPUP_DURATION,
     });
@@ -89,7 +113,7 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
       id: `c-${questionIndex}-${popupIndex++}`,
       type: 'stat',
       emoji: '💀',
-      text: t('commentary.nobodyCorrect'),
+      text: pickVariant('nobodyCorrect', VARIANT_COUNTS.nobodyCorrect, seed),
       delayMs: nextDelay(popups.length),
       durationMs: POPUP_DURATION,
     });
@@ -98,7 +122,7 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
       id: `c-${questionIndex}-${popupIndex++}`,
       type: 'stat',
       emoji: '📊',
-      text: t('commentary.correctCount', { correct: correctCount, total: totalPlayers }),
+      text: pickVariant('correctCount', VARIANT_COUNTS.correctCount, seed, { correct: correctCount, total: totalPlayers }),
       delayMs: nextDelay(popups.length),
       durationMs: POPUP_DURATION,
     });
@@ -118,7 +142,7 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
         id: `c-${questionIndex}-${popupIndex++}`,
         type: 'stat',
         emoji: '🤔',
-        text: t('commentary.wrongAnswerPopular', { count: popularCount, answer: popularWrong }),
+        text: pickVariant('wrongAnswerPopular', VARIANT_COUNTS.wrongAnswerPopular, seed + 1, { count: popularCount, answer: popularWrong }),
         delayMs: nextDelay(popups.length),
         durationMs: POPUP_DURATION,
       });
@@ -132,7 +156,7 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
       id: `c-${questionIndex}-${popupIndex++}`,
       type: 'highlight',
       emoji: '⚡',
-      text: t('commentary.fastestPlayer', { name: fastest.playerName }),
+      text: pickVariant('fastestPlayer', VARIANT_COUNTS.fastestPlayer, seed + 2, { name: fastest.playerName }),
       delayMs: nextDelay(popups.length),
       durationMs: POPUP_DURATION,
     });
@@ -146,7 +170,7 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
         id: `c-${questionIndex}-${popupIndex++}`,
         type: 'joker',
         emoji: '🦹',
-        text: t('commentary.jokerSteal', { name: joker.playerName, target: joker.targetPlayerName }),
+        text: pickVariant('jokerSteal', VARIANT_COUNTS.jokerSteal, seed + 3, { name: joker.playerName, target: joker.targetPlayerName }),
         delayMs: nextDelay(popups.length),
         durationMs: POPUP_DURATION,
       });
@@ -155,7 +179,7 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
         id: `c-${questionIndex}-${popupIndex++}`,
         type: 'joker',
         emoji: '🚫',
-        text: t('commentary.jokerBlock', { blocker: joker.playerName, target: joker.targetPlayerName }),
+        text: pickVariant('jokerBlock', VARIANT_COUNTS.jokerBlock, seed + 3, { blocker: joker.playerName, target: joker.targetPlayerName }),
         delayMs: nextDelay(popups.length),
         durationMs: POPUP_DURATION,
       });
@@ -164,7 +188,7 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
         id: `c-${questionIndex}-${popupIndex++}`,
         type: 'joker',
         emoji: '✨',
-        text: t('commentary.jokerDouble', { name: joker.playerName }),
+        text: pickVariant('jokerDouble', VARIANT_COUNTS.jokerDouble, seed + 3, { name: joker.playerName }),
         delayMs: nextDelay(popups.length),
         durationMs: POPUP_DURATION,
       });
@@ -173,59 +197,51 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
         id: `c-${questionIndex}-${popupIndex++}`,
         type: 'joker',
         emoji: '🛡️',
-        text: t('commentary.jokerProtection', { name: joker.playerName }),
+        text: pickVariant('jokerProtection', VARIANT_COUNTS.jokerProtection, seed + 3, { name: joker.playerName }),
         delayMs: nextDelay(popups.length),
         durationMs: POPUP_DURATION,
       });
     }
   } else if (correctStats.length > 1) {
-    // Slowest correct player
     const slowest = correctStats.reduce((a, b) => a.timeTaken > b.timeTaken ? a : b);
     popups.push({
       id: `c-${questionIndex}-${popupIndex++}`,
       type: 'highlight',
       emoji: '🐢',
-      text: t('commentary.slowestPlayer', { name: slowest.playerName }),
+      text: pickVariant('slowestPlayer', VARIANT_COUNTS.slowestPlayer, seed + 3, { name: slowest.playerName }),
       delayMs: nextDelay(popups.length),
       durationMs: POPUP_DURATION,
     });
   }
 
   // ── Popup 5: Funny one-liner about a random player ──
-  const seed = questionIndex * 7 + answerStats.length * 3;
   if (correctStats.length > 0 && wrongStats.length > 0) {
-    // Pick a wrong player to roast
-    const roastTarget = wrongStats[seed % wrongStats.length];
-    const key = pickTemplate('roast', ROAST_COUNT, seed);
+    const roastTarget = wrongStats[(seed + 4) % wrongStats.length];
     popups.push({
       id: `c-${questionIndex}-${popupIndex++}`,
       type: 'roast',
       emoji: '🎤',
-      text: t(key, { name: roastTarget.playerName }),
+      text: pickVariant('roast', VARIANT_COUNTS.roast, seed + 4, { name: roastTarget.playerName }),
       delayMs: nextDelay(popups.length),
       durationMs: POPUP_DURATION,
     });
   } else if (correctStats.length > 0) {
-    // Everyone correct — praise a random one
-    const praiseTarget = correctStats[seed % correctStats.length];
-    const key = pickTemplate('praise', PRAISE_COUNT, seed);
+    const praiseTarget = correctStats[(seed + 4) % correctStats.length];
     popups.push({
       id: `c-${questionIndex}-${popupIndex++}`,
       type: 'praise',
       emoji: '🎤',
-      text: t(key, { name: praiseTarget.playerName }),
+      text: pickVariant('praise', VARIANT_COUNTS.praise, seed + 4, { name: praiseTarget.playerName }),
       delayMs: nextDelay(popups.length),
       durationMs: POPUP_DURATION,
     });
   } else if (wrongStats.length > 0) {
-    // Everyone wrong — roast a random one
-    const roastTarget = wrongStats[seed % wrongStats.length];
-    const key = pickTemplate('roast', ROAST_COUNT, seed);
+    const roastTarget = wrongStats[(seed + 4) % wrongStats.length];
     popups.push({
       id: `c-${questionIndex}-${popupIndex++}`,
       type: 'roast',
       emoji: '🎤',
-      text: t(key, { name: roastTarget.playerName }),
+      text: pickVariant('roast', VARIANT_COUNTS.roast, seed + 4, { name: roastTarget.playerName }),
       delayMs: nextDelay(popups.length),
       durationMs: POPUP_DURATION,
     });

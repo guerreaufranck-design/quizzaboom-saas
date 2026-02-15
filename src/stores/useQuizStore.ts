@@ -318,7 +318,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
     }
   },
 
-  createSession: async (quizId, enabledJokers, commercialBreaks, teamMode, teamNames) => {
+  createSession: async (quizId, enabledJokers, commercialBreaks, teamMode, teamNames, jokerInventory) => {
     set({ isLoading: true, error: null });
     try {
       console.log('📝 Creating session for quiz:', quizId);
@@ -351,6 +351,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
 
       const settings: Record<string, unknown> = {};
       if (enabledJokers) settings.enabledJokers = enabledJokers;
+      if (jokerInventory) settings.jokerInventory = jokerInventory;
       if (breakSchedule) settings.breakSchedule = breakSchedule;
       if (commercialBreaks?.promoMessage) settings.promoMessage = commercialBreaks.promoMessage;
       if (teamMode) settings.teamMode = true;
