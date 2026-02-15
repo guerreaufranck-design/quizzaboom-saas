@@ -37,10 +37,12 @@ export class StrategicGameEngine {
 
         case 'steal':
           if (action.target_player_id) {
-            if (!effects.protections[action.target_player_id]) {
-              effects.steals[action.target_player_id] = action.player_id;
+            if (effects.protections[action.target_player_id]) {
+              conflicts.push(action); // Target is protected
+            } else if (effects.steals[action.target_player_id]) {
+              conflicts.push(action); // Already stolen — first-come-first-served
             } else {
-              conflicts.push(action);
+              effects.steals[action.target_player_id] = action.player_id;
             }
           }
           break;

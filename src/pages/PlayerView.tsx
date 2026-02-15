@@ -277,7 +277,15 @@ export const PlayerView: React.FC = () => {
 
   const TargetSelectorModal = () => {
     if (!showTargetSelector || !pendingJokerType) return null;
-    const opponents = players.filter(p => p.id !== currentPlayer?.id);
+    // Exclude self + already-stolen/blocked players
+    const alreadyStolenIds = new Set(Object.keys(activeEffects.steals));
+    const alreadyBlockedIds = new Set(Object.keys(activeEffects.blocks));
+    const opponents = players.filter(p => {
+      if (p.id === currentPlayer?.id) return false;
+      if (pendingJokerType === 'steal' && alreadyStolenIds.has(p.id)) return false;
+      if (pendingJokerType === 'block' && alreadyBlockedIds.has(p.id)) return false;
+      return true;
+    });
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">

@@ -90,6 +90,7 @@ export interface AIQuizResponse {
 export interface Quiz {
   id: string;
   creator_id: string;
+  organization_id?: string;
   title: string;
   description: string;
   total_stages: number;

@@ -79,6 +79,16 @@ interface StrategicQuizState {
 
 let globalRealtimeChannel: ReturnType<typeof supabase.channel> | null = null;
 
+// Debounce score-updated loadPlayers to avoid 250 simultaneous fetches
+let _scoreUpdateTimer: ReturnType<typeof setTimeout> | null = null;
+function debouncedScoreRefresh(sessionId: string) {
+  if (_scoreUpdateTimer) clearTimeout(_scoreUpdateTimer);
+  _scoreUpdateTimer = setTimeout(() => {
+    useQuizStore.getState().loadPlayers(sessionId);
+    _scoreUpdateTimer = null;
+  }, 2000);
+}
+
 export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   currentPhase: 'theme_announcement',
   phaseTimeRemaining: 25,
@@ -329,11 +339,11 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
       if (rpcError) {
         console.log('⚠️ RPC not available, using manual update:', rpcError.message);
-        
-        // ✅ Fallback: Récupérer le score actuel puis mettre à jour
+
+        // ✅ Fallback: single fetch + single update (score + streak merged)
         const { data: currentData, error: fetchError } = await supabase
           .from('session_players')
-          .select('total_score, correct_answers, questions_answered')
+          .select('total_score, correct_answers, questions_answered, current_streak, best_streak')
           .eq('id', playerId)
           .single();
 
@@ -342,13 +352,11 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
           return;
         }
 
-        console.log('📊 Current data:', currentData);
-
         const newTotalScore = currentData.total_score + pointsToAdd;
         const newCorrectAnswers = isCorrect ? currentData.correct_answers + 1 : currentData.correct_answers;
         const newQuestionsAnswered = currentData.questions_answered + 1;
-
-        console.log('🔢 Updating:', currentData.total_score, '+', pointsToAdd, '=', newTotalScore);
+        const newStreak = isCorrect ? currentData.current_streak + 1 : 0;
+        const newBestStreak = Math.max(currentData.best_streak, newStreak);
 
         const { error: updateError } = await supabase
           .from('session_players')
@@ -356,6 +364,8 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
             total_score: newTotalScore,
             correct_answers: newCorrectAnswers,
             questions_answered: newQuestionsAnswered,
+            current_streak: newStreak,
+            best_streak: newBestStreak,
             last_activity: new Date().toISOString(),
           })
           .eq('id', playerId);
@@ -365,61 +375,15 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
           return;
         }
 
-        console.log('💾 Score updated to:', newTotalScore);
-      } else {
-        console.log('✅ RPC success');
-      }
-
-      // ✅ Récupérer le nouveau score
-      const { data: updatedPlayer } = await supabase
-        .from('session_players')
-        .select('total_score, correct_answers, questions_answered')
-        .eq('id', playerId)
-        .single();
-
-      if (updatedPlayer) {
-        console.log('✅ New total score:', updatedPlayer.total_score);
-
+        // Update local state directly (no extra fetch needed)
         useQuizStore.setState((state) => {
           if (state.currentPlayer) {
             return {
               currentPlayer: {
                 ...state.currentPlayer,
-                total_score: updatedPlayer.total_score,
-                correct_answers: updatedPlayer.correct_answers,
-                questions_answered: updatedPlayer.questions_answered,
-              }
-            };
-          }
-          return state;
-        });
-      }
-
-      // Update streak
-      const { data: streakData } = await supabase
-        .from('session_players')
-        .select('current_streak, best_streak')
-        .eq('id', playerId)
-        .single();
-
-      if (streakData) {
-        const newStreak = isCorrect ? streakData.current_streak + 1 : 0;
-        const newBestStreak = Math.max(streakData.best_streak, newStreak);
-
-        await supabase
-          .from('session_players')
-          .update({
-            current_streak: newStreak,
-            best_streak: newBestStreak,
-          })
-          .eq('id', playerId);
-
-        // Update local state
-        useQuizStore.setState((state) => {
-          if (state.currentPlayer) {
-            return {
-              currentPlayer: {
-                ...state.currentPlayer,
+                total_score: newTotalScore,
+                correct_answers: newCorrectAnswers,
+                questions_answered: newQuestionsAnswered,
                 current_streak: newStreak,
                 best_streak: newBestStreak,
               }
@@ -427,6 +391,41 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
           }
           return state;
         });
+      } else {
+        console.log('✅ RPC success');
+
+        // Single fetch for score + streak after RPC
+        const { data: updatedPlayer } = await supabase
+          .from('session_players')
+          .select('total_score, correct_answers, questions_answered, current_streak, best_streak')
+          .eq('id', playerId)
+          .single();
+
+        if (updatedPlayer) {
+          const newStreak = isCorrect ? updatedPlayer.current_streak + 1 : 0;
+          const newBestStreak = Math.max(updatedPlayer.best_streak, newStreak);
+
+          await supabase
+            .from('session_players')
+            .update({ current_streak: newStreak, best_streak: newBestStreak })
+            .eq('id', playerId);
+
+          useQuizStore.setState((state) => {
+            if (state.currentPlayer) {
+              return {
+                currentPlayer: {
+                  ...state.currentPlayer,
+                  total_score: updatedPlayer.total_score,
+                  correct_answers: updatedPlayer.correct_answers,
+                  questions_answered: updatedPlayer.questions_answered,
+                  current_streak: newStreak,
+                  best_streak: newBestStreak,
+                }
+              };
+            }
+            return state;
+          });
+        }
       }
 
       // Broadcaster
@@ -494,7 +493,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       .on('broadcast', { event: 'score_updated' }, () => {
         const sessionId = useQuizStore.getState().currentSession?.id;
         if (sessionId) {
-          useQuizStore.getState().loadPlayers(sessionId);
+          debouncedScoreRefresh(sessionId);
         }
       })
       .on('broadcast', { event: 'answer_submitted' }, () => {

@@ -3,6 +3,7 @@ import type { Quiz, QuizSession, Player, Question, QuizGenRequest, CommercialBre
 import { supabase } from '../services/supabase/client';
 import { generateMultiStageQuiz } from '../services/gemini';
 import { v4 as uuidv4 } from 'uuid';
+import { useOrganizationStore } from './useOrganizationStore';
 
 // Simple MD5-like hash for question deduplication (browser-compatible)
 function simpleHash(str: string): string {
@@ -37,6 +38,19 @@ const VIEW_TO_PATH: Record<string, string> = {
 };
 
 let _navigateCallback: ((path: string) => void) | null = null;
+
+// Debounce loadPlayers to avoid 250 simultaneous fetches when many scores update
+let _loadPlayersTimer: ReturnType<typeof setTimeout> | null = null;
+let _pendingSessionId: string | null = null;
+function debouncedLoadPlayers(sessionId: string, loadFn: (id: string) => Promise<void>) {
+  _pendingSessionId = sessionId;
+  if (_loadPlayersTimer) clearTimeout(_loadPlayersTimer);
+  _loadPlayersTimer = setTimeout(() => {
+    if (_pendingSessionId) loadFn(_pendingSessionId);
+    _loadPlayersTimer = null;
+    _pendingSessionId = null;
+  }, 2000);
+}
 
 export function setNavigateCallback(cb: (path: string) => void) {
   _navigateCallback = cb;
@@ -203,10 +217,14 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       console.log('✅ AI generation complete, saving to DB...');
       
       const quizId = uuidv4();
-      
+
+      // Link quiz to B2B organization if user belongs to one
+      const orgId = useOrganizationStore.getState().currentOrganization?.id || null;
+
       const quiz: Partial<Quiz> = {
         id: quizId,
         creator_id: creatorId,
+        ...(orgId ? { organization_id: orgId } : {}),
         title: aiResponse.title,
         description: aiResponse.description,
         total_stages: aiResponse.stages.length,
@@ -604,7 +622,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       },
       (payload) => {
         console.log('🔄 Player event:', payload.eventType);
-        get().loadPlayers(currentSession.id);
+        debouncedLoadPlayers(currentSession.id, get().loadPlayers);
       }
     );
 
