@@ -1,19 +1,28 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useOrganizationStore } from '../stores/useOrganizationStore';
 import { signOut } from '../services/auth';
+import { supabase } from '../services/supabase/client';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { InviteEmailModal } from '../components/InviteEmailModal';
 import {
   LogOut, Plus, Building2, Clock, BarChart3,
   AlertTriangle, Crown, ArrowLeft, BookOpen,
+  Download, Mail, Send, Users, Loader2, CheckCircle,
 } from 'lucide-react';
+
+interface ContactInfo {
+  player_name: string;
+  email: string;
+}
 
 export const ProDashboard: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuthStore();
   const {
     currentOrganization: org,
@@ -22,6 +31,12 @@ export const ProDashboard: React.FC = () => {
     isLoading,
     fetchOrganization,
   } = useOrganizationStore();
+
+  const [contacts, setContacts] = useState<ContactInfo[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteSending, setInviteSending] = useState(false);
+  const [inviteSent, setInviteSent] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -35,6 +50,86 @@ export const ProDashboard: React.FC = () => {
       fetchWithRetry();
     }
   }, [user, fetchOrganization]);
+
+  // Load contacts when org is available
+  useEffect(() => {
+    if (org?.id) {
+      loadContacts(org.id);
+    }
+  }, [org?.id]);
+
+  // Handle invite payment return from Stripe
+  useEffect(() => {
+    const inviteStatus = searchParams.get('invite');
+    if (inviteStatus === 'success' && org?.id) {
+      const date = searchParams.get('date');
+      const time = searchParams.get('time');
+      if (date && time) {
+        handlePostPaymentSend(org.id, date, time);
+        setSearchParams({}, { replace: true });
+      }
+    } else if (inviteStatus === 'cancelled') {
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams.get('invite'), org?.id]);
+
+  const loadContacts = async (orgId: string) => {
+    setContactsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('participant_emails')
+        .select('player_name, email')
+        .eq('source_organization_id', orgId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Deduplicate by email
+      const emailMap = new Map<string, ContactInfo>();
+      for (const c of data || []) {
+        if (!emailMap.has(c.email)) {
+          emailMap.set(c.email, { player_name: c.player_name, email: c.email });
+        }
+      }
+      setContacts(Array.from(emailMap.values()));
+    } catch (error) {
+      console.error('Failed to load contacts:', error);
+    } finally {
+      setContactsLoading(false);
+    }
+  };
+
+  const handlePostPaymentSend = async (orgId: string, date: string, time: string) => {
+    setInviteSending(true);
+    try {
+      const res = await fetch('/api/send-invite-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ organizationId: orgId, eventDate: date, eventTime: time }),
+      });
+      if (res.ok) {
+        setInviteSent(true);
+      }
+    } catch (error) {
+      console.error('Failed to send invite emails after payment:', error);
+    } finally {
+      setInviteSending(false);
+    }
+  };
+
+  const exportContactsCSV = () => {
+    if (contacts.length === 0) return;
+    const headers = ['Name', 'Email'];
+    const rows = contacts.map(c => [`"${c.player_name}"`, `"${c.email}"`]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `quizzaboom-contacts-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -117,6 +212,25 @@ export const ProDashboard: React.FC = () => {
               {t('common.signOut')}
             </Button>
           </div>
+
+          {/* Invite sent banner */}
+          {(inviteSending || inviteSent) && (
+            <Card className="mb-6 p-4 bg-gradient-to-r from-green-500/20 to-qb-cyan/20 border border-green-500/50">
+              <div className="flex items-center gap-3 justify-center">
+                {inviteSending ? (
+                  <>
+                    <Loader2 className="w-5 h-5 text-green-400 animate-spin" />
+                    <span className="text-green-400 font-bold">{t('proDashboard.inviteSending')}</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5 text-green-400" />
+                    <span className="text-green-400 font-bold">{t('proDashboard.inviteSent')}</span>
+                  </>
+                )}
+              </div>
+            </Card>
+          )}
 
           {/* Trial Expiration Warning */}
           {isTrialExpired && (
@@ -222,6 +336,69 @@ export const ProDashboard: React.FC = () => {
             </Card>
           </div>
 
+          {/* Player Contacts — CRM Section */}
+          <Card gradient className="p-8 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-qb-magenta/20 rounded-xl flex items-center justify-center">
+                  <Users className="w-5 h-5 text-qb-magenta" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">{t('proDashboard.playerContacts')}</h2>
+                  <p className="text-white/50 text-sm">{t('proDashboard.playerContactsDesc')}</p>
+                </div>
+              </div>
+              {!contactsLoading && (
+                <span className="text-3xl font-bold text-qb-cyan">
+                  {contacts.length}
+                </span>
+              )}
+            </div>
+
+            {contactsLoading ? (
+              <div className="text-center py-8">
+                <Loader2 className="w-8 h-8 text-white/30 animate-spin mx-auto" />
+              </div>
+            ) : contacts.length === 0 ? (
+              <div className="text-center py-8">
+                <Mail className="w-12 h-12 text-white/20 mx-auto mb-3" />
+                <p className="text-white/50">{t('proDashboard.noContacts')}</p>
+                <p className="text-white/30 text-sm mt-1">{t('proDashboard.noContactsHint')}</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Contact count summary */}
+                <div className="flex items-center gap-2 text-white/60 text-sm">
+                  <Mail className="w-4 h-4" />
+                  <span>{t('proDashboard.contactCount', { count: contacts.length })}</span>
+                </div>
+
+                {/* Action buttons */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button
+                    fullWidth
+                    size="lg"
+                    variant="secondary"
+                    icon={<Download />}
+                    onClick={exportContactsCSV}
+                  >
+                    {t('proDashboard.exportCSV')}
+                  </Button>
+                  <Button
+                    fullWidth
+                    size="lg"
+                    gradient
+                    icon={<Send />}
+                    onClick={() => setShowInviteModal(true)}
+                  >
+                    {t('proDashboard.inviteNextQuiz')}
+                    <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs">$1.99</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Card>
+
           {/* Quick Actions */}
           <Card gradient className="p-8">
             <h2 className="text-2xl font-bold text-white mb-6">{t('proDashboard.quickActions')}</h2>
@@ -256,6 +433,15 @@ export const ProDashboard: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Invite Email Modal */}
+      <InviteEmailModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        organizationId={org.id}
+        organizationName={org.name}
+        contactCount={contacts.length}
+      />
     </div>
   );
 };

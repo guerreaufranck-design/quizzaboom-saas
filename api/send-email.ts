@@ -485,6 +485,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const lang = getLang(language);
   const results = { sent: 0, failed: 0, skipped: 0 };
 
+  // Look up organization_id from the session's quiz
+  let sourceOrgId: string | null = null;
+  try {
+    const { data: sessionData } = await supabase
+      .from('quiz_sessions')
+      .select('quiz_id')
+      .eq('id', sessionId)
+      .single();
+
+    if (sessionData?.quiz_id) {
+      const { data: quizData } = await supabase
+        .from('ai_generated_quizzes')
+        .select('organization_id')
+        .eq('id', sessionData.quiz_id)
+        .single();
+
+      sourceOrgId = quizData?.organization_id || null;
+    }
+  } catch (err) {
+    console.warn('Could not resolve organization_id for session:', err);
+  }
+
   for (const player of players) {
     if (!player.email) {
       results.skipped++;
@@ -516,6 +538,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             bestStreak: player.bestStreak,
           },
           email_sent_at: new Date().toISOString(),
+          ...(sourceOrgId ? { source_organization_id: sourceOrgId } : {}),
         },
         { onConflict: 'session_id,email' }
       );
