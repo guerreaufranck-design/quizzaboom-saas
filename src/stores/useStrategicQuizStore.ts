@@ -162,7 +162,12 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     set({
       currentPhase: data.phase,
       phaseTimeRemaining: data.timeRemaining,
-      phaseEndTime: data.phaseEndTime || null,
+      // Reject stale or unreasonable phaseEndTime (>30s in the future = clock skew)
+      phaseEndTime: data.phaseEndTime && (data.phaseEndTime - Date.now()) < 30000
+        ? data.phaseEndTime
+        : data.phaseEndTime && (data.phaseEndTime - Date.now()) > 0
+          ? Date.now() + data.timeRemaining * 1000
+          : null,
       currentQuestionIndex: data.questionIndex,
       currentStage: data.stageNumber,
       currentQuestion: question,
@@ -332,6 +337,19 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
           targetPlayerEmoji: targetPlayer?.avatar_emoji || '',
         },
       });
+
+      // Broadcast actual effects so targeted players know they are blocked/stolen
+      if (jokerType === 'block' || jokerType === 'steal' || jokerType === 'protection' || jokerType === 'double_points') {
+        await globalRealtimeChannel.send({
+          type: 'broadcast',
+          event: 'joker_effect',
+          payload: {
+            jokerType,
+            playerId,
+            targetPlayerId: targetPlayerId || null,
+          },
+        });
+      }
     }
   },
 
@@ -546,6 +564,21 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       })
       .on('broadcast', { event: 'answer_submitted' }, () => {
         set(state => ({ answeredCount: state.answeredCount + 1 }));
+      })
+      .on('broadcast', { event: 'joker_effect' }, (msg: { payload: { jokerType: string; playerId: string; targetPlayerId: string | null } }) => {
+        const { jokerType, playerId, targetPlayerId } = msg.payload;
+        const currentEffects = get().activeEffects;
+        console.log('🃏 Joker effect received:', jokerType, 'from', playerId, 'target', targetPlayerId);
+
+        if (jokerType === 'block' && targetPlayerId) {
+          set({ activeEffects: { ...currentEffects, blocks: { ...currentEffects.blocks, [targetPlayerId]: true } } });
+        } else if (jokerType === 'steal' && targetPlayerId) {
+          set({ activeEffects: { ...currentEffects, steals: { ...currentEffects.steals, [targetPlayerId]: playerId } } });
+        } else if (jokerType === 'protection') {
+          set({ activeEffects: { ...currentEffects, protections: { ...currentEffects.protections, [playerId]: true } } });
+        } else if (jokerType === 'double_points') {
+          set({ activeEffects: { ...currentEffects, doublePoints: { ...currentEffects.doublePoints, [playerId]: true } } });
+        }
       })
       .subscribe((status: string) => {
         console.log('📡 Realtime status:', status);

@@ -104,10 +104,11 @@ export const HostDashboard: React.FC = () => {
   }, [currentSession?.id]);
 
   // Listen for answer_submitted and joker_used events for TV host commentary
+  // Must use the SAME channel name as players: `quiz_session_${sessionCode}`
   useEffect(() => {
     if (!sessionCode) return;
     const channelName = `quiz_session_${sessionCode}`;
-    const hostListenerChannel = supabase.channel(`${channelName}_host_listener`);
+    const hostListenerChannel = supabase.channel(channelName);
 
     hostListenerChannel
       .on('broadcast', { event: 'answer_submitted' }, (msg: { payload: Record<string, unknown> }) => {

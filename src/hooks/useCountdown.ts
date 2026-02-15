@@ -34,7 +34,8 @@ export function useCountdown(
     }
 
     const remaining = Math.ceil((phaseEndTime - Date.now()) / 1000);
-    const clamped = Math.max(0, remaining);
+    // Cap at 30s (longest phase is 24s) to prevent clock-skew / stale timestamp bugs
+    const clamped = Math.max(0, Math.min(remaining, 30));
     setSecondsLeft(clamped);
 
     if (clamped <= 0 && !expiredRef.current) {

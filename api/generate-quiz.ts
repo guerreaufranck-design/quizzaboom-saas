@@ -10,7 +10,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
-const SECONDS_PER_QUESTION = 41;
+const SECONDS_PER_QUESTION = 67; // theme(11) + display(15) + answer(24) + results(12) + intermission(7) ≈ 69s
 const MINUTES_PER_QUESTION = SECONDS_PER_QUESTION / 60;
 const QUESTIONS_PER_STAGE = 5;
 const BATCH_SIZE = 15;
@@ -413,7 +413,29 @@ async function generateBatchWithRetry(
       }
 
       const totalQs = parsed.stages.reduce((sum, s) => sum + (s.questions?.length || 0), 0);
-      console.log(`✅ Batch ${batchIndex + 1}/${totalBatches}: got ${totalQs} questions in ${parsed.stages.length} stages`);
+      console.log(`✅ Batch ${batchIndex + 1}/${totalBatches}: got ${totalQs}/${batchQuestionCount} questions in ${parsed.stages.length} stages`);
+
+      // Enforce: Gemini must return at least the requested number of questions
+      if (totalQs < batchQuestionCount) {
+        throw new Error(
+          `Batch returned ${totalQs} questions but ${batchQuestionCount} were requested — retrying`
+        );
+      }
+
+      // If Gemini returned MORE than requested, trim the excess
+      if (totalQs > batchQuestionCount) {
+        let kept = 0;
+        for (const stage of parsed.stages) {
+          const canKeep = batchQuestionCount - kept;
+          if (stage.questions.length > canKeep) {
+            stage.questions = stage.questions.slice(0, canKeep);
+          }
+          kept += stage.questions.length;
+        }
+        // Remove empty stages
+        parsed.stages = parsed.stages.filter(s => s.questions.length > 0);
+        console.log(`✂️ Trimmed batch to exactly ${batchQuestionCount} questions`);
+      }
 
       return parsed;
 
@@ -558,7 +580,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // --- Post-generation dedup: remove exact duplicates within the quiz ---
     const seenHashes = new Set<string>();
+    let dedupRemoved = 0;
     for (const stage of mergedStages) {
+      const before = stage.questions.length;
       stage.questions = stage.questions.filter(q => {
         const hash = computeQuestionHash(q.question_text, q.correct_answer);
         if (seenHashes.has(hash)) {
@@ -568,18 +592,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         seenHashes.add(hash);
         return true;
       });
+      dedupRemoved += before - stage.questions.length;
     }
+
+    // After dedup, re-balance stages so each has QUESTIONS_PER_STAGE (except possibly last)
+    if (dedupRemoved > 0) {
+      const allQuestionsFlat = mergedStages.flatMap(s => s.questions);
+      const stageThemesDedup = mergedStages.map(s => s.theme);
+      mergedStages.length = 0;
+      for (let i = 0; i < allQuestionsFlat.length; i += QUESTIONS_PER_STAGE) {
+        const stageIdx = Math.floor(i / QUESTIONS_PER_STAGE);
+        mergedStages.push({
+          stageNumber: stageIdx + 1,
+          theme: stageThemesDedup[stageIdx] || `Stage ${stageIdx + 1}`,
+          questions: allQuestionsFlat.slice(i, i + QUESTIONS_PER_STAGE),
+        });
+      }
+      console.log(`⚠️ Dedup removed ${dedupRemoved} questions. Rebalanced to ${mergedStages.length} stages.`);
+    }
+
+    // Remove any empty stages
+    const finalStages = mergedStages.filter(s => s.questions.length > 0);
+
     const estimatedDuration = Math.ceil((totalQuestions * SECONDS_PER_QUESTION) / 60);
 
     const finalResponse = {
       title: allBatchResults[0]?.title || 'Quiz',
       description: allBatchResults[0]?.description || '',
       estimatedDuration,
-      stages: mergedStages,
+      stages: finalStages,
     };
 
-    const totalGenerated = mergedStages.reduce((sum, s) => sum + s.questions.length, 0);
-    console.log(`✅ Quiz complete: ${totalGenerated} questions in ${mergedStages.length} stages (~${estimatedDuration} min)`);
+    const totalGenerated = finalStages.reduce((sum, s) => sum + s.questions.length, 0);
+    console.log(`✅ Quiz complete: ${totalGenerated}/${totalQuestions} questions in ${finalStages.length} stages (~${estimatedDuration} min)`);
 
     return res.status(200).json(finalResponse);
 
