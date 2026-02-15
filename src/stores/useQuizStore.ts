@@ -83,7 +83,7 @@ interface QuizState {
   setCurrentView: (view: string) => void;
   setError: (error: string | null) => void;
   generateQuiz: (request: QuizGenRequest) => Promise<Quiz>;
-  createSession: (quizId: string, enabledJokers?: { protection: boolean; block: boolean; steal: boolean; double_points: boolean }, commercialBreaks?: CommercialBreakConfig, teamMode?: boolean, teamNames?: string[]) => Promise<string>;
+  createSession: (quizId: string, enabledJokers?: { protection: boolean; block: boolean; steal: boolean; double_points: boolean }, commercialBreaks?: CommercialBreakConfig, teamMode?: boolean, teamNames?: string[], jokerInventory?: { protection: number; block: number; steal: number; double_points: number }) => Promise<string>;
   joinSession: (code: string, playerName: string, email?: string, avatarEmoji?: string, teamName?: string) => Promise<void>;
   loadPlayers: (sessionId: string) => Promise<void>;
   startSession: () => Promise<void>;

@@ -235,7 +235,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   },
 
   executeJokerAction: async (jokerType, targetPlayerId) => {
-    const { playerInventory, activeEffects, currentPhase } = get();
+    const { playerInventory, currentPhase } = get();
     const currentPlayer = useQuizStore.getState().currentPlayer;
     const playerId = currentPlayer?.id;
     
