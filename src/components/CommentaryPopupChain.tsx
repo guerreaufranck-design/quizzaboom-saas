@@ -65,16 +65,16 @@ export const CommentaryPopupChain: React.FC<Props> = ({ popups, variant }) => {
       <div className="w-full flex justify-center pointer-events-none">
         <div
           className={`
-            inline-flex items-center gap-4 px-10 py-5
+            inline-flex items-center gap-6 px-14 py-8
             bg-gradient-to-r ${typeColor}
-            backdrop-blur-xl rounded-2xl
-            shadow-2xl border border-white/20
-            transition-all duration-300 ease-out
+            backdrop-blur-xl rounded-3xl
+            shadow-2xl border-2 border-white/30
+            transition-all duration-500 ease-out
             ${animClass}
           `}
         >
-          <span className="text-5xl flex-shrink-0">{current.emoji}</span>
-          <p className="text-2xl font-bold text-white leading-tight max-w-3xl">
+          <span className="text-7xl flex-shrink-0">{current.emoji}</span>
+          <p className="text-4xl font-extrabold text-white leading-snug max-w-4xl drop-shadow-lg">
             {current.text}
           </p>
         </div>
@@ -82,21 +82,21 @@ export const CommentaryPopupChain: React.FC<Props> = ({ popups, variant }) => {
     );
   }
 
-  // Player variant — compact mobile-friendly
+  // Player variant — bigger and more readable on mobile
   return (
     <div className="w-full pointer-events-none">
       <div
         className={`
-          flex items-center gap-3 px-4 py-3
+          flex items-center gap-4 px-5 py-4
           bg-gradient-to-r ${typeColor}
-          backdrop-blur-xl rounded-xl
-          shadow-lg border border-white/20
-          transition-all duration-300 ease-out
+          backdrop-blur-xl rounded-2xl
+          shadow-xl border border-white/25
+          transition-all duration-500 ease-out
           ${animClass}
         `}
       >
-        <span className="text-2xl flex-shrink-0">{current.emoji}</span>
-        <p className="text-sm font-bold text-white leading-tight">
+        <span className="text-4xl flex-shrink-0">{current.emoji}</span>
+        <p className="text-lg font-extrabold text-white leading-snug">
           {current.text}
         </p>
       </div>

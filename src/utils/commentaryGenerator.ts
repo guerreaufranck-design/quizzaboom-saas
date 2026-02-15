@@ -47,6 +47,14 @@ function pickTemplate(prefix: string, count: number, seed: number): string {
   return `commentary.${prefix}_${idx}`;
 }
 
+// Each popup stays on screen for 4s, with 500ms gap between them
+const POPUP_DURATION = 4000;
+const POPUP_GAP = 500;
+
+function nextDelay(popupsSoFar: number): number {
+  return popupsSoFar * (POPUP_DURATION + POPUP_GAP);
+}
+
 export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
   const { answerStats, jokerEvents, totalPlayers, questionIndex } = input;
   const popups: CommentaryPopup[] = [];
@@ -57,15 +65,15 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
   const correctCount = correctStats.length;
   const answeredCount = answerStats.length;
 
-  // ── Popup 1: Stats overview (0ms) ──
+  // ── Popup 1: Stats overview ──
   if (answeredCount === 0) {
     popups.push({
       id: `c-${questionIndex}-${popupIndex++}`,
       type: 'stat',
       emoji: '😴',
       text: t('commentary.nobodyAnswered'),
-      delayMs: 0,
-      durationMs: 2000,
+      delayMs: nextDelay(popups.length),
+      durationMs: POPUP_DURATION,
     });
   } else if (correctCount === answeredCount && correctCount > 0) {
     popups.push({
@@ -73,8 +81,8 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
       type: 'stat',
       emoji: '🤯',
       text: t('commentary.allCorrect'),
-      delayMs: 0,
-      durationMs: 2000,
+      delayMs: nextDelay(popups.length),
+      durationMs: POPUP_DURATION,
     });
   } else if (correctCount === 0) {
     popups.push({
@@ -82,8 +90,8 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
       type: 'stat',
       emoji: '💀',
       text: t('commentary.nobodyCorrect'),
-      delayMs: 0,
-      durationMs: 2000,
+      delayMs: nextDelay(popups.length),
+      durationMs: POPUP_DURATION,
     });
   } else {
     popups.push({
@@ -91,12 +99,12 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
       type: 'stat',
       emoji: '📊',
       text: t('commentary.correctCount', { correct: correctCount, total: totalPlayers }),
-      delayMs: 0,
-      durationMs: 2000,
+      delayMs: nextDelay(popups.length),
+      durationMs: POPUP_DURATION,
     });
   }
 
-  // ── Popup 2: Most popular wrong answer (2400ms) ──
+  // ── Popup 2: Most popular wrong answer ──
   if (wrongStats.length > 0) {
     const wrongAnswerCounts = new Map<string, number>();
     for (const s of wrongStats) {
@@ -111,13 +119,13 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
         type: 'stat',
         emoji: '🤔',
         text: t('commentary.wrongAnswerPopular', { count: popularCount, answer: popularWrong }),
-        delayMs: 2400,
-        durationMs: 2000,
+        delayMs: nextDelay(popups.length),
+        durationMs: POPUP_DURATION,
       });
     }
   }
 
-  // ── Popup 3: Fastest correct player (4800ms) ──
+  // ── Popup 3: Fastest correct player ──
   if (correctStats.length > 0) {
     const fastest = correctStats.reduce((a, b) => a.timeTaken < b.timeTaken ? a : b);
     popups.push({
@@ -125,12 +133,12 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
       type: 'highlight',
       emoji: '⚡',
       text: t('commentary.fastestPlayer', { name: fastest.playerName }),
-      delayMs: 4800,
-      durationMs: 2000,
+      delayMs: nextDelay(popups.length),
+      durationMs: POPUP_DURATION,
     });
   }
 
-  // ── Popup 4: Joker drama or slowest player (7200ms) ──
+  // ── Popup 4: Joker drama or slowest player ──
   if (jokerEvents.length > 0) {
     const joker = jokerEvents[0];
     if (joker.jokerType === 'steal' && joker.targetPlayerName) {
@@ -139,8 +147,8 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
         type: 'joker',
         emoji: '🦹',
         text: t('commentary.jokerSteal', { name: joker.playerName, target: joker.targetPlayerName }),
-        delayMs: 7200,
-        durationMs: 2200,
+        delayMs: nextDelay(popups.length),
+        durationMs: POPUP_DURATION,
       });
     } else if (joker.jokerType === 'block' && joker.targetPlayerName) {
       popups.push({
@@ -148,8 +156,8 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
         type: 'joker',
         emoji: '🚫',
         text: t('commentary.jokerBlock', { blocker: joker.playerName, target: joker.targetPlayerName }),
-        delayMs: 7200,
-        durationMs: 2200,
+        delayMs: nextDelay(popups.length),
+        durationMs: POPUP_DURATION,
       });
     } else if (joker.jokerType === 'double_points') {
       popups.push({
@@ -157,8 +165,8 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
         type: 'joker',
         emoji: '✨',
         text: t('commentary.jokerDouble', { name: joker.playerName }),
-        delayMs: 7200,
-        durationMs: 2200,
+        delayMs: nextDelay(popups.length),
+        durationMs: POPUP_DURATION,
       });
     } else if (joker.jokerType === 'protection') {
       popups.push({
@@ -166,8 +174,8 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
         type: 'joker',
         emoji: '🛡️',
         text: t('commentary.jokerProtection', { name: joker.playerName }),
-        delayMs: 7200,
-        durationMs: 2200,
+        delayMs: nextDelay(popups.length),
+        durationMs: POPUP_DURATION,
       });
     }
   } else if (correctStats.length > 1) {
@@ -178,12 +186,12 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
       type: 'highlight',
       emoji: '🐢',
       text: t('commentary.slowestPlayer', { name: slowest.playerName }),
-      delayMs: 7200,
-      durationMs: 2200,
+      delayMs: nextDelay(popups.length),
+      durationMs: POPUP_DURATION,
     });
   }
 
-  // ── Popup 5: Funny one-liner about a random player (9600ms) ──
+  // ── Popup 5: Funny one-liner about a random player ──
   const seed = questionIndex * 7 + answerStats.length * 3;
   if (correctStats.length > 0 && wrongStats.length > 0) {
     // Pick a wrong player to roast
@@ -194,8 +202,8 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
       type: 'roast',
       emoji: '🎤',
       text: t(key, { name: roastTarget.playerName }),
-      delayMs: 9600,
-      durationMs: 2200,
+      delayMs: nextDelay(popups.length),
+      durationMs: POPUP_DURATION,
     });
   } else if (correctStats.length > 0) {
     // Everyone correct — praise a random one
@@ -206,8 +214,8 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
       type: 'praise',
       emoji: '🎤',
       text: t(key, { name: praiseTarget.playerName }),
-      delayMs: 9600,
-      durationMs: 2200,
+      delayMs: nextDelay(popups.length),
+      durationMs: POPUP_DURATION,
     });
   } else if (wrongStats.length > 0) {
     // Everyone wrong — roast a random one
@@ -218,8 +226,8 @@ export function generateCommentary(input: CommentaryInput): CommentaryPopup[] {
       type: 'roast',
       emoji: '🎤',
       text: t(key, { name: roastTarget.playerName }),
-      delayMs: 9600,
-      durationMs: 2200,
+      delayMs: nextDelay(popups.length),
+      durationMs: POPUP_DURATION,
     });
   }
 

@@ -10,7 +10,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
-const SECONDS_PER_QUESTION = 67; // theme(11) + display(15) + answer(24) + results(12) + intermission(7) ≈ 69s
+const SECONDS_PER_QUESTION = 82; // theme(11) + display(15) + answer(24) + results(25) + intermission(7)
 const MINUTES_PER_QUESTION = SECONDS_PER_QUESTION / 60;
 const QUESTIONS_PER_STAGE = 5;
 const BATCH_SIZE = 15;

@@ -11,7 +11,7 @@ const GAME_PHASES = {
   theme_announcement: { duration: 11, description: 'Theme is revealed with animation' },
   question_display: { duration: 15, description: 'Question and options appear on screen' },
   answer_selection: { duration: 24, description: 'Players select their answer on their phone' },
-  results: { duration: 12, description: 'Correct answer revealed + animated TV host commentary' },
+  results: { duration: 25, description: 'Correct answer revealed + animated TV host commentary popups (5 popups × 4s each)' },
   intermission: { duration: 7, description: 'Brief pause between questions with leaderboard' },
   commercial_break: { duration: 0, description: 'Scheduled pause with promo message (configurable 3-20 min)' },
   quiz_complete: { duration: 0, description: 'Final leaderboard and results' },
