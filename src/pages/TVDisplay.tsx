@@ -154,7 +154,7 @@ export const TVDisplay: React.FC = () => {
 
   useEffect(() => {
     // Hide instructions as soon as the host starts the quiz (any active phase)
-    if (showInstructions && currentPhase && currentPhase !== '') {
+    if (showInstructions && phaseEndTime && phaseEndTime > 0) {
       setShowInstructions(false);
     }
   }, [currentPhase, phaseEndTime]);
@@ -255,8 +255,9 @@ export const TVDisplay: React.FC = () => {
   // PHASE 0: Instructions Screen — compact, fits 1080p
   // Only show if no active phase has been received yet
   // ═══════════════════════════════════════════════════════════════
-  const hasActivePhase = currentPhase && currentPhase !== '';
-  if ((showInstructions || !isReady || allQuestions.length === 0) && !hasActivePhase) {
+  // phaseEndTime is null at init and only set when a broadcast arrives from the host
+  const hostHasStarted = phaseEndTime !== null && phaseEndTime > 0;
+  if ((showInstructions || !isReady || allQuestions.length === 0) && !hostHasStarted) {
     const joinUrl = `${window.location.origin}/join?code=${sessionCode}`;
 
     return (
