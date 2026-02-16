@@ -511,21 +511,37 @@ export const PlayerView: React.FC = () => {
             {t('player.answersTitle')} {answersEnabled ? t('player.answersSelectNow') : t('player.answersWaitTime')}
           </h3>
           <div className="grid grid-cols-2 gap-3">
-            {['A', 'B', 'C', 'D'].map((letter) => (
-              <Button
-                key={letter}
-                size="xl"
-                onClick={() => handleAnswerSelect(letter as 'A' | 'B' | 'C' | 'D')}
-                disabled={!answersEnabled}
-                className={`h-32 text-7xl font-bold ${
-                  selectedAnswer === currentQuestion?.options?.[['A', 'B', 'C', 'D'].indexOf(letter)]
-                    ? 'bg-qb-cyan border-4 border-white scale-105'
-                    : 'bg-qb-darker hover:bg-qb-purple'
-                } disabled:opacity-30`}
-              >
-                {letter}
-              </Button>
-            ))}
+            {['A', 'B', 'C', 'D'].map((letter) => {
+              const optionIndex = ['A', 'B', 'C', 'D'].indexOf(letter);
+              const optionText = currentQuestion?.options?.[optionIndex];
+              const isSelected = selectedAnswer === optionText;
+              const isCorrectOption = optionText === currentQuestion?.correct_answer;
+              const isResultsPhase = currentPhase === 'results';
+
+              let buttonClass = 'bg-qb-darker hover:bg-qb-purple';
+              if (isResultsPhase && isCorrectOption) {
+                // Always highlight correct answer in green during results
+                buttonClass = 'bg-green-500 border-4 border-green-300 scale-105';
+              } else if (isResultsPhase && isSelected && !isCorrectOption) {
+                // Player's wrong answer in red
+                buttonClass = 'bg-red-500 border-4 border-red-300';
+              } else if (isSelected) {
+                // Selected during answer phase
+                buttonClass = 'bg-qb-cyan border-4 border-white scale-105';
+              }
+
+              return (
+                <Button
+                  key={letter}
+                  size="xl"
+                  onClick={() => handleAnswerSelect(letter as 'A' | 'B' | 'C' | 'D')}
+                  disabled={!answersEnabled}
+                  className={`h-32 text-7xl font-bold ${buttonClass} disabled:opacity-30`}
+                >
+                  {letter}
+                </Button>
+              );
+            })}
           </div>
 
           {hasAnswered && (

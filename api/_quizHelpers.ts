@@ -392,6 +392,25 @@ export async function generateBatchWithRetry(
             q.options = q.options.map((opt: string) =>
               opt.length > 60 ? opt.substring(0, 57) + '...' : opt
             );
+            // If correct_answer was truncated in options, update it to match
+            if (q.correct_answer) {
+              const matchingOption = q.options.find(
+                (opt: string) => opt === q.correct_answer || q.correct_answer.startsWith(opt.replace('...', ''))
+              );
+              if (matchingOption && matchingOption !== q.correct_answer) {
+                q.correct_answer = matchingOption;
+              }
+              // Also ensure correct_answer is exactly one of the options
+              if (!q.options.includes(q.correct_answer)) {
+                // Fallback: find the closest match
+                const bestMatch = q.options.find((opt: string) =>
+                  q.correct_answer.toLowerCase().startsWith(opt.replace('...', '').toLowerCase())
+                );
+                if (bestMatch) {
+                  q.correct_answer = bestMatch;
+                }
+              }
+            }
           }
           if (q.explanation && q.explanation.length > 250) {
             q.explanation = q.explanation.substring(0, 247) + '...';

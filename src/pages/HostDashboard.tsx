@@ -573,11 +573,14 @@ export const HostDashboard: React.FC = () => {
                     {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}`}
                   </div>
                   <div className="text-3xl">{player.avatar_emoji}</div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="text-lg font-bold text-white">{player.player_name}</div>
                     <div className="text-sm text-white/60">
                       {t('host.playerStats', { correct: player.correct_answers, accuracy: player.accuracy_percentage })}
                     </div>
+                    {player.email && (
+                      <div className="text-xs text-white/40 truncate">{player.email}</div>
+                    )}
                   </div>
                   <div className="text-2xl font-bold text-qb-cyan">{player.total_score}</div>
                 </div>
@@ -1005,14 +1008,19 @@ export const HostDashboard: React.FC = () => {
                 {players.map((player) => (
                   <div key={player.id} className="flex items-center gap-3 p-2 bg-qb-darker rounded-lg">
                     <div className="text-xl">{player.avatar_emoji}</div>
-                    <div className="flex-1 text-white text-sm truncate">{player.player_name}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-white text-sm truncate">{player.player_name}</div>
+                      {player.email && (
+                        <div className="text-white/40 text-xs truncate">{player.email}</div>
+                      )}
+                    </div>
                     <div
-                      className="w-2 h-2 rounded-full"
+                      className="w-2 h-2 rounded-full shrink-0"
                       style={{ backgroundColor: player.is_connected ? '#10B981' : '#EF4444' }}
                     />
                     <button
                       onClick={() => handleKickPlayer(player.id, player.player_name)}
-                      className="text-red-400/50 hover:text-red-400 transition-colors p-1"
+                      className="text-red-400/50 hover:text-red-400 transition-colors p-1 shrink-0"
                       title={t('host.kickPlayer')}
                     >
                       <UserMinus className="w-4 h-4" />
