@@ -34,8 +34,8 @@ export function useCountdown(
     }
 
     const remaining = Math.ceil((phaseEndTime - Date.now()) / 1000);
-    // Cap at 30s (longest phase is 24s) to prevent clock-skew / stale timestamp bugs
-    const clamped = Math.max(0, Math.min(remaining, 30));
+    // Cap at 600s (10 min) to support long phases: tutorial (~90s), commercial breaks (~5min)
+    const clamped = Math.max(0, Math.min(remaining, 600));
     setSecondsLeft(clamped);
 
     if (clamped <= 0 && !expiredRef.current) {

@@ -178,4 +178,4 @@ export function buildTutorialSlides(settings: {
   return slides;
 }
 
-export const TUTORIAL_SECONDS_PER_SLIDE = 6;
+export const TUTORIAL_SECONDS_PER_SLIDE = 9;
