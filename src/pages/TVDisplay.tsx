@@ -22,9 +22,9 @@ const getAdaptiveTextSize = (
   sizes: { sm: string; md: string; lg: string; xl: string }
 ): string => {
   const len = text.length;
-  if (len > 100) return sizes.sm;
-  if (len > 60) return sizes.md;
-  if (len > 30) return sizes.lg;
+  if (len > 120) return sizes.sm;
+  if (len > 80) return sizes.md;
+  if (len > 40) return sizes.lg;
   return sizes.xl;
 };
 
@@ -33,10 +33,10 @@ const getAdaptiveTextSize = (
  */
 const getAdaptiveOptionSize = (options: string[]): string => {
   const maxLen = Math.max(...options.map(o => o.length));
-  if (maxLen > 80) return 'text-base';
-  if (maxLen > 50) return 'text-lg';
-  if (maxLen > 30) return 'text-xl';
-  return 'text-2xl';
+  if (maxLen > 80) return 'text-xl';
+  if (maxLen > 50) return 'text-2xl';
+  if (maxLen > 30) return 'text-3xl';
+  return 'text-4xl';
 };
 
 export const TVDisplay: React.FC = () => {
@@ -666,13 +666,13 @@ export const TVDisplay: React.FC = () => {
     const questionText = currentQuestion?.question_text || t('common.loading');
     const hasImage = !!currentQuestion?.image_url;
     const questionTextClass = hasImage
-      ? getAdaptiveTextSize(questionText, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
+      ? getAdaptiveTextSize(questionText, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' })
+      : getAdaptiveTextSize(questionText, { xl: 'text-7xl', lg: 'text-6xl', md: 'text-5xl', sm: 'text-4xl' });
 
     return (
       <div className="h-screen bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-500 flex items-center justify-center p-8 overflow-hidden">
         <div className="max-w-6xl w-full text-center flex flex-col items-center justify-center h-full">
-          {!hasImage && <div className="text-6xl mb-4">📖</div>}
+          {!hasImage && <div className="text-7xl mb-4">📖</div>}
           {hasImage && (
             <div className="mb-4 w-full flex justify-center">
               {!loadedImages.has(currentQuestion!.image_url!) ? (
@@ -681,13 +681,13 @@ export const TVDisplay: React.FC = () => {
                 <img
                   src={currentQuestion!.image_url}
                   alt=""
-                  className="max-h-[40vh] max-w-full object-contain rounded-2xl shadow-2xl transition-opacity duration-300"
+                  className="max-h-[35vh] max-w-full object-contain rounded-2xl shadow-2xl transition-opacity duration-300"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
               )}
             </div>
           )}
-          <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-8 mb-6 w-full">
+          <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-10 mb-6 w-full">
             <h2 className={`font-bold text-white leading-tight ${questionTextClass}`}>
               {questionText}
             </h2>
@@ -708,26 +708,26 @@ export const TVDisplay: React.FC = () => {
     const questionText = currentQuestion?.question_text || '';
     const hasImage = !!currentQuestion?.image_url;
     const answerQuestionClass = hasImage
-      ? getAdaptiveTextSize(questionText, { xl: 'text-2xl', lg: 'text-xl', md: 'text-lg', sm: 'text-base' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' });
+      ? getAdaptiveTextSize(questionText, { xl: 'text-3xl', lg: 'text-2xl', md: 'text-xl', sm: 'text-lg' })
+      : getAdaptiveTextSize(questionText, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' });
     const options = currentQuestion?.options || [];
     const optionTextClass = getAdaptiveOptionSize(options);
     const maxOptionLen = Math.max(...options.map(o => o.length), 0);
     const gridCols = maxOptionLen > 60 ? 'grid-cols-1' : 'grid-cols-2';
 
     return (
-      <div className="h-screen bg-qb-dark p-6 overflow-hidden">
+      <div className="h-screen bg-qb-dark p-4 overflow-hidden">
         <div className="max-w-7xl mx-auto h-full flex flex-col justify-between">
           <div className="text-center">
-            <div className="inline-flex items-center gap-4 px-8 py-3 bg-qb-cyan/20 rounded-3xl">
+            <div className="inline-flex items-center gap-4 px-8 py-2 bg-qb-cyan/20 rounded-3xl">
               <Clock className="w-10 h-10 text-qb-cyan animate-pulse" />
               <span className="text-6xl font-mono font-bold text-white">
                 {displaySeconds}
               </span>
             </div>
             {/* Live answer counter */}
-            <div className="mt-3 flex items-center justify-center gap-3">
-              <div className="flex items-center gap-2 px-4 py-2 bg-qb-purple/30 rounded-full">
+            <div className="mt-2 flex items-center justify-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-1.5 bg-qb-purple/30 rounded-full">
                 <Users className="w-5 h-5 text-qb-yellow" />
                 <span className="text-white font-bold text-lg">
                   {t('tv.answeredCount', { count: answeredCount, total: topPlayers.length })}
@@ -744,16 +744,16 @@ export const TVDisplay: React.FC = () => {
             </div>
           </div>
 
-          <Card className="p-6 bg-gradient-to-br from-qb-purple/30 to-qb-cyan/30 border-white/20 flex-1 min-h-0 my-4">
+          <Card className="p-5 bg-gradient-to-br from-qb-purple/30 to-qb-cyan/30 border-white/20 flex-1 min-h-0 my-3">
             {hasImage && (
-              <div className="flex justify-center mb-3">
+              <div className="flex justify-center mb-2">
                 {!loadedImages.has(currentQuestion!.image_url!) ? (
                   <div className="w-48 h-32 bg-white/10 rounded-xl animate-pulse" />
                 ) : (
                   <img
                     src={currentQuestion!.image_url}
                     alt=""
-                    className="max-h-[25vh] max-w-full object-contain rounded-xl transition-opacity duration-300"
+                    className="max-h-[20vh] max-w-full object-contain rounded-xl transition-opacity duration-300"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
                 )}
@@ -767,10 +767,10 @@ export const TVDisplay: React.FC = () => {
               {options.map((option, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-2xl bg-qb-darker border-2 border-white/20 flex items-center gap-3"
+                  className="p-4 rounded-2xl bg-qb-darker border-2 border-white/20 flex items-center gap-4"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                    <span className="text-2xl font-bold text-white">
+                  <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                    <span className="text-3xl font-bold text-white">
                       {['A', 'B', 'C', 'D'][idx]}
                     </span>
                   </div>
@@ -791,7 +791,7 @@ export const TVDisplay: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'results') {
     const correctAnswer = currentQuestion?.correct_answer || '';
-    const correctAnswerClass = getAdaptiveTextSize(correctAnswer, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' });
+    const correctAnswerClass = getAdaptiveTextSize(correctAnswer, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
     const hasImage = !!currentQuestion?.image_url;
 
     return (
@@ -807,9 +807,9 @@ export const TVDisplay: React.FC = () => {
           </div>
         )}
         <div className="max-w-7xl mx-auto h-full flex flex-col items-center justify-center relative z-10">
-          <div className="text-6xl mb-3 animate-bounce">✅</div>
-          <h1 className="text-5xl font-bold text-white mb-6">{t('tv.correctAnswer')}</h1>
-          <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-8 mb-6">
+          <div className="text-7xl mb-3 animate-bounce">✅</div>
+          <h1 className="text-6xl font-bold text-white mb-6">{t('tv.correctAnswer')}</h1>
+          <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-10 mb-6">
             <p className={`${correctAnswerClass} font-bold text-white`}>
               {correctAnswer}
             </p>
@@ -818,10 +818,10 @@ export const TVDisplay: React.FC = () => {
           {currentQuestion?.fun_fact && commentaryPopups.length === 0 && (
             <div className="bg-yellow-500/10 backdrop-blur-xl border border-yellow-400/30 rounded-2xl p-5 mb-4 max-w-4xl">
               <div className="flex items-center gap-2 mb-2">
-                <Lightbulb className="w-6 h-6 text-yellow-300" />
-                <span className="text-yellow-300 font-bold text-lg">{t('tv.funFact')}</span>
+                <Lightbulb className="w-8 h-8 text-yellow-300" />
+                <span className="text-yellow-300 font-bold text-2xl">{t('tv.funFact')}</span>
               </div>
-              <p className="text-white/90 text-xl">{currentQuestion.fun_fact}</p>
+              <p className="text-white/90 text-2xl">{currentQuestion.fun_fact}</p>
             </div>
           )}
 

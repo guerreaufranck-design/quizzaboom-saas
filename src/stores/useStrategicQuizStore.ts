@@ -160,6 +160,51 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
     console.log('📍 Phase data received:', data.phase, 'Q:', data.questionIndex);
 
+    // Quiz ended — if player didn't answer the last question, count it as wrong
+    if (data.phase === 'quiz_complete' && !prevHasAnswered && prevQIdx >= 0) {
+      console.log('🏁 Quiz ended — last question', prevQIdx + 1, 'was not answered, counting as wrong');
+      const playerId = useQuizStore.getState().currentPlayer?.id;
+      if (playerId) {
+        supabase.rpc('increment_player_score', {
+          p_player_id: playerId,
+          p_points: 0,
+          p_is_correct: false,
+        }).then(({ error: rpcError }) => {
+          if (rpcError) {
+            supabase
+              .from('session_players')
+              .select('questions_answered')
+              .eq('id', playerId)
+              .single()
+              .then(({ data: playerData }) => {
+                if (playerData) {
+                  supabase
+                    .from('session_players')
+                    .update({
+                      questions_answered: playerData.questions_answered + 1,
+                      current_streak: 0,
+                    })
+                    .eq('id', playerId)
+                    .then(() => {});
+                }
+              });
+          }
+          useQuizStore.setState((state) => {
+            if (state.currentPlayer) {
+              return {
+                currentPlayer: {
+                  ...state.currentPlayer,
+                  questions_answered: state.currentPlayer.questions_answered + 1,
+                  current_streak: 0,
+                }
+              };
+            }
+            return state;
+          });
+        });
+      }
+    }
+
     set({
       currentPhase: data.phase,
       phaseTimeRemaining: data.timeRemaining,
@@ -183,9 +228,53 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
     if (data.phase === 'theme_announcement') {
       // If the question index advanced, the previous question is over.
-      // If the player didn't answer → score 0 (already handled by not submitting).
+      // If the player didn't answer → count as wrong answer in DB (questions_answered + 1, streak reset)
       if (data.questionIndex !== prevQIdx && !prevHasAnswered && prevQIdx >= 0) {
-        console.log('⏭️ Question', prevQIdx + 1, 'missed (not answered) — 0 points');
+        console.log('⏭️ Question', prevQIdx + 1, 'missed (not answered) — counting as wrong');
+        const playerId = useQuizStore.getState().currentPlayer?.id;
+        if (playerId) {
+          // Increment questions_answered and reset streak for missed question
+          supabase.rpc('increment_player_score', {
+            p_player_id: playerId,
+            p_points: 0,
+            p_is_correct: false,
+          }).then(({ error: rpcError }) => {
+            if (rpcError) {
+              // Fallback: manual update
+              supabase
+                .from('session_players')
+                .select('questions_answered, current_streak')
+                .eq('id', playerId)
+                .single()
+                .then(({ data: playerData }) => {
+                  if (playerData) {
+                    supabase
+                      .from('session_players')
+                      .update({
+                        questions_answered: playerData.questions_answered + 1,
+                        current_streak: 0,
+                        last_activity: new Date().toISOString(),
+                      })
+                      .eq('id', playerId)
+                      .then(() => {});
+                  }
+                });
+            }
+            // Update local state
+            useQuizStore.setState((state) => {
+              if (state.currentPlayer) {
+                return {
+                  currentPlayer: {
+                    ...state.currentPlayer,
+                    questions_answered: state.currentPlayer.questions_answered + 1,
+                    current_streak: 0,
+                  }
+                };
+              }
+              return state;
+            });
+          });
+        }
       }
 
       // Reset answer state for the new question
