@@ -153,8 +153,8 @@ export const TVDisplay: React.FC = () => {
   }, [allQuestions]);
 
   useEffect(() => {
-    // Hide instructions as soon as the host starts the quiz (any phase with a valid phaseEndTime)
-    if (phaseEndTime && phaseEndTime > 0 && showInstructions) {
+    // Hide instructions as soon as the host starts the quiz (any active phase)
+    if (showInstructions && currentPhase && currentPhase !== '') {
       setShowInstructions(false);
     }
   }, [currentPhase, phaseEndTime]);
@@ -253,8 +253,10 @@ export const TVDisplay: React.FC = () => {
 
   // ═══════════════════════════════════════════════════════════════
   // PHASE 0: Instructions Screen — compact, fits 1080p
+  // Only show if no active phase has been received yet
   // ═══════════════════════════════════════════════════════════════
-  if (showInstructions || !isReady || allQuestions.length === 0) {
+  const hasActivePhase = currentPhase && currentPhase !== '';
+  if ((showInstructions || !isReady || allQuestions.length === 0) && !hasActivePhase) {
     const joinUrl = `${window.location.origin}/join?code=${sessionCode}`;
 
     return (
@@ -376,6 +378,13 @@ export const TVDisplay: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // TUTORIAL: Pre-quiz tutorial slides
+  // ═══════════════════════════════════════════════════════════════
+  if (currentPhase === 'tutorial' && tutorialSlides.length > 0) {
+    return <TutorialSlides slides={tutorialSlides} variant="tv" />;
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -636,13 +645,6 @@ export const TVDisplay: React.FC = () => {
         </div>
       </div>
     );
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // TUTORIAL: Pre-quiz tutorial slides
-  // ═══════════════════════════════════════════════════════════════
-  if (currentPhase === 'tutorial' && tutorialSlides.length > 0) {
-    return <TutorialSlides slides={tutorialSlides} variant="tv" />;
   }
 
   // ═══════════════════════════════════════════════════════════════
