@@ -55,18 +55,12 @@ export function useUserEntitlement(): UserEntitlement {
     }
   }, [user, fetchOrganization]);
 
-  // After org fetch completes, check B2C credits if not B2B
+  // After org fetch completes, ALWAYS check B2C credits (even for B2B users as fallback)
   useEffect(() => {
     if (!orgChecked || orgLoading || !user) return;
 
     const loadCredits = async () => {
-      if (currentOrganization) {
-        // B2B user → no need to fetch credits
-        setIsLoading(false);
-        return;
-      }
-
-      // B2C user → fetch purchase credits
+      // ALWAYS fetch B2C credits, even for B2B users (fallback when quota reached)
       try {
         const { data, count } = await supabase
           .from('user_purchases')
@@ -90,7 +84,7 @@ export function useUserEntitlement(): UserEntitlement {
     };
 
     loadCredits();
-  }, [orgChecked, orgLoading, currentOrganization, user]);
+  }, [orgChecked, orgLoading, user]);
 
   useEffect(() => {
     loadEntitlement();
