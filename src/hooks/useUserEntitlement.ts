@@ -108,14 +108,32 @@ export function useUserEntitlement(): UserEntitlement {
 
     if (isTrialExpired) {
       reason = 'trial_expired';
+      // FALLBACK: Allow B2C credits even if trial expired
+      if (availableCredits > 0) {
+        canCreate = true;
+        reason = 'ok';
+        userType = 'b2c'; // Switch to B2C mode
+      }
     } else if (currentOrganization.subscription_status === 'cancelled') {
       reason = 'cancelled';
+      // FALLBACK: Allow B2C credits even if subscription cancelled
+      if (availableCredits > 0) {
+        canCreate = true;
+        reason = 'ok';
+        userType = 'b2c'; // Switch to B2C mode
+      }
     } else if (!checkQuizLimit()) {
       reason = 'quota_reached';
       quizUsage = {
         used: currentOrganization.quizzes_used_this_month,
         limit: currentOrganization.monthly_quiz_limit ?? 5,
       };
+      // FALLBACK: Allow B2C credits if B2B quota reached
+      if (availableCredits > 0) {
+        canCreate = true;
+        reason = 'ok';
+        userType = 'b2c'; // Switch to B2C mode for this quiz
+      }
     } else {
       canCreate = true;
       reason = 'ok';

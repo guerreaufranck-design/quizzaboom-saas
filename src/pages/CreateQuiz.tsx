@@ -105,11 +105,13 @@ export const CreateQuiz: React.FC = () => {
     // Check plan limits BEFORE generating
     if (!canCreate) {
       if (reason === 'quota_reached') {
-        alert(t('create.error.quotaReached', `You have reached your monthly limit of ${quizUsage?.limit || 5} quizzes. Upgrade to Pro for unlimited quizzes!`));
+        alert(t('create.error.quotaReached', `You have reached your monthly limit of ${quizUsage?.limit || 5} quizzes. ${t('create.error.quotaHint', 'Upgrade to Pro for unlimited quizzes, or purchase B2C credits to continue.')}`));
       } else if (reason === 'trial_expired') {
-        alert(t('create.error.trialExpired', 'Your trial has expired. Please subscribe to continue creating quizzes.'));
+        alert(t('create.error.trialExpired', 'Your trial has expired. Please subscribe to continue creating quizzes, or purchase B2C credits.'));
       } else if (reason === 'no_credits') {
-        alert(t('create.error.noCredits', 'You have no quiz credits remaining. Please purchase more credits.'));
+        alert(t('create.error.noCredits', 'You have no quiz credits remaining. Please purchase more credits or upgrade your plan.'));
+      } else if (reason === 'cancelled') {
+        alert(t('create.error.cancelled', 'Your subscription has been cancelled. Please reactivate your subscription or purchase B2C credits.'));
       } else {
         alert(t('create.error.cannotCreate', 'Unable to create quiz. Please check your subscription status.'));
       }
