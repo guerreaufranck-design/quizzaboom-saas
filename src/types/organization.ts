@@ -38,7 +38,8 @@ export interface OrganizationMember {
   joined_at: string;
 }
 
-export type VerificationStatus = 'pending' | 'approved' | 'rejected' | 'contested';
+export type VerificationStatus = 'pending' | 'pending_review' | 'approved' | 'rejected' | 'contested';
+export type RegistrationType = 'automatic' | 'manual';
 
 export interface VerificationRequest {
   id: string;
@@ -54,6 +55,15 @@ export interface VerificationRequest {
   raw_data?: Record<string, unknown>;
   contested_at?: string;
   contest_reason?: string;
+  // Manual verification fields
+  registration_type?: RegistrationType;
+  full_name?: string;
+  commercial_name?: string;
+  business_type?: string;
+  city?: string;
+  region?: string;
+  business_description?: string;
+  phone?: string;
   created_at: string;
   updated_at: string;
 }
@@ -65,4 +75,5 @@ export interface VerificationResult {
   detectedType: string;
   organizationId?: string;
   trialEndsAt?: string;
+  pendingReview?: boolean;
 }

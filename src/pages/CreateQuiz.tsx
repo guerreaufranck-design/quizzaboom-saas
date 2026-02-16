@@ -27,7 +27,7 @@ const BREAK_DURATION_OPTIONS = [
 
 export const CreateQuiz: React.FC = () => {
   const { t } = useTranslation();
-  const { generateQuiz, createSession, isLoading } = useQuizStore();
+  const { generateQuiz, createSession, isLoading, generationProgress } = useQuizStore();
   const navigate = useAppNavigate();
   const [selectedThemes, setSelectedThemes] = useState<ThemeCategory[]>(['general']);
   const [selectedMode, setSelectedMode] = useState<ThemeMode>('standard');
@@ -187,7 +187,27 @@ export const CreateQuiz: React.FC = () => {
               <h2 className="text-2xl font-bold text-white mb-2">
                 {generationStep || t('create.generating')}
               </h2>
-              <p className="text-white/80">
+
+              {/* Chunk progress bar */}
+              {generationProgress && generationProgress.total > 1 && (
+                <div className="mt-4 max-w-md mx-auto">
+                  <div className="flex justify-between text-sm text-white/80 mb-2">
+                    <span>{generationProgress.message}</span>
+                    <span className="font-bold">{generationProgress.current}/{generationProgress.total}</span>
+                  </div>
+                  <div className="w-full bg-white/20 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="bg-white rounded-full h-3 transition-all duration-700 ease-out"
+                      style={{ width: `${(generationProgress.current / generationProgress.total) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-white/60 text-xs mt-2">
+                    {Math.round((generationProgress.current / generationProgress.total) * 100)}%
+                  </p>
+                </div>
+              )}
+
+              <p className="text-white/80 mt-3">
                 {t('create.generationWait')}
               </p>
               <div className="mt-4 flex items-center justify-center gap-2">

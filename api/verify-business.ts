@@ -152,6 +152,8 @@ Analyze this business and determine if it is ELIGIBLE for our B2B platform.
 - IT services, software companies
 - Real estate, insurance, banking
 
+NOTE: Some businesses are registered under the owner's personal name (e.g., "Juan Fernandez" for an autónomo/auto-entrepreneur). When a personal name is provided along with explicit business type information (e.g., "bar", "restaurant", activity description like "tapas bar on the beach"), use the business type and activity description to determine eligibility, NOT the personal name alone. A personal name with a clear hospitality/entertainment activity description IS eligible.
+
 Respond ONLY with this JSON format:
 {
   "eligible": true/false,
@@ -189,10 +191,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: 'Too many requests. Please wait a minute.' });
   }
 
-  const { registrationNumber, country, userId, businessName } = req.body;
+  const {
+    registrationNumber, country, userId, businessName,
+    // Manual registration fields
+    registrationType,
+    fullName,
+    commercialName,
+    businessType,
+    city,
+    region,
+    businessDescription,
+    phone,
+  } = req.body;
 
-  if (!registrationNumber || !country || !userId) {
-    return res.status(400).json({ error: 'Missing required fields: registrationNumber, country, userId' });
+  // Validate based on registration type
+  if (registrationType === 'manual') {
+    if (!fullName || !businessType || !city || !country || !businessDescription || !userId) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        message: 'Please fill in all required fields: full name, business type, city, country, and activity description.',
+      });
+    }
+  } else {
+    if (!registrationNumber || !country || !userId) {
+      return res.status(400).json({ error: 'Missing required fields: registrationNumber, country, userId' });
+    }
   }
 
   try {
@@ -220,6 +243,96 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
     }
+
+    // --- MANUAL VERIFICATION PATH ---
+    if (registrationType === 'manual') {
+      const displayName = commercialName?.trim() || fullName.trim();
+
+      // Check if user already has a pending_review request
+      const { data: existingRequest } = await supabase
+        .from('verification_requests')
+        .select('id, status')
+        .eq('user_id', userId)
+        .eq('status', 'pending_review')
+        .limit(1);
+
+      if (existingRequest && existingRequest.length > 0) {
+        return res.status(200).json({
+          eligible: true,
+          pendingReview: true,
+          businessName: displayName,
+          detectedType: businessType,
+        });
+      }
+
+      // Run AI eligibility pre-check
+      const manualBusinessInfo = {
+        name: displayName,
+        activityCode: '',
+        activityLabel: `${businessType} - ${businessDescription}`,
+        address: `${city}${region ? ', ' + region : ''}, ${country}`,
+        country,
+      };
+
+      const eligibility = await checkEligibilityWithAI(manualBusinessInfo);
+
+      if (!eligibility.eligible) {
+        // AI says not eligible — reject immediately
+        await supabase.from('verification_requests').insert({
+          user_id: userId,
+          registration_number: '',
+          registration_type: 'manual',
+          country,
+          business_name: displayName,
+          full_name: fullName.trim(),
+          commercial_name: commercialName?.trim() || null,
+          business_type: businessType,
+          city: city.trim(),
+          region: region?.trim() || null,
+          business_description: businessDescription.trim(),
+          phone: phone?.trim() || null,
+          status: 'rejected',
+          rejection_reason: eligibility.reason,
+          detected_type: eligibility.detectedType,
+          raw_data: manualBusinessInfo,
+        });
+
+        return res.status(200).json({
+          eligible: false,
+          businessName: displayName,
+          reason: eligibility.reason,
+          detectedType: eligibility.detectedType,
+        });
+      }
+
+      // AI says eligible → create pending_review request (NO org created yet)
+      await supabase.from('verification_requests').insert({
+        user_id: userId,
+        registration_number: '',
+        registration_type: 'manual',
+        country,
+        business_name: displayName,
+        full_name: fullName.trim(),
+        commercial_name: commercialName?.trim() || null,
+        business_type: businessType,
+        city: city.trim(),
+        region: region?.trim() || null,
+        business_description: businessDescription.trim(),
+        phone: phone?.trim() || null,
+        status: 'pending_review',
+        detected_type: eligibility.detectedType,
+        raw_data: manualBusinessInfo,
+      });
+
+      return res.status(200).json({
+        eligible: true,
+        pendingReview: true,
+        businessName: displayName,
+        detectedType: eligibility.detectedType,
+      });
+    }
+
+    // --- AUTOMATIC VERIFICATION PATH (existing flow) ---
 
     // Step 1: Look up business in official registry
     let businessInfo: {

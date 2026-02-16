@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Quiz, QuizSession, Player, Question, QuizGenRequest, CommercialBreakConfig, CommercialBreakSchedule } from '../types/quiz';
 import { supabase } from '../services/supabase/client';
-import { generateMultiStageQuiz } from '../services/gemini';
+import { generateMultiStageQuiz, type GenerationProgress } from '../services/gemini';
 import { v4 as uuidv4 } from 'uuid';
 import { useOrganizationStore } from './useOrganizationStore';
 
@@ -77,6 +77,7 @@ interface QuizState {
   currentView: string;
   isLoading: boolean;
   error: string | null;
+  generationProgress: GenerationProgress | null;
   realtimeChannel: ReturnType<typeof supabase.channel> | null;
   connectionStatus: 'connected' | 'connecting' | 'disconnected';
 
@@ -108,6 +109,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   currentView: 'home',
   isLoading: false,
   error: null,
+  generationProgress: null,
   realtimeChannel: null,
   connectionStatus: 'disconnected',
 
@@ -204,15 +206,19 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   },
 
   generateQuiz: async (request) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null, generationProgress: null });
     try {
       console.log('🎨 Generating quiz with AI...');
 
       const { data: { user } } = await supabase.auth.getUser();
       const creatorId = user?.id || uuidv4();
 
-      // Pass creatorId for deduplication of previously generated questions
-      const aiResponse = await generateMultiStageQuiz(request, creatorId);
+      // Pass creatorId for deduplication + progress callback for chunked generation
+      const aiResponse = await generateMultiStageQuiz(
+        request,
+        creatorId,
+        (progress) => set({ generationProgress: progress }),
+      );
 
       console.log('✅ AI generation complete, saving to DB...');
       
@@ -307,13 +313,13 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         }).catch(err => console.warn('Image fetch failed (non-critical):', err));
       }
 
-      set({ currentQuiz: quizData as Quiz, isLoading: false });
+      set({ currentQuiz: quizData as Quiz, isLoading: false, generationProgress: null });
       return quizData as Quiz;
-      
+
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('❌ Generate quiz error:', error);
-      set({ error: message, isLoading: false });
+      set({ error: message, isLoading: false, generationProgress: null });
       throw error;
     }
   },
