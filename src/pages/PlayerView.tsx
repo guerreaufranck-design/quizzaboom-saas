@@ -48,6 +48,7 @@ export const PlayerView: React.FC = () => {
   const lastPhaseRef = useRef<string>('');
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectingRef = useRef(false);
+  const inventoryLoadedRef = useRef(false);
   const lastWakeLockAttemptRef = useRef(0);
 
   // ===== RECONNECTION ROBUSTE =====
@@ -213,10 +214,16 @@ export const PlayerView: React.FC = () => {
     pollPhaseFromDB();
   }, [currentQuiz?.id, sessionCode]);
 
-  // Load joker inventory ONLY when currentPlayer becomes available
+  // Load joker inventory ONLY when currentPlayer becomes available (ONCE per session)
   useEffect(() => {
     const loadPlayerInventory = async () => {
       if (!currentPlayer?.id) return;
+
+      // Prevent reloading inventory if already loaded (fixes reload exploit)
+      if (inventoryLoadedRef.current) {
+        console.log('🃏 Inventory already loaded, skipping reload');
+        return;
+      }
 
       try {
         const { data } = await supabase
@@ -233,6 +240,7 @@ export const PlayerView: React.FC = () => {
             // Use saved inventory (prevents reload exploit)
             console.log('🃏 Loading saved joker inventory:', savedInventory);
             initializeInventory(savedInventory);
+            inventoryLoadedRef.current = true;
             return;
           }
         }
@@ -247,6 +255,7 @@ export const PlayerView: React.FC = () => {
         if (defaultInventory) {
           console.log('🃏 Using default joker inventory:', defaultInventory);
           initializeInventory(defaultInventory);
+          inventoryLoadedRef.current = true;
         }
       }
     };
