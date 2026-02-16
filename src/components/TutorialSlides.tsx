@@ -100,67 +100,67 @@ export function buildTutorialSlides(settings: {
   // Slide 1: Welcome
   slides.push({
     emoji: '🎉',
-    titleKey: 'tutorial.welcomeTitle',
-    descriptionKey: 'tutorial.welcomeDesc',
+    titleKey: 'quizTutorial.welcomeTitle',
+    descriptionKey: 'quizTutorial.welcomeDesc',
   });
 
   // Slide 2: How it works
   slides.push({
     emoji: '📱',
-    titleKey: 'tutorial.howItWorksTitle',
-    descriptionKey: 'tutorial.howItWorksDesc',
+    titleKey: 'quizTutorial.howItWorksTitle',
+    descriptionKey: 'quizTutorial.howItWorksDesc',
   });
 
   // Slide 3: Answer change
   slides.push({
     emoji: '🔄',
-    titleKey: 'tutorial.answerChangeTitle',
-    descriptionKey: 'tutorial.answerChangeDesc',
+    titleKey: 'quizTutorial.answerChangeTitle',
+    descriptionKey: 'quizTutorial.answerChangeDesc',
   });
 
   if (settings.hasJokers) {
     // Slide 4: Jokers overview
     slides.push({
       emoji: '🃏',
-      titleKey: 'tutorial.jokersTitle',
-      descriptionKey: 'tutorial.jokersDesc',
+      titleKey: 'quizTutorial.jokersTitle',
+      descriptionKey: 'quizTutorial.jokersDesc',
       descriptionParams: { count: settings.jokerCount || 1 },
     });
 
     // Slide 5: Double Points
     slides.push({
       emoji: '⭐',
-      titleKey: 'tutorial.doubleTitle',
-      descriptionKey: 'tutorial.doubleDesc',
+      titleKey: 'quizTutorial.doubleTitle',
+      descriptionKey: 'quizTutorial.doubleDesc',
     });
 
     // Slide 6: Steal
     slides.push({
       emoji: '💰',
-      titleKey: 'tutorial.stealTitle',
-      descriptionKey: 'tutorial.stealDesc',
+      titleKey: 'quizTutorial.stealTitle',
+      descriptionKey: 'quizTutorial.stealDesc',
     });
 
     // Slide 7: Block
     slides.push({
       emoji: '🚫',
-      titleKey: 'tutorial.blockTitle',
-      descriptionKey: 'tutorial.blockDesc',
+      titleKey: 'quizTutorial.blockTitle',
+      descriptionKey: 'quizTutorial.blockDesc',
     });
 
     // Slide 8: Protection
     slides.push({
       emoji: '🛡️',
-      titleKey: 'tutorial.protectionTitle',
-      descriptionKey: 'tutorial.protectionDesc',
+      titleKey: 'quizTutorial.protectionTitle',
+      descriptionKey: 'quizTutorial.protectionDesc',
     });
   }
 
   if (settings.hasBreaks) {
     slides.push({
       emoji: '☕',
-      titleKey: 'tutorial.breaksTitle',
-      descriptionKey: 'tutorial.breaksDesc',
+      titleKey: 'quizTutorial.breaksTitle',
+      descriptionKey: 'quizTutorial.breaksDesc',
       descriptionParams: {
         count: settings.breakCount || 1,
         duration: settings.breakDuration || 5,
@@ -171,8 +171,8 @@ export function buildTutorialSlides(settings: {
   // Final slide: Get ready!
   slides.push({
     emoji: '🚀',
-    titleKey: 'tutorial.readyTitle',
-    descriptionKey: 'tutorial.readyDesc',
+    titleKey: 'quizTutorial.readyTitle',
+    descriptionKey: 'quizTutorial.readyDesc',
   });
 
   return slides;

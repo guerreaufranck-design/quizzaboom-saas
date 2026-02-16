@@ -748,7 +748,7 @@
     "lateJoinWelcome": "Vous rejoignez en cours de partie !",
     "lateJoinDesc": "Le quiz est deja en cours. Vous marquerez des points a partir de la prochaine question. Bonne chance !"
   },
-  "tutorial": {
+  "quizTutorial": {
     "welcomeTitle": "Bienvenue sur QuizzaBoom !",
     "welcomeDesc": "Preparez-vous pour une bataille de quiz epique ! Repondez aux questions sur votre telephone et affrontez les autres joueurs.",
     "howItWorksTitle": "Comment ca marche",

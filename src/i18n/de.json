@@ -748,7 +748,7 @@
     "lateJoinWelcome": "Du bist mitten im Spiel beigetreten!",
     "lateJoinDesc": "Das Quiz lauft bereits. Du sammelst Punkte ab der nachsten Frage. Viel Gluck!"
   },
-  "tutorial": {
+  "quizTutorial": {
     "welcomeTitle": "Willkommen bei QuizzaBoom!",
     "welcomeDesc": "Mach dich bereit fur eine epische Quiz-Schlacht! Beantworte Fragen auf deinem Handy und tritt gegen andere Spieler an.",
     "howItWorksTitle": "So funktioniert's",
