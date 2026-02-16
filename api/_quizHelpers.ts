@@ -65,22 +65,24 @@ export async function fetchRecentQuestionTexts(creatorId?: string): Promise<stri
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !creatorId) return [];
   try {
     const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    // Fetch last 50 quizzes (up from 20) — covers ~6 months of weekly bar quizzes
     const { data: quizzes } = await sb
       .from('ai_generated_quizzes')
       .select('id')
       .eq('creator_id', creatorId)
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(50);
 
     if (!quizzes || quizzes.length === 0) return [];
 
     const quizIds = quizzes.map(q => q.id);
+    // Fetch up to 500 recent questions (up from 200) for deeper dedup
     const { data: questions } = await sb
       .from('ai_questions')
       .select('question_text')
       .in('quiz_id', quizIds)
       .order('created_at', { ascending: false })
-      .limit(200);
+      .limit(500);
 
     return questions?.map(q => q.question_text) || [];
   } catch (err) {
@@ -113,6 +115,25 @@ export function buildBatchPrompt(
   const randomSeed = Math.floor(Math.random() * 1000000);
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().toLocaleString('en', { month: 'long' });
+  const currentDay = new Date().getDate();
+
+  // Diversity angles rotate based on date — ensures different perspectives each session
+  const diversityAngles = [
+    'Focus on 21st century events, modern discoveries, and recent achievements (post-2000)',
+    'Focus on historical events before 1900, ancient civilizations, and classical knowledge',
+    'Focus on lesser-known facts, obscure records, and underrated achievements',
+    'Focus on scientific discoveries, technology milestones, and innovation',
+    'Focus on cultural diversity — questions about Africa, Asia, South America, Oceania (avoid Euro-centric bias)',
+    'Focus on sports, entertainment, music, cinema, and pop culture from various decades',
+    'Focus on nature, geography, animals, oceans, and the environment',
+    'Focus on food, traditions, languages, and everyday life around the world',
+    'Focus on space, physics, chemistry, and the wonders of science',
+    'Focus on art, literature, architecture, and creative achievements throughout history',
+    'Focus on records, extremes, firsts, and "biggest/smallest/oldest/youngest" facts',
+    'Focus on inventions, origins of everyday objects, and "who invented X" stories',
+  ];
+  const diversityAngle = diversityAngles[(currentDay + randomSeed) % diversityAngles.length];
+  const diversityAngle2 = diversityAngles[(currentDay + randomSeed + 5) % diversityAngles.length];
 
   const batchContext = totalBatches > 1
     ? `This is BATCH ${batchIndex + 1} of ${totalBatches} for this quiz. `
@@ -124,10 +145,13 @@ Use COMPLETELY DIFFERENT sub-topics and angles. DO NOT repeat any questions or t
     : '';
 
   const dedupWarning = previousQuestions.length > 0
-    ? `\n⚠️ DUPLICATE PREVENTION (CRITICAL):
-The following questions have ALREADY been used in previous quizzes. You MUST NOT repeat them or ask very similar questions.
-Generate COMPLETELY NEW and DIFFERENT questions:
-${previousQuestions.slice(0, 50).map((q, i) => `${i + 1}. "${q}"`).join('\n')}\n`
+    ? `\n⚠️ DUPLICATE PREVENTION (CRITICAL — READ CAREFULLY):
+The following ${Math.min(previousQuestions.length, 100)} questions have ALREADY been used in previous quizzes by this creator.
+You MUST NOT repeat them, rephrase them, or ask about the SAME FACT/TOPIC/ANSWER.
+"Similar" means: same correct answer, same historical event, same person, same statistic, same concept.
+Example: if "What is the capital of France?" was asked before, do NOT ask "Which city is the French capital?" or "Where is the French government located?"
+Generate COMPLETELY FRESH questions about DIFFERENT facts, events, and topics:
+${previousQuestions.slice(0, 100).map((q, i) => `${i + 1}. "${q}"`).join('\n')}\n`
     : '';
 
   const isFunnyMode = theme.toLowerCase().includes('funny mode') || theme.toLowerCase().includes('mode humour') || theme.toLowerCase().includes('modo humor') || theme.toLowerCase().includes('lustig');
@@ -215,9 +239,26 @@ Your job: write ${batchQuestionCount} questions in ${fullLanguage} about: ${them
 Organize into ${batchStageCount} stages, starting at stage ${startStageNumber + 1}.
 Each stage has ${QUESTIONS_PER_STAGE} questions (last stage may have fewer).
 
-UNIQUE SEED: ${randomSeed}
+UNIQUE SEED: ${randomSeed} | Date: ${currentMonth} ${currentDay}, ${currentYear}
 ${previousThemesWarning}
 ${dedupWarning}
+
+🔄 FRESHNESS & DIVERSITY (EXTREMELY IMPORTANT):
+This quiz will be played in a bar/venue where REGULARS come back every week. They have ALREADY seen hundreds of quiz questions.
+You MUST generate questions they have NEVER encountered before. Avoid the "classic" overused quiz questions that appear in every trivia night.
+
+DIVERSITY DIRECTIVE FOR THIS SESSION:
+- Primary angle: ${diversityAngle}
+- Secondary angle: ${diversityAngle2}
+- Mix BOTH angles across your stages for maximum variety
+
+ANTI-REPETITION RULES:
+- NEVER ask about: the capital of France, the Mona Lisa painter, the highest mountain, the longest river, the speed of light, the largest ocean — these are in EVERY quiz
+- Dig DEEPER into topics: instead of "Who wrote Romeo and Juliet?", ask about a specific act, a lesser-known adaptation, or Shakespeare's other works
+- Prefer SPECIFIC over GENERIC: instead of "What is the largest planet?", ask "Which planet has the shortest day?" or "Which planet has the most moons?"
+- Use RECENT facts (2020-2024) when possible: new records, recent discoveries, recent winners
+- Explore NICHE sub-topics within each theme: not just "History" but "Byzantine Empire", "Meiji Restoration", "Zulu Kingdom"
+- Each stage must explore a COMPLETELY DIFFERENT angle/era/region of the main theme
 ${modeInstructions}
 
 ═══════════════════════════════════════════════════
@@ -238,12 +279,15 @@ PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
    - NEVER mix categories: no "Paris, 42, a banana, Napoleon" as options
    - The correct answer position must be RANDOMLY distributed (roughly equal A/B/C/D)
 
-3. QUESTION VARIETY (mix ALL these types across the quiz):
+3. QUESTION VARIETY (mix ALL these types — NO type should appear more than 3 times):
    - Factual: "What is / Who was / Where is...?"
    - Numeric: "How many / What percentage / In what year...?"
    - Ranking: "Which is the largest / fastest / oldest...?"
    - Chronological: "In what year / What came first...?"
    - Identification: "Which country / Who composed / What element...?"
+   - Comparison: "Which is heavier/longer/older: X or Y?"
+   - Process: "What happens when / How is X made...?"
+   - Origin: "Where does X come from / Who invented...?"
 
 4. STAGE THEMES:
    - Each stage needs a distinct sub-topic within the main theme
