@@ -20,7 +20,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
       const baseUrl = window.location.origin;
       const url = value.startsWith('http')
         ? value
-        : `${baseUrl}?code=${value}&view=join`;
+        : `${baseUrl}/join?code=${value}`;
 
       console.log('QR Code URL:', url);
 

@@ -115,7 +115,7 @@ async function checkEligibilityWithAI(businessInfo: {
     return { eligible: false, reason: 'AI verification unavailable', detectedType: 'unknown' };
   }
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const prompt = `You are a business eligibility checker for QuizzaBoom, a quiz entertainment platform for hospitality and events.
 

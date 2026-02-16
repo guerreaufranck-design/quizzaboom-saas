@@ -54,6 +54,7 @@ export const CreateQuiz: React.FC = () => {
   });
   const [customQuestionCount, setCustomQuestionCount] = useState('');
   const [isCustomCount, setIsCustomCount] = useState(false);
+  const [customThemeText, setCustomThemeText] = useState('');
 
   // Multi-theme toggle using functional setState to avoid stale closures
   const toggleTheme = useCallback((category: ThemeCategory) => {
@@ -109,9 +110,12 @@ export const CreateQuiz: React.FC = () => {
       console.log('🎨 Starting quiz generation...');
 
       // Build theme string with active sub-themes for AI diversity
-      const themeLabel = selectedThemeObjects.map(t => t.label).join(' + ');
+      const isCustomTheme = selectedThemes.includes('custom') && customThemeText.trim();
+      const themeLabel = isCustomTheme
+        ? customThemeText.trim()
+        : selectedThemeObjects.filter(t => t.category !== 'custom').map(t => t.label).join(' + ');
       const modeLabel = THEME_MODES[selectedMode].label;
-      const subThemesStr = activeSubThemes.length > 0 ? ` (focus: ${activeSubThemes.join(', ')})` : '';
+      const subThemesStr = (!isCustomTheme && activeSubThemes.length > 0) ? ` (focus: ${activeSubThemes.join(', ')})` : '';
 
       const request: QuizGenRequest = {
         theme: `${themeLabel} - ${modeLabel}${subThemesStr}`,
@@ -253,10 +257,27 @@ export const CreateQuiz: React.FC = () => {
                   );
                 })}
               </div>
+              {/* Custom theme input */}
+              {selectedThemes.includes('custom') && (
+                <div className="mt-4 p-4 bg-qb-darker rounded-lg border border-qb-cyan/30">
+                  <label className="block text-sm text-white/80 mb-2">{t('create.customThemeLabel', 'Describe your theme')}</label>
+                  <input
+                    type="text"
+                    value={customThemeText}
+                    onChange={(e) => setCustomThemeText(e.target.value)}
+                    placeholder={t('create.customThemePlaceholder', 'e.g. History of Rock Music, Local Cuisine of Tenerife, FC Barcelona Trivia...')}
+                    disabled={isLoading}
+                    maxLength={200}
+                    className="w-full px-4 py-3 bg-qb-dark border border-white/20 rounded-lg text-white placeholder-white/40 focus:border-qb-cyan focus:outline-none focus:ring-2 focus:ring-qb-cyan/30"
+                  />
+                  <p className="text-xs text-white/50 mt-2">{t('create.customThemeHint', 'The AI will generate questions about this specific topic')}</p>
+                </div>
+              )}
+
               {selectedThemes.length > 1 && (
                 <div className="mt-3 flex items-center gap-2 text-sm text-qb-cyan">
                   <Sparkles className="w-4 h-4" />
-                  <span>{t('create.multiThemeSelected', { count: selectedThemes.length, themes: selectedThemeObjects.map(t => t.label).join(' + ') })}</span>
+                  <span>{t('create.multiThemeSelected', { count: selectedThemes.length, themes: selectedThemeObjects.filter(t => t.category !== 'custom').map(t => t.label).join(' + ') })}</span>
                 </div>
               )}
 
@@ -319,7 +340,7 @@ export const CreateQuiz: React.FC = () => {
               <label className="block text-white font-bold mb-4">
                 {t('create.quizMode')}
               </label>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {Object.values(THEME_MODES).map((mode) => (
                   <button
                     key={mode.id}
@@ -346,7 +367,7 @@ export const CreateQuiz: React.FC = () => {
                 <Hash className="w-5 h-5 text-qb-cyan" />
                 {t('create.questionCount')}
               </label>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {QUESTION_COUNT_OPTIONS.map((option) => {
                   const structure = calculateQuizStructureFromCount(option.value);
                   const isActive = !isCustomCount && formData.questionCount === option.value;
@@ -429,7 +450,7 @@ export const CreateQuiz: React.FC = () => {
 
               <div className="mt-4 p-4 bg-qb-darker rounded-lg">
                 <div className="text-sm text-white/70 mb-2">{t('create.quizStructure')}</div>
-                <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                   <div>
                     <div className="text-3xl font-bold text-qb-cyan">{quizStructure.totalQuestions}</div>
                     <div className="text-xs text-white/60">{t('create.questions')}</div>
@@ -570,7 +591,7 @@ export const CreateQuiz: React.FC = () => {
                 <Target className="w-5 h-5 text-qb-yellow" />
                 {t('create.difficulty')}
               </label>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
                   { value: 'easy' as const, label: t('create.easy'), emoji: '😊', desc: t('create.easyDesc') },
                   { value: 'medium' as const, label: t('create.medium'), emoji: '🤔', desc: t('create.mediumDesc') },

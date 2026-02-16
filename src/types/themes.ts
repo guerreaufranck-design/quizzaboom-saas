@@ -1,4 +1,4 @@
-export type ThemeCategory = 
+export type ThemeCategory =
   | 'general'
   | 'sport'
   | 'history'
@@ -12,7 +12,8 @@ export type ThemeCategory =
   | 'etymology'
   | 'absurd_laws'
   | 'human_bizarre'
-  | 'mix';
+  | 'mix'
+  | 'custom';
 
 export type ThemeMode = 'standard' | 'funny' | 'kids';
 
@@ -23,6 +24,7 @@ export interface Theme {
   description: string;
   emoji: string;
   subThemes?: string[];
+  isCustom?: boolean;
 }
 
 export const THEMES: Theme[] = [
@@ -137,6 +139,14 @@ export const THEMES: Theme[] = [
     description: 'Variety of all categories',
     emoji: '🎲',
     subThemes: ['Random Mix', 'Surprise Me!'],
+  },
+  {
+    id: 'custom',
+    category: 'custom',
+    label: 'Custom Theme',
+    description: 'Enter your own topic',
+    emoji: '✏️',
+    isCustom: true,
   },
 ];
 

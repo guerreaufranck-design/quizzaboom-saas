@@ -405,10 +405,15 @@ export async function generateBatchWithRetry(
       const totalQs = parsed.stages.reduce((sum, s) => sum + (s.questions?.length || 0), 0);
       console.log(`✅ Batch ${batchIndex + 1}/${totalBatches}: got ${totalQs}/${batchQuestionCount} questions in ${parsed.stages.length} stages`);
 
-      if (totalQs < batchQuestionCount) {
+      // Accept batches with at least 80% of requested questions to avoid timeout retries
+      const minAcceptable = Math.ceil(batchQuestionCount * 0.8);
+      if (totalQs < minAcceptable) {
         throw new Error(
-          `Batch returned ${totalQs} questions but ${batchQuestionCount} were requested — retrying`
+          `Batch returned ${totalQs} questions but minimum ${minAcceptable} were needed (requested ${batchQuestionCount}) — retrying`
         );
+      }
+      if (totalQs < batchQuestionCount) {
+        console.log(`⚠️ Batch ${batchIndex + 1}: accepted ${totalQs}/${batchQuestionCount} questions (above 80% threshold)`);
       }
 
       if (totalQs > batchQuestionCount) {
