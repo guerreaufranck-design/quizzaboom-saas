@@ -34,6 +34,13 @@ interface PhaseData {
     delayMs: number;
     durationMs: number;
   }>;
+  // Tutorial slides data
+  tutorialSlides?: Array<{
+    emoji: string;
+    titleKey: string;
+    descriptionKey: string;
+    descriptionParams?: Record<string, string | number>;
+  }>;
 }
 
 interface StrategicQuizState {
@@ -64,6 +71,7 @@ interface StrategicQuizState {
     doublePoints: Record<string, boolean>;
   };
   
+  preSelectedAnswer: string | null;
   selectedAnswer: string | null;
   hasAnswered: boolean;
   answerSubmittedAt: number | null;
@@ -79,11 +87,19 @@ interface StrategicQuizState {
     delayMs: number;
     durationMs: number;
   }>;
+  tutorialSlides: Array<{
+    emoji: string;
+    titleKey: string;
+    descriptionKey: string;
+    descriptionParams?: Record<string, string | number>;
+  }>;
 
   loadQuestions: (quizId: string) => Promise<void>;
   setPhaseData: (data: PhaseData) => void;
   executeJokerAction: (jokerType: JokerType, targetPlayerId?: string) => Promise<void>;
+  selectAnswer: (answer: string) => void;
   submitAnswer: (answer: string) => Promise<void>;
+  confirmAnswer: () => Promise<void>;
   resetForNextQuestion: () => void;
   listenToPhaseChanges: (sessionCode: string) => void;
   reconnectToSession: (sessionId: string, sessionCode: string) => Promise<void>;
@@ -120,6 +136,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   breakNumber: 0,
   totalBreaks: 0,
   playerInventory: INITIAL_JOKER_INVENTORY,
+  preSelectedAnswer: null,
   activeEffects: {
     protections: {},
     blocks: {},
@@ -133,6 +150,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   showTargetSelector: false,
   pendingJokerType: null,
   commentaryPopups: [],
+  tutorialSlides: [],
 
   loadQuestions: async (quizId) => {
     try {
@@ -155,10 +173,16 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   },
 
   setPhaseData: (data) => {
-    const { allQuestions, currentQuestionIndex: prevQIdx, hasAnswered: prevHasAnswered } = get();
+    const { allQuestions, currentQuestionIndex: prevQIdx, hasAnswered: prevHasAnswered, preSelectedAnswer, currentPhase: prevPhase } = get();
     const question = allQuestions[data.questionIndex] || null;
 
     console.log('📍 Phase data received:', data.phase, 'Q:', data.questionIndex);
+
+    // Auto-submit pre-selected answer when leaving answer_selection phase
+    if (prevPhase === 'answer_selection' && data.phase !== 'answer_selection' && preSelectedAnswer && !prevHasAnswered) {
+      console.log('⏰ Phase changed — auto-submitting pre-selected answer:', preSelectedAnswer);
+      get().submitAnswer(preSelectedAnswer);
+    }
 
     // Quiz ended — if player didn't answer the last question, count it as wrong
     if (data.phase === 'quiz_complete' && !prevHasAnswered && prevQIdx >= 0) {
@@ -219,6 +243,8 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       totalBreaks: data.totalBreaks || 0,
       // Store commentary popups for results phase
       commentaryPopups: data.commentary || [],
+      // Store tutorial slides
+      tutorialSlides: data.tutorialSlides || [],
     });
 
     if (data.phase === 'theme_announcement') {
@@ -283,6 +309,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
           steals: {},
           doublePoints: {},
         },
+        preSelectedAnswer: null,
         selectedAnswer: null,
         hasAnswered: false,
         answerSubmittedAt: null,
@@ -460,6 +487,19 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         });
       }
     }
+  },
+
+  selectAnswer: (answer) => {
+    const { hasAnswered } = get();
+    if (hasAnswered) return; // Already submitted — can't change
+    console.log('🔄 Pre-selected answer:', answer);
+    set({ preSelectedAnswer: answer });
+  },
+
+  confirmAnswer: async () => {
+    const { preSelectedAnswer, hasAnswered } = get();
+    if (hasAnswered || !preSelectedAnswer) return;
+    await get().submitAnswer(preSelectedAnswer);
   },
 
   submitAnswer: async (answer) => {
@@ -688,6 +728,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
   resetForNextQuestion: () => {
     set({
+      preSelectedAnswer: null,
       selectedAnswer: null,
       hasAnswered: false,
       answerSubmittedAt: null,

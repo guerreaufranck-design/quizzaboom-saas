@@ -1,4 +1,5 @@
 export type GamePhase =
+  | 'tutorial'
   | 'theme_announcement'
   | 'question_display'
   | 'answer_selection'
@@ -8,7 +9,8 @@ export type GamePhase =
   | 'quiz_complete';
 
 export const PHASE_DURATIONS: Record<GamePhase, number> = {
-  theme_announcement: 11,
+  tutorial: 0, // Dynamic — calculated from number of slides
+  theme_announcement: 14,
   question_display: 15,
   answer_selection: 24,
   results: 25,

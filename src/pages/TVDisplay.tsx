@@ -12,6 +12,7 @@ import { useQuizAudio } from '../hooks/useQuizAudio';
 import { useCountdown } from '../hooks/useCountdown';
 import { AnimatedLogo } from '../components/AnimatedLogo';
 import { CommentaryPopupChain } from '../components/CommentaryPopupChain';
+import { TutorialSlides } from '../components/TutorialSlides';
 
 /**
  * Adaptive text sizing: returns a Tailwind class based on string length.
@@ -55,6 +56,7 @@ export const TVDisplay: React.FC = () => {
     totalBreaks,
     answeredCount,
     commentaryPopups,
+    tutorialSlides,
   } = useStrategicQuizStore();
   const { stopAll, onPhaseChange } = useQuizAudio();
   const displaySeconds = useCountdown(phaseEndTime);
@@ -626,6 +628,13 @@ export const TVDisplay: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // TUTORIAL: Pre-quiz tutorial slides
+  // ═══════════════════════════════════════════════════════════════
+  if (currentPhase === 'tutorial' && tutorialSlides.length > 0) {
+    return <TutorialSlides slides={tutorialSlides} variant="tv" />;
   }
 
   // ═══════════════════════════════════════════════════════════════

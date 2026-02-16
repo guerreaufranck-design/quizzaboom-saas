@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createHash } from 'crypto';
 
 // --- Constants ---
-export const SECONDS_PER_QUESTION = 82; // theme(11) + display(15) + answer(24) + results(25) + intermission(7)
+export const SECONDS_PER_QUESTION = 85; // theme(14) + display(15) + answer(24) + results(25) + intermission(7)
 export const MINUTES_PER_QUESTION = SECONDS_PER_QUESTION / 60;
 export const QUESTIONS_PER_STAGE = 5;
 export const BATCH_SIZE = 15;

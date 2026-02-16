@@ -9,6 +9,7 @@ import { useCountdown } from '../hooks/useCountdown';
 import { useQuizAudio } from '../hooks/useQuizAudio';
 import { supabase } from '../services/supabase/client';
 import { CommentaryPopupChain } from '../components/CommentaryPopupChain';
+import { TutorialSlides } from '../components/TutorialSlides';
 
 export const PlayerView: React.FC = () => {
   const { t } = useTranslation();
@@ -19,10 +20,12 @@ export const PlayerView: React.FC = () => {
     currentQuestion,
     playerInventory,
     activeEffects,
+    preSelectedAnswer,
     selectedAnswer,
     hasAnswered,
     executeJokerAction,
-    submitAnswer,
+    selectAnswer,
+    confirmAnswer,
     loadQuestions,
     listenToPhaseChanges,
     reconnectToSession,
@@ -33,6 +36,7 @@ export const PlayerView: React.FC = () => {
     closeTargetSelector,
     commentaryPopups,
     initializeInventory,
+    tutorialSlides,
   } = useStrategicQuizStore();
   const displaySeconds = useCountdown(phaseEndTime);
   const { playCorrectSound, playWrongSound, playApplause } = useQuizAudio();
@@ -278,14 +282,29 @@ export const PlayerView: React.FC = () => {
     }
   };
 
-  const handleAnswerSelect = async (letter: 'A' | 'B' | 'C' | 'D') => {
+  const handleAnswerSelect = (letter: 'A' | 'B' | 'C' | 'D') => {
     const optionIndex = ['A', 'B', 'C', 'D'].indexOf(letter);
     const answer = currentQuestion?.options?.[optionIndex];
     if (answer) {
-      console.log('📤 Submitting answer:', answer);
-      await submitAnswer(answer);
+      console.log('🔄 Pre-selecting answer:', answer);
+      selectAnswer(answer);
     }
   };
+
+  // Auto-submit answer at 5 seconds remaining
+  const autoSubmitRef = useRef(false);
+  useEffect(() => {
+    if (currentPhase !== 'answer_selection') {
+      autoSubmitRef.current = false;
+      return;
+    }
+    if (hasAnswered || autoSubmitRef.current) return;
+    if (displaySeconds !== null && displaySeconds <= 5 && preSelectedAnswer) {
+      console.log('⏰ Auto-submitting answer at', displaySeconds, 'seconds');
+      autoSubmitRef.current = true;
+      confirmAnswer();
+    }
+  }, [displaySeconds, currentPhase, hasAnswered, preSelectedAnswer]);
 
   const TargetSelectorModal = () => {
     if (!showTargetSelector || !pendingJokerType) return null;
@@ -337,6 +356,7 @@ export const PlayerView: React.FC = () => {
 
   const jokersEnabled = currentPhase === 'theme_announcement';
   const answersEnabled = currentPhase === 'answer_selection' && !isBlocked && !hasAnswered;
+  const canChangeAnswer = answersEnabled && displaySeconds !== null && displaySeconds > 5;
 
   // Filter jokers based on session settings
   const sessionSettings = (currentSession?.settings as Record<string, unknown>) || {};
@@ -385,7 +405,9 @@ export const PlayerView: React.FC = () => {
           </div>
         </Card>
 
-        {currentPhase === 'commercial_break' ? (
+        {currentPhase === 'tutorial' && tutorialSlides.length > 0 ? (
+          <TutorialSlides slides={tutorialSlides} variant="mobile" />
+        ) : currentPhase === 'commercial_break' ? (
           <Card className="p-6 text-center bg-gradient-to-br from-yellow-500 to-orange-500 border-2 border-yellow-300">
             <div className="text-4xl mb-2">☕</div>
             <div className="text-xl font-bold text-white mb-1">{t('player.pause')}</div>
@@ -508,26 +530,26 @@ export const PlayerView: React.FC = () => {
 
         <Card className="p-4 bg-white/10 backdrop-blur-lg border-white/20">
           <h3 className="text-white font-bold mb-3 text-center text-sm">
-            {t('player.answersTitle')} {answersEnabled ? t('player.answersSelectNow') : t('player.answersWaitTime')}
+            {t('player.answersTitle')} {answersEnabled ? (canChangeAnswer ? t('player.answersSelectNow') : t('player.answersLocking')) : t('player.answersWaitTime')}
           </h3>
           <div className="grid grid-cols-2 gap-3">
             {['A', 'B', 'C', 'D'].map((letter) => {
               const optionIndex = ['A', 'B', 'C', 'D'].indexOf(letter);
               const optionText = currentQuestion?.options?.[optionIndex];
-              const isSelected = selectedAnswer === optionText;
+              const isPreSelected = preSelectedAnswer === optionText && !hasAnswered;
+              const isFinalAnswer = selectedAnswer === optionText && hasAnswered;
               const isCorrectOption = optionText === currentQuestion?.correct_answer;
               const isResultsPhase = currentPhase === 'results';
 
               let buttonClass = 'bg-qb-darker hover:bg-qb-purple';
               if (isResultsPhase && isCorrectOption) {
-                // Always highlight correct answer in green during results
                 buttonClass = 'bg-green-500 border-4 border-green-300 scale-105';
-              } else if (isResultsPhase && isSelected && !isCorrectOption) {
-                // Player's wrong answer in red
+              } else if (isResultsPhase && isFinalAnswer && !isCorrectOption) {
                 buttonClass = 'bg-red-500 border-4 border-red-300';
-              } else if (isSelected) {
-                // Selected during answer phase
+              } else if (isFinalAnswer) {
                 buttonClass = 'bg-qb-cyan border-4 border-white scale-105';
+              } else if (isPreSelected) {
+                buttonClass = 'bg-qb-cyan/60 border-4 border-dashed border-white/70 scale-105';
               }
 
               return (
@@ -543,6 +565,29 @@ export const PlayerView: React.FC = () => {
               );
             })}
           </div>
+
+          {/* Pre-selected: show confirm button + countdown info */}
+          {preSelectedAnswer && !hasAnswered && currentPhase === 'answer_selection' && (
+            <div className="mt-4 p-3 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg text-center">
+              {canChangeAnswer ? (
+                <>
+                  <p className="text-sm text-yellow-300 mb-2">{t('player.answerPreSelected')}</p>
+                  <Button
+                    size="lg"
+                    onClick={() => confirmAnswer()}
+                    className="bg-green-600 hover:bg-green-700 text-white font-bold px-8"
+                  >
+                    {t('player.confirmAnswer')}
+                  </Button>
+                </>
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <Clock className="w-5 h-5 text-yellow-400 animate-pulse" />
+                  <p className="text-lg font-bold text-yellow-300">{t('player.answerLocking')}</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {hasAnswered && (
             <div className="mt-4 p-3 bg-blue-500/20 border-2 border-blue-500 rounded-lg text-center">

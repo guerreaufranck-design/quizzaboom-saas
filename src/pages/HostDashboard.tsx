@@ -30,6 +30,7 @@ import { useAppNavigate } from '../hooks/useAppNavigate';
 import { useCountdown } from '../hooks/useCountdown';
 import type { GamePhase } from '../types/gamePhases';
 import { PHASE_DURATIONS, PHASE_ORDER } from '../types/gamePhases';
+import { buildTutorialSlides, TUTORIAL_SECONDS_PER_SLIDE } from '../components/TutorialSlides';
 import type { Question, CommercialBreakSchedule } from '../types/quiz';
 import { supabase } from '../services/supabase/client';
 import { calculateTeamScores } from '../utils/teamScores';
@@ -137,6 +138,12 @@ export const HostDashboard: React.FC = () => {
   };
 
   const handlePhaseComplete = () => {
+    // If tutorial just ended, start the real quiz
+    if (currentPhaseState === 'tutorial') {
+      changePhase('theme_announcement', 0);
+      return;
+    }
+
     // If we're currently in a commercial break, move to next question
     if (currentPhaseState === 'commercial_break') {
       if (currentQuestionIndex < allQuestions.length - 1) {
@@ -320,9 +327,53 @@ export const HostDashboard: React.FC = () => {
     } else {
       // === RESUME / START ===
       if (currentPhaseState === 'theme_announcement' && currentQuestionIndex === 0 && pausedRemaining === null) {
-        // First start of the quiz
+        // First start of the quiz — show tutorial slides first
         setIsPlaying(true);
-        changePhase('theme_announcement', 0);
+
+        const hasJokers = !!(sessionSettings.enabledJokers);
+        const jokerInv = sessionSettings.jokerInventory as { protection: number } | undefined;
+        const hasBreaks = !!(breakSchedule?.breaks && breakSchedule.breaks.length > 0);
+        const slides = buildTutorialSlides({
+          hasJokers,
+          jokerCount: jokerInv?.protection || 1,
+          hasBreaks,
+          breakCount: breakSchedule?.breaks?.length || 0,
+          breakDuration: breakSchedule?.breaks?.[0]?.durationSeconds ? Math.round(breakSchedule.breaks[0].durationSeconds / 60) : 5,
+        });
+
+        const tutorialDuration = slides.length * TUTORIAL_SECONDS_PER_SLIDE;
+        const endTime = Date.now() + tutorialDuration * 1000;
+
+        setCurrentPhaseState('tutorial');
+        setPhaseEndTime(endTime);
+
+        const tutorialData = {
+          phase: 'tutorial' as GamePhase,
+          questionIndex: 0,
+          stageNumber: 0,
+          timeRemaining: tutorialDuration,
+          phaseEndTime: endTime,
+          currentQuestion: null,
+          themeTitle: 'Tutorial',
+          tutorialSlides: slides,
+        };
+
+        if (sessionCode) {
+          broadcastPhaseChange(sessionCode, tutorialData);
+        }
+        if (currentSession?.id) {
+          supabase.from('quiz_sessions')
+            .update({
+              settings: {
+                ...(typeof currentSession.settings === 'object' && currentSession.settings ? currentSession.settings : {}),
+                currentPhase: tutorialData,
+              },
+            })
+            .eq('id', currentSession.id)
+            .then(({ error }) => {
+              if (error) console.error('Failed to persist tutorial phase:', error);
+            });
+        }
       } else if (pausedRemaining !== null && pausedRemaining > 0) {
         // Resume from pause
         const newEndTime = Date.now() + pausedRemaining;
@@ -389,6 +440,7 @@ export const HostDashboard: React.FC = () => {
 
   const getPhaseLabel = (phase: GamePhase) => {
     switch (phase) {
+      case 'tutorial': return 'Tutorial';
       case 'theme_announcement': return t('host.phaseThemeJokers');
       case 'question_display': return t('host.phaseQuestion');
       case 'answer_selection': return t('host.phaseAnswers');
