@@ -10,7 +10,7 @@ export type GamePhase =
 
 export const PHASE_DURATIONS: Record<GamePhase, number> = {
   tutorial: 0, // Dynamic — calculated from number of slides
-  theme_announcement: 14,
+  theme_announcement: 16, // Extended by 2 seconds for joker selection
   question_display: 15,
   answer_selection: 24,
   results: 25,

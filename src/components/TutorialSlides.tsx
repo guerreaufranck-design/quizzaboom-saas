@@ -16,7 +16,7 @@ interface TutorialSlidesProps {
 
 export const TutorialSlides: React.FC<TutorialSlidesProps> = ({
   slides,
-  secondsPerSlide = 6,
+  secondsPerSlide = 8,
   variant,
 }) => {
   const { t } = useTranslation();

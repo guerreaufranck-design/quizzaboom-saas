@@ -138,9 +138,9 @@ export const HostDashboard: React.FC = () => {
   };
 
   const handlePhaseComplete = () => {
-    // If tutorial just ended, go directly to first question (skip theme announcement)
+    // If tutorial just ended, go to jokers phase (theme announcement)
     if (currentPhaseState === 'tutorial') {
-      changePhase('question_display', 0);
+      changePhase('theme_announcement', 0);
       return;
     }
 
