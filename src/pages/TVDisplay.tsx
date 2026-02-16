@@ -459,13 +459,21 @@ export const TVDisplay: React.FC = () => {
             </div>
           </div>
 
-          {/* Bottom: Branding */}
-          <div className="text-center w-full pb-2">
-            <div className="inline-block bg-black/40 backdrop-blur-xl rounded-2xl px-8 py-2 border border-white/20">
+          {/* Bottom: Branding + mini QR for late joiners */}
+          <div className="flex items-center justify-between w-full pb-2">
+            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/20">
+              <QRCodeDisplay value={`${window.location.origin}/join?code=${sessionCode}`} size={50} className="rounded" />
+              <div className="text-left">
+                <p className="text-xs text-white/50">{t('tv.joinAnytime')}</p>
+                <p className="text-base font-mono font-bold text-yellow-300 tracking-wider">{sessionCode}</p>
+              </div>
+            </div>
+            <div className="bg-black/40 backdrop-blur-xl rounded-2xl px-8 py-2 border border-white/20">
               <p className="text-lg text-white font-bold">
                 {t('tv.poweredBy')} <span className="text-yellow-300">QuizzaBoom</span> · quizzaboom.app
               </p>
             </div>
+            <div className="w-[130px]" /> {/* Spacer for symmetry */}
           </div>
         </div>
       </div>
@@ -952,14 +960,27 @@ export const TVDisplay: React.FC = () => {
             </div>
           )}
 
-          <div className="text-center flex items-center justify-center gap-4">
-            <AnimatedLogo size="sm" />
-            <div className="inline-flex items-center gap-3 px-6 py-3 bg-qb-cyan/20 rounded-2xl">
-              <p className="text-2xl text-white/80">{t('tv.nextQuestionIn')}</p>
-              <span className="text-4xl font-mono font-bold text-qb-cyan">
-                {displaySeconds}
-              </span>
+          <div className="flex items-center justify-between">
+            {/* Mini QR code for late joiners */}
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/20">
+              <QRCodeDisplay value={`${window.location.origin}/join?code=${sessionCode}`} size={60} className="rounded" />
+              <div className="text-left">
+                <p className="text-xs text-white/60">{t('tv.joinAnytime')}</p>
+                <p className="text-lg font-mono font-bold text-yellow-300 tracking-wider">{sessionCode}</p>
+              </div>
             </div>
+
+            <div className="flex items-center gap-4">
+              <AnimatedLogo size="sm" />
+              <div className="inline-flex items-center gap-3 px-6 py-3 bg-qb-cyan/20 rounded-2xl">
+                <p className="text-2xl text-white/80">{t('tv.nextQuestionIn')}</p>
+                <span className="text-4xl font-mono font-bold text-qb-cyan">
+                  {displaySeconds}
+                </span>
+              </div>
+            </div>
+
+            <div className="w-[140px]" /> {/* Spacer for symmetry */}
           </div>
         </div>
       </div>

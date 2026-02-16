@@ -744,7 +744,9 @@
     "answerLocking": "Envoi de votre reponse...",
     "yourTeam": "Équipe : {{team}}",
     "streakBadge": "Série x{{count}} !",
-    "streakFire": "En feu !"
+    "streakFire": "En feu !",
+    "lateJoinWelcome": "Vous rejoignez en cours de partie !",
+    "lateJoinDesc": "Le quiz est deja en cours. Vous marquerez des points a partir de la prochaine question. Bonne chance !"
   },
   "tutorial": {
     "welcomeTitle": "Bienvenue sur QuizzaBoom !",
@@ -817,7 +819,9 @@
     "answeredCount": "{{count}}/{{total}} ont répondu",
     "playersAnswered": "joueurs ont répondu",
     "badgeTitle": "Récompenses",
-    "badges": "Récompenses"
+    "badges": "Récompenses",
+    "joinAnytime": "Rejoignez à tout moment !",
+    "scanToJoinNow": "Scannez pour rejoindre"
   },
   "badges": {
     "quizMaster": "Maître du Quiz",

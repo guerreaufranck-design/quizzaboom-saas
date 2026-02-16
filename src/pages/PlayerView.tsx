@@ -44,6 +44,7 @@ export const PlayerView: React.FC = () => {
   const wakeLockRef = useRef<any>(null);
   const [playerRank, setPlayerRank] = useState(0);
   const [frozenScore, setFrozenScore] = useState(0);
+  const [showLateJoinBanner, setShowLateJoinBanner] = useState(false);
   const lastPhaseRef = useRef<string>('');
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectingRef = useRef(false);
@@ -231,6 +232,22 @@ export const PlayerView: React.FC = () => {
     }
   }, [currentSession?.id]);
 
+  // Detect late-joiner: player has 0 score and quiz is already in a mid-game phase
+  const lateJoinDetectedRef = useRef(false);
+  useEffect(() => {
+    if (lateJoinDetectedRef.current) return;
+    if (currentSession?.status === 'playing' && currentPlayer?.total_score === 0 && currentPlayer?.questions_answered === 0) {
+      // Check if this is really mid-game (not just started)
+      const phase = useStrategicQuizStore.getState().currentPhase;
+      if (phase && phase !== 'tutorial' && phase !== '' as any) {
+        lateJoinDetectedRef.current = true;
+        setShowLateJoinBanner(true);
+        // Auto-hide after 8 seconds
+        setTimeout(() => setShowLateJoinBanner(false), 8000);
+      }
+    }
+  }, [currentSession?.status, currentPlayer?.total_score, currentPhase]);
+
   useEffect(() => {
     if (currentPlayer && players.length > 0) {
       const sorted = [...players].sort((a, b) => b.total_score - a.total_score);
@@ -404,6 +421,21 @@ export const PlayerView: React.FC = () => {
             </div>
           </div>
         </Card>
+
+        {showLateJoinBanner && (
+          <Card className="p-4 bg-gradient-to-r from-green-600 to-emerald-600 border-2 border-green-400 animate-pulse">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">🎉</div>
+              <div>
+                <p className="text-white font-bold text-lg">{t('player.lateJoinWelcome')}</p>
+                <p className="text-white/90 text-sm">{t('player.lateJoinDesc')}</p>
+              </div>
+              <button onClick={() => setShowLateJoinBanner(false)} className="text-white/70 hover:text-white ml-auto">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </Card>
+        )}
 
         {currentPhase === 'tutorial' && tutorialSlides.length > 0 ? (
           <TutorialSlides slides={tutorialSlides} variant="mobile" />

@@ -744,7 +744,9 @@
     "answerLocking": "Submitting your answer...",
     "yourTeam": "Team: {{team}}",
     "streakBadge": "Streak x{{count}}!",
-    "streakFire": "On Fire!"
+    "streakFire": "On Fire!",
+    "lateJoinWelcome": "You joined mid-game!",
+    "lateJoinDesc": "The quiz is already in progress. You'll start scoring from the next question. Good luck!"
   },
   "tutorial": {
     "welcomeTitle": "Welcome to QuizzaBoom!",
@@ -817,7 +819,9 @@
     "answeredCount": "{{count}}/{{total}} answered",
     "playersAnswered": "players answered",
     "badgeTitle": "Awards",
-    "badges": "Awards"
+    "badges": "Awards",
+    "joinAnytime": "Join anytime!",
+    "scanToJoinNow": "Scan to join now"
   },
   "badges": {
     "quizMaster": "Quiz Master",
