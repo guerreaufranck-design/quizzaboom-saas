@@ -506,24 +506,26 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       get().saveSessionState();
       get().setupRealtimeSubscription(code);
 
-      // Collect email into participant_emails for the organizer's contact list
+      // Collect email into participant_emails via server API (bypasses RLS)
       if (email) {
         const orgId = (quiz as Record<string, unknown>).organization_id as string | null;
-        supabase.from('participant_emails').upsert(
-          {
-            session_id: session.id,
-            player_name: playerName,
+        fetch('/api/collect-participant-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: session.id,
+            playerName,
             email,
-            ...(orgId ? { source_organization_id: orgId } : {}),
-            created_at: new Date().toISOString(),
-          },
-          { onConflict: 'session_id,email' }
-        ).then(({ error: emailError }) => {
-          if (emailError) {
-            console.warn('⚠️ Failed to collect participant email:', emailError.message);
-          } else {
+            organizationId: orgId,
+          }),
+        }).then(res => {
+          if (res.ok) {
             console.log('✅ Participant email collected for organizer');
+          } else {
+            console.warn('⚠️ Failed to collect participant email');
           }
+        }).catch(() => {
+          console.warn('⚠️ Failed to collect participant email (network)');
         });
       }
 

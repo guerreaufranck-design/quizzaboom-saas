@@ -133,19 +133,24 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     const { currentOrganization } = get();
     if (!currentOrganization) return;
 
-    const newCount = currentOrganization.quizzes_used_this_month + 1;
+    // Use server-side API to bypass RLS on organizations table
+    const response = await fetch('/api/increment-quiz-usage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ organizationId: currentOrganization.id }),
+    });
 
-    const { error } = await supabase
-      .from('organizations')
-      .update({ quizzes_used_this_month: newCount })
-      .eq('id', currentOrganization.id);
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to increment quiz usage');
+    }
 
-    if (error) throw error;
+    const result = await response.json();
 
     set({
       currentOrganization: {
         ...currentOrganization,
-        quizzes_used_this_month: newCount,
+        quizzes_used_this_month: result.quizzes_used_this_month,
       },
     });
   },
