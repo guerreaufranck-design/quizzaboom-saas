@@ -76,21 +76,53 @@ export const ProDashboard: React.FC = () => {
   const loadContacts = async (orgId: string) => {
     setContactsLoading(true);
     try {
-      const { data, error } = await supabase
+      const emailMap = new Map<string, ContactInfo>();
+
+      // 1. Load from participant_emails (emails collected at join + at quiz end)
+      const { data: peData } = await supabase
         .from('participant_emails')
         .select('player_name, email')
         .eq('source_organization_id', orgId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-
-      // Deduplicate by email
-      const emailMap = new Map<string, ContactInfo>();
-      for (const c of data || []) {
-        if (!emailMap.has(c.email)) {
+      for (const c of peData || []) {
+        if (c.email && !emailMap.has(c.email)) {
           emailMap.set(c.email, { player_name: c.player_name, email: c.email });
         }
       }
+
+      // 2. Also load from session_players for org's quizzes (catches emails not yet in participant_emails)
+      const { data: quizzes } = await supabase
+        .from('ai_generated_quizzes')
+        .select('id')
+        .eq('organization_id', orgId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (quizzes && quizzes.length > 0) {
+        const quizIds = quizzes.map(q => q.id);
+        const { data: sessions } = await supabase
+          .from('quiz_sessions')
+          .select('id')
+          .in('quiz_id', quizIds);
+
+        if (sessions && sessions.length > 0) {
+          const sessionIds = sessions.map(s => s.id);
+          const { data: players } = await supabase
+            .from('session_players')
+            .select('player_name, email')
+            .in('session_id', sessionIds)
+            .not('email', 'is', null)
+            .order('joined_at', { ascending: false });
+
+          for (const p of players || []) {
+            if (p.email && !emailMap.has(p.email)) {
+              emailMap.set(p.email, { player_name: p.player_name, email: p.email });
+            }
+          }
+        }
+      }
+
       setContacts(Array.from(emailMap.values()));
     } catch (error) {
       console.error('Failed to load contacts:', error);

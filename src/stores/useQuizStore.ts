@@ -506,6 +506,27 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       get().saveSessionState();
       get().setupRealtimeSubscription(code);
 
+      // Collect email into participant_emails for the organizer's contact list
+      if (email) {
+        const orgId = (quiz as Record<string, unknown>).organization_id as string | null;
+        supabase.from('participant_emails').upsert(
+          {
+            session_id: session.id,
+            player_name: playerName,
+            email,
+            ...(orgId ? { source_organization_id: orgId } : {}),
+            created_at: new Date().toISOString(),
+          },
+          { onConflict: 'session_id,email' }
+        ).then(({ error: emailError }) => {
+          if (emailError) {
+            console.warn('⚠️ Failed to collect participant email:', emailError.message);
+          } else {
+            console.log('✅ Participant email collected for organizer');
+          }
+        });
+      }
+
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('❌ Join error:', error);
