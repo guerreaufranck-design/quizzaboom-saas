@@ -171,23 +171,18 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
           p_is_correct: false,
         }).then(({ error: rpcError }) => {
           if (rpcError) {
-            supabase
-              .from('session_players')
-              .select('questions_answered')
-              .eq('id', playerId)
-              .single()
-              .then(({ data: playerData }) => {
-                if (playerData) {
-                  supabase
-                    .from('session_players')
-                    .update({
-                      questions_answered: playerData.questions_answered + 1,
-                      current_streak: 0,
-                    })
-                    .eq('id', playerId)
-                    .then(() => {});
-                }
-              });
+            // Fallback: server-side API to bypass RLS
+            fetch('/api/update-player', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                playerId,
+                updates: {
+                  questions_answered: (useQuizStore.getState().currentPlayer?.questions_answered || 0) + 1,
+                  current_streak: 0,
+                },
+              }),
+            }).catch(() => {});
           }
           useQuizStore.setState((state) => {
             if (state.currentPlayer) {
@@ -233,33 +228,36 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         console.log('⏭️ Question', prevQIdx + 1, 'missed (not answered) — counting as wrong');
         const playerId = useQuizStore.getState().currentPlayer?.id;
         if (playerId) {
-          // Increment questions_answered and reset streak for missed question
+          // Increment questions_answered via RPC (SECURITY DEFINER bypasses RLS)
           supabase.rpc('increment_player_score', {
             p_player_id: playerId,
             p_points: 0,
             p_is_correct: false,
           }).then(({ error: rpcError }) => {
             if (rpcError) {
-              // Fallback: manual update
-              supabase
-                .from('session_players')
-                .select('questions_answered, current_streak')
-                .eq('id', playerId)
-                .single()
-                .then(({ data: playerData }) => {
-                  if (playerData) {
-                    supabase
-                      .from('session_players')
-                      .update({
-                        questions_answered: playerData.questions_answered + 1,
-                        current_streak: 0,
-                        last_activity: new Date().toISOString(),
-                      })
-                      .eq('id', playerId)
-                      .then(() => {});
-                  }
-                });
+              // Fallback: server-side API to bypass RLS
+              fetch('/api/update-player', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  playerId,
+                  updates: {
+                    questions_answered: (useQuizStore.getState().currentPlayer?.questions_answered || 0) + 1,
+                    current_streak: 0,
+                    last_activity: new Date().toISOString(),
+                  },
+                }),
+              }).catch(() => {});
             }
+            // Also reset streak via server API (RPC doesn't handle streak)
+            fetch('/api/update-player', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                playerId,
+                updates: { current_streak: 0 },
+              }),
+            }).catch(() => {});
             // Update local state
             useQuizStore.setState((state) => {
               if (state.currentPlayer) {
@@ -507,17 +505,21 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
           p_is_correct: false, // Not their answer — just a point transfer
         });
         if (stealRpcError) {
-          // Fallback: manual update for the thief
+          // Fallback: server-side API to bypass RLS
           const { data: thiefData } = await supabase
             .from('session_players')
             .select('total_score')
             .eq('id', thiefId)
             .single();
           if (thiefData) {
-            await supabase
-              .from('session_players')
-              .update({ total_score: thiefData.total_score + pointsToAdd })
-              .eq('id', thiefId);
+            await fetch('/api/update-player', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                playerId: thiefId,
+                updates: { total_score: thiefData.total_score + pointsToAdd },
+              }),
+            });
           }
         }
       } catch (err) {
@@ -538,9 +540,9 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       });
 
       if (rpcError) {
-        console.log('⚠️ RPC not available, using manual update:', rpcError.message);
+        console.log('⚠️ RPC not available, using server-side fallback:', rpcError.message);
 
-        // ✅ Fallback: single fetch + single update (score + streak merged)
+        // Fallback: use server-side API to bypass RLS
         const { data: currentData, error: fetchError } = await supabase
           .from('session_players')
           .select('total_score, correct_answers, questions_answered, current_streak, best_streak')
@@ -558,20 +560,25 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         const newStreak = isCorrect ? currentData.current_streak + 1 : 0;
         const newBestStreak = Math.max(currentData.best_streak, newStreak);
 
-        const { error: updateError } = await supabase
-          .from('session_players')
-          .update({
-            total_score: newTotalScore,
-            correct_answers: newCorrectAnswers,
-            questions_answered: newQuestionsAnswered,
-            current_streak: newStreak,
-            best_streak: newBestStreak,
-            last_activity: new Date().toISOString(),
-          })
-          .eq('id', playerId);
+        // Use server-side API to bypass RLS
+        const updateRes = await fetch('/api/update-player', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            playerId,
+            updates: {
+              total_score: newTotalScore,
+              correct_answers: newCorrectAnswers,
+              questions_answered: newQuestionsAnswered,
+              current_streak: newStreak,
+              best_streak: newBestStreak,
+              last_activity: new Date().toISOString(),
+            },
+          }),
+        });
 
-        if (updateError) {
-          console.error('❌ Update error:', updateError);
+        if (!updateRes.ok) {
+          console.error('❌ Server update error');
           return;
         }
 
@@ -605,10 +612,15 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
           const newStreak = isCorrect ? updatedPlayer.current_streak + 1 : 0;
           const newBestStreak = Math.max(updatedPlayer.best_streak, newStreak);
 
-          await supabase
-            .from('session_players')
-            .update({ current_streak: newStreak, best_streak: newBestStreak })
-            .eq('id', playerId);
+          // Use server-side API to bypass RLS for streak update
+          fetch('/api/update-player', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              playerId,
+              updates: { current_streak: newStreak, best_streak: newBestStreak },
+            }),
+          }).catch(err => console.warn('⚠️ Streak update failed:', err));
 
           useQuizStore.setState((state) => {
             if (state.currentPlayer) {
