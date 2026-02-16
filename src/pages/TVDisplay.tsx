@@ -615,7 +615,7 @@ export const TVDisplay: React.FC = () => {
               {topPlayers.length > 8 && (
                 <div className="mt-3 text-center">
                   <p className="text-white/70 text-lg">
-                    {t('tv.andMorePlayers', { count: topPlayers.length - 8 }, `... et ${topPlayers.length - 8} autres joueur(s) en compétition !`)}
+                    {t('tv.andMorePlayers', { count: topPlayers.length - 8, defaultValue: `... et ${topPlayers.length - 8} autres joueur(s) en compétition !` })}
                   </p>
                 </div>
               )}
@@ -970,7 +970,7 @@ export const TVDisplay: React.FC = () => {
               {topPlayers.length > 8 && (
                 <div className="mt-3 text-center">
                   <p className="text-white/70 text-2xl">
-                    {t('tv.andMorePlayers', { count: topPlayers.length - 8 }, `... et ${topPlayers.length - 8} autres joueur(s) en compétition !`)}
+                    {t('tv.andMorePlayers', { count: topPlayers.length - 8, defaultValue: `... et ${topPlayers.length - 8} autres joueur(s) en compétition !` })}
                   </p>
                 </div>
               )}
