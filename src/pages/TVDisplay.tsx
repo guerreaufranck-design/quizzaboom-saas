@@ -572,7 +572,7 @@ export const TVDisplay: React.FC = () => {
               )}
             </div>
           ) : topPlayers.length > 0 ? (
-            /* Individual Leaderboard — top 5 only */
+            /* Individual Leaderboard — top 8 */
             <div className="bg-black/30 backdrop-blur-xl rounded-2xl p-4 border-2 border-yellow-400/50 flex-1 min-h-0">
               <h2 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-3">
                 <Trophy className="w-7 h-7 text-yellow-300" />
@@ -580,7 +580,7 @@ export const TVDisplay: React.FC = () => {
                 <Trophy className="w-7 h-7 text-yellow-300" />
               </h2>
               <div className="space-y-1.5">
-                {topPlayers.slice(0, 5).map((player, index) => (
+                {topPlayers.slice(0, 8).map((player, index) => (
                   <div
                     key={player.id}
                     className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${
@@ -612,6 +612,13 @@ export const TVDisplay: React.FC = () => {
                   </div>
                 ))}
               </div>
+              {topPlayers.length > 8 && (
+                <div className="mt-3 text-center">
+                  <p className="text-white/70 text-lg">
+                    {t('tv.andMorePlayers', { count: topPlayers.length - 8 }, `... et ${topPlayers.length - 8} autres joueur(s) en compétition !`)}
+                  </p>
+                </div>
+              )}
             </div>
           ) : null}
 
@@ -836,19 +843,21 @@ export const TVDisplay: React.FC = () => {
             </p>
           </div>
 
-          {currentQuestion?.fun_fact && commentaryPopups.length === 0 && (
-            <div className="bg-yellow-500/10 backdrop-blur-xl border border-yellow-400/30 rounded-2xl p-5 mb-4 max-w-4xl">
-              <div className="flex items-center gap-2 mb-2">
-                <Lightbulb className="w-8 h-8 text-yellow-300" />
-                <span className="text-yellow-300 font-bold text-2xl">{t('tv.funFact')}</span>
-              </div>
-              <p className="text-white/90 text-2xl">{currentQuestion.fun_fact}</p>
-            </div>
-          )}
-
+          {/* Commentary popups (show on top when present) */}
           {commentaryPopups.length > 0 && (
             <div className="mb-4 max-w-4xl w-full">
               <CommentaryPopupChain popups={commentaryPopups} variant="tv" />
+            </div>
+          )}
+
+          {/* Fun fact (always show below commentary if present) */}
+          {currentQuestion?.fun_fact && (
+            <div className="bg-yellow-500/10 backdrop-blur-xl border-2 border-yellow-400/50 rounded-2xl p-8 mb-6 max-w-5xl">
+              <div className="flex items-center gap-4 mb-4">
+                <Lightbulb className="w-12 h-12 text-yellow-300" />
+                <span className="text-yellow-300 font-bold text-5xl">{t('tv.funFact')}</span>
+              </div>
+              <p className="text-white/95 text-4xl leading-relaxed font-medium">{currentQuestion.fun_fact}</p>
             </div>
           )}
 
@@ -927,7 +936,7 @@ export const TVDisplay: React.FC = () => {
             </div>
           ) : topPlayers.length > 0 ? (
             <div className="space-y-3 flex-1 min-h-0 my-4">
-              {topPlayers.slice(0, 3).map((player, index) => (
+              {topPlayers.slice(0, 8).map((player, index) => (
                 <div
                   key={player.id}
                   className={`flex items-center gap-4 p-4 rounded-2xl ${
@@ -935,11 +944,13 @@ export const TVDisplay: React.FC = () => {
                       ? 'bg-yellow-500/30 border-4 border-yellow-400 scale-105'
                       : index === 1
                       ? 'bg-gray-400/20 border-2 border-gray-300'
-                      : 'bg-orange-700/20 border-2 border-orange-600'
+                      : index === 2
+                      ? 'bg-orange-700/20 border-2 border-orange-600'
+                      : 'bg-white/10 border border-white/20'
                   }`}
                 >
                   <div className="text-4xl font-bold text-white/80 w-16 text-center">
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                    {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                   </div>
                   <div className="text-3xl">{player.avatar_emoji}</div>
                   <div className="flex-1">
@@ -956,6 +967,13 @@ export const TVDisplay: React.FC = () => {
                   </div>
                 </div>
               ))}
+              {topPlayers.length > 8 && (
+                <div className="mt-3 text-center">
+                  <p className="text-white/70 text-2xl">
+                    {t('tv.andMorePlayers', { count: topPlayers.length - 8 }, `... et ${topPlayers.length - 8} autres joueur(s) en compétition !`)}
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center flex-1 flex flex-col items-center justify-center">

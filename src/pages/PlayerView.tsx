@@ -211,8 +211,10 @@ export const PlayerView: React.FC = () => {
     if (sessionCode) listenToPhaseChanges(sessionCode);
     // Fetch current phase from DB immediately on mount (don't wait for first 3s poll)
     pollPhaseFromDB();
+  }, [currentQuiz?.id, sessionCode]);
 
-    // Initialize joker inventory from player's saved state (or fallback to session default)
+  // Load joker inventory ONLY when currentPlayer becomes available
+  useEffect(() => {
     const loadPlayerInventory = async () => {
       if (!currentPlayer?.id) return;
 
@@ -229,6 +231,7 @@ export const PlayerView: React.FC = () => {
 
           if (savedInventory) {
             // Use saved inventory (prevents reload exploit)
+            console.log('🃏 Loading saved joker inventory:', savedInventory);
             initializeInventory(savedInventory);
             return;
           }
@@ -242,13 +245,14 @@ export const PlayerView: React.FC = () => {
         const settings = currentSession.settings as Record<string, unknown>;
         const defaultInventory = settings.jokerInventory as { protection: number; block: number; steal: number; double_points: number } | undefined;
         if (defaultInventory) {
+          console.log('🃏 Using default joker inventory:', defaultInventory);
           initializeInventory(defaultInventory);
         }
       }
     };
 
     loadPlayerInventory();
-  }, [currentQuiz?.id, sessionCode]);
+  }, [currentPlayer?.id, currentSession?.settings]);
 
   useEffect(() => {
     if (currentSession?.id) {
@@ -668,17 +672,22 @@ export const PlayerView: React.FC = () => {
             </div>
           )}
 
-          {currentPhase === 'results' && currentQuestion?.fun_fact && commentaryPopups.length === 0 && (
-            <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-              <p className="text-qb-yellow/80 text-sm italic">
-                💡 {currentQuestion.fun_fact}
-              </p>
-            </div>
-          )}
-
+          {/* Commentary popups (show first) */}
           {currentPhase === 'results' && commentaryPopups.length > 0 && (
             <div className="mt-4">
               <CommentaryPopupChain popups={commentaryPopups} variant="player" />
+            </div>
+          )}
+
+          {/* Fun fact (always show below commentary) */}
+          {currentPhase === 'results' && currentQuestion?.fun_fact && (
+            <div className="mt-4 p-4 bg-yellow-500/10 border-2 border-yellow-500/40 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-yellow-400 text-xl font-bold">💡 {t('player.funFact', 'Le saviez-vous ?')}</span>
+              </div>
+              <p className="text-white/90 text-lg leading-relaxed font-medium">
+                {currentQuestion.fun_fact}
+              </p>
             </div>
           )}
         </Card>
