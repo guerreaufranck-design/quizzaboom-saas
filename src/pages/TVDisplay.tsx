@@ -23,21 +23,22 @@ const getAdaptiveTextSize = (
   sizes: { sm: string; md: string; lg: string; xl: string }
 ): string => {
   const len = text.length;
-  if (len > 120) return sizes.sm;
-  if (len > 80) return sizes.md;
-  if (len > 40) return sizes.lg;
+  if (len > 150) return sizes.sm;
+  if (len > 100) return sizes.md;
+  if (len > 50) return sizes.lg;
   return sizes.xl;
 };
 
 /**
  * Adaptive text size for answer options — based on the longest option in the set.
+ * Increased for better readability.
  */
 const getAdaptiveOptionSize = (options: string[]): string => {
   const maxLen = Math.max(...options.map(o => o.length));
-  if (maxLen > 80) return 'text-xl';
-  if (maxLen > 50) return 'text-2xl';
-  if (maxLen > 30) return 'text-3xl';
-  return 'text-4xl';
+  if (maxLen > 100) return 'text-2xl';
+  if (maxLen > 60) return 'text-3xl';
+  if (maxLen > 30) return 'text-4xl';
+  return 'text-5xl';
 };
 
 export const TVDisplay: React.FC = () => {
@@ -686,8 +687,8 @@ export const TVDisplay: React.FC = () => {
     const questionText = currentQuestion?.question_text || t('common.loading');
     const hasImage = !!currentQuestion?.image_url;
     const questionTextClass = hasImage
-      ? getAdaptiveTextSize(questionText, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-7xl', lg: 'text-6xl', md: 'text-5xl', sm: 'text-4xl' });
+      ? getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' })
+      : getAdaptiveTextSize(questionText, { xl: 'text-8xl', lg: 'text-7xl', md: 'text-6xl', sm: 'text-5xl' });
 
     return (
       <div className="h-screen bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-500 flex items-center justify-center p-8 overflow-hidden">
@@ -728,8 +729,8 @@ export const TVDisplay: React.FC = () => {
     const questionText = currentQuestion?.question_text || '';
     const hasImage = !!currentQuestion?.image_url;
     const answerQuestionClass = hasImage
-      ? getAdaptiveTextSize(questionText, { xl: 'text-3xl', lg: 'text-2xl', md: 'text-xl', sm: 'text-lg' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' });
+      ? getAdaptiveTextSize(questionText, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' })
+      : getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
     const options = currentQuestion?.options || [];
     const optionTextClass = getAdaptiveOptionSize(options);
     const maxOptionLen = Math.max(...options.map(o => o.length), 0);
@@ -811,7 +812,7 @@ export const TVDisplay: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'results') {
     const correctAnswer = currentQuestion?.correct_answer || '';
-    const correctAnswerClass = getAdaptiveTextSize(correctAnswer, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
+    const correctAnswerClass = getAdaptiveTextSize(correctAnswer, { xl: 'text-7xl', lg: 'text-6xl', md: 'text-5xl', sm: 'text-4xl' });
     const hasImage = !!currentQuestion?.image_url;
 
     return (

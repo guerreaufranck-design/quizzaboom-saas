@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuizStore } from '../stores/useQuizStore';
+import { useUserEntitlement } from '../hooks/useUserEntitlement';
 import { useAppNavigate } from '../hooks/useAppNavigate';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -11,11 +12,7 @@ import { THEMES, THEME_MODES, type ThemeCategory, type ThemeMode } from '../type
 import type { QuizGenRequest, CommercialBreakConfig } from '../types/quiz';
 
 
-const QUESTION_COUNT_OPTIONS = [
-  { value: 25 as const, emoji: '⚡', labelKey: 'create.questions25', descKey: 'create.questions25Desc' },
-  { value: 50 as const, emoji: '🎯', labelKey: 'create.questions50', descKey: 'create.questions50Desc' },
-  { value: 100 as const, emoji: '🏆', labelKey: 'create.questions100', descKey: 'create.questions100Desc' },
-];
+// Removed preset question counts (25/50/100) due to timeout issues — use custom only
 
 const BREAK_DURATION_OPTIONS = [
   { value: 180, label: '3 min' },
@@ -28,6 +25,7 @@ const BREAK_DURATION_OPTIONS = [
 export const CreateQuiz: React.FC = () => {
   const { t } = useTranslation();
   const { generateQuiz, createSession, isLoading, generationProgress } = useQuizStore();
+  const { consumeCredit, canCreate, reason, quizUsage } = useUserEntitlement();
   const navigate = useAppNavigate();
   const [selectedThemes, setSelectedThemes] = useState<ThemeCategory[]>(['general']);
   const [selectedMode, setSelectedMode] = useState<ThemeMode>('standard');
@@ -47,13 +45,12 @@ export const CreateQuiz: React.FC = () => {
   const [teamMode, setTeamMode] = useState(false);
   const [teamNames, setTeamNames] = useState<string[]>(['Table 1', 'Table 2']);
   const [formData, setFormData] = useState({
-    questionCount: 25,
+    questionCount: 15,  // Default to 15 questions
     difficulty: 'medium' as 'easy' | 'medium' | 'hard',
     language: 'fr' as QuizGenRequest['language'],
     includeJokers: true,
   });
-  const [customQuestionCount, setCustomQuestionCount] = useState('');
-  const [isCustomCount, setIsCustomCount] = useState(false);
+  const [customQuestionCount, setCustomQuestionCount] = useState('15');
   const [customThemeText, setCustomThemeText] = useState('');
 
   // Multi-theme toggle using functional setState to avoid stale closures
@@ -105,17 +102,40 @@ export const CreateQuiz: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Check plan limits BEFORE generating
+    if (!canCreate) {
+      if (reason === 'quota_reached') {
+        alert(t('create.error.quotaReached', `You have reached your monthly limit of ${quizUsage?.limit || 5} quizzes. Upgrade to Pro for unlimited quizzes!`));
+      } else if (reason === 'trial_expired') {
+        alert(t('create.error.trialExpired', 'Your trial has expired. Please subscribe to continue creating quizzes.'));
+      } else if (reason === 'no_credits') {
+        alert(t('create.error.noCredits', 'You have no quiz credits remaining. Please purchase more credits.'));
+      } else {
+        alert(t('create.error.cannotCreate', 'Unable to create quiz. Please check your subscription status.'));
+      }
+      return;
+    }
+
     try {
       setGenerationStep(t('create.generationSteps.connecting'));
       console.log('🎨 Starting quiz generation...');
 
-      // Build theme string with active sub-themes for AI diversity
-      const isCustomTheme = selectedThemes.includes('custom') && customThemeText.trim();
-      const themeLabel = isCustomTheme
-        ? customThemeText.trim()
-        : selectedThemeObjects.filter(t => t.category !== 'custom').map(t => t.label).join(' + ');
+      // Consume credit/increment usage BEFORE generating (prevents abuse)
+      try {
+        await consumeCredit();
+      } catch (err) {
+        alert(t('create.error.creditConsumption', 'Failed to process quiz credit. Please try again.'));
+        setGenerationStep('');
+        return;
+      }
+
+      // Build theme string — custom is now one theme among others
+      const hasCustom = selectedThemes.includes('custom') && customThemeText.trim();
+      const standardThemes = selectedThemeObjects.filter(t => t.category !== 'custom').map(t => t.label);
+      const allThemeLabels = hasCustom ? [...standardThemes, customThemeText.trim()] : standardThemes;
+      const themeLabel = allThemeLabels.join(' + ');
       const modeLabel = THEME_MODES[selectedMode].label;
-      const subThemesStr = (!isCustomTheme && activeSubThemes.length > 0) ? ` (focus: ${activeSubThemes.join(', ')})` : '';
+      const subThemesStr = (activeSubThemes.length > 0 && !hasCustom) ? ` (focus: ${activeSubThemes.join(', ')})` : '';
 
       const request: QuizGenRequest = {
         theme: `${themeLabel} - ${modeLabel}${subThemesStr}`,
@@ -178,10 +198,22 @@ export const CreateQuiz: React.FC = () => {
             >
               {t('common.back')}
             </Button>
-            <div>
+            <div className="flex-1">
               <h1 className="text-4xl font-bold text-white">{t('create.title')}</h1>
               <p className="text-white/70 mt-2">{t('create.subtitle')}</p>
             </div>
+            {/* Plan usage indicator */}
+            {quizUsage && (
+              <Card className="px-4 py-2 bg-qb-darker border-white/20">
+                <p className="text-sm text-white/70">{t('create.quizzesThisMonth', 'Quizzes this month')}</p>
+                <p className="text-2xl font-bold text-white">
+                  {quizUsage.used} / {quizUsage.limit}
+                </p>
+                {quizUsage.used >= quizUsage.limit && (
+                  <p className="text-xs text-red-400 mt-1">{t('create.limitReached', 'Limit reached!')}</p>
+                )}
+              </Card>
+            )}
           </div>
 
           {/* Loading Overlay */}
@@ -367,86 +399,38 @@ export const CreateQuiz: React.FC = () => {
                 <Hash className="w-5 h-5 text-qb-cyan" />
                 {t('create.questionCount')}
               </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {QUESTION_COUNT_OPTIONS.map((option) => {
-                  const structure = calculateQuizStructureFromCount(option.value);
-                  const isActive = !isCustomCount && formData.questionCount === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => {
-                        setIsCustomCount(false);
-                        setCustomQuestionCount('');
-                        setFormData({ ...formData, questionCount: option.value });
-                      }}
-                      disabled={isLoading}
-                      className={`p-6 rounded-xl border-2 transition-all ${
-                        isActive
-                          ? 'bg-qb-cyan border-qb-cyan scale-105 shadow-lg shadow-qb-cyan/50'
-                          : 'bg-qb-darker border-white/20 hover:border-qb-cyan hover:scale-105'
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      <div className="text-4xl mb-2">{option.emoji}</div>
-                      <div className="text-3xl font-bold text-white mb-1">{option.value}</div>
-                      <div className="text-sm text-white/80 font-medium">{t('create.questions')}</div>
-                      <div className="text-xs text-white/50 mt-2">~{structure.estimatedDurationMinutes} min</div>
-                      <div className="text-xs text-white/50">{t(option.descKey)}</div>
-                    </button>
-                  );
-                })}
-                {/* Custom question count */}
-                <button
-                  type="button"
-                  onClick={() => setIsCustomCount(true)}
-                  disabled={isLoading}
-                  className={`p-6 rounded-xl border-2 transition-all ${
-                    isCustomCount
-                      ? 'bg-qb-cyan border-qb-cyan scale-105 shadow-lg shadow-qb-cyan/50'
-                      : 'bg-qb-darker border-white/20 hover:border-qb-cyan hover:scale-105'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  <div className="text-4xl mb-2">✏️</div>
-                  <div className="text-xl font-bold text-white mb-1">{t('create.custom')}</div>
-                  <div className="text-sm text-white/80 font-medium">{t('create.questions')}</div>
-                  <div className="text-xs text-white/50 mt-2">5-100</div>
-                  <div className="text-xs text-white/50">{t('create.customDesc')}</div>
-                </button>
-              </div>
-
-              {/* Custom input field */}
-              {isCustomCount && (
-                <div className="mt-4 p-4 bg-qb-darker rounded-lg border border-qb-cyan/30">
-                  <label className="block text-sm text-white/80 mb-2">{t('create.customQuestionLabel')}</label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="number"
-                      min={5}
-                      max={100}
-                      value={customQuestionCount}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setCustomQuestionCount(val);
-                        const num = parseInt(val, 10);
-                        if (num >= 5 && num <= 100) {
-                          setFormData({ ...formData, questionCount: num });
-                        }
-                      }}
-                      placeholder="15"
-                      disabled={isLoading}
-                      className="w-28 px-4 py-3 bg-qb-dark border border-white/20 rounded-lg text-white text-center text-2xl font-bold focus:border-qb-cyan focus:outline-none focus:ring-2 focus:ring-qb-cyan/30"
-                    />
-                    <div className="text-white/60 text-sm">
-                      {customQuestionCount && parseInt(customQuestionCount, 10) >= 5 && parseInt(customQuestionCount, 10) <= 100 && (
-                        <span>~{calculateQuizStructureFromCount(parseInt(customQuestionCount, 10)).estimatedDurationMinutes} min</span>
-                      )}
-                      {customQuestionCount && (parseInt(customQuestionCount, 10) < 5 || parseInt(customQuestionCount, 10) > 100) && (
-                        <span className="text-red-400">{t('create.customRange')}</span>
-                      )}
-                    </div>
+              {/* Direct custom input — always visible, no preset buttons */}
+              <div className="p-4 bg-qb-darker rounded-lg border border-qb-cyan/30">
+                <label className="block text-sm text-white/80 mb-2">{t('create.customQuestionLabel', 'How many questions?')}</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min={5}
+                    max={100}
+                    value={customQuestionCount}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCustomQuestionCount(val);
+                      const num = parseInt(val, 10);
+                      if (num >= 5 && num <= 100) {
+                        setFormData({ ...formData, questionCount: num });
+                      }
+                    }}
+                    placeholder="15"
+                    disabled={isLoading}
+                    className="w-28 px-4 py-3 bg-qb-dark border border-white/20 rounded-lg text-white text-center text-2xl font-bold focus:border-qb-cyan focus:outline-none focus:ring-2 focus:ring-qb-cyan/30"
+                  />
+                  <div className="text-white/60 text-sm">
+                    {customQuestionCount && parseInt(customQuestionCount, 10) >= 5 && parseInt(customQuestionCount, 10) <= 100 && (
+                      <span className="text-qb-cyan font-bold">~{calculateQuizStructureFromCount(parseInt(customQuestionCount, 10)).estimatedDurationMinutes} min</span>
+                    )}
+                    {customQuestionCount && (parseInt(customQuestionCount, 10) < 5 || parseInt(customQuestionCount, 10) > 100) && (
+                      <span className="text-red-400">{t('create.customRange', 'Between 5 and 100')}</span>
+                    )}
                   </div>
                 </div>
-              )}
+                <p className="text-xs text-white/50 mt-2">{t('create.customHint', 'Recommended: 10-20 questions for best experience. Larger quizzes may take longer to generate.')}</p>
+              </div>
 
               <div className="mt-4 p-4 bg-qb-darker rounded-lg">
                 <div className="text-sm text-white/70 mb-2">{t('create.quizStructure')}</div>

@@ -227,12 +227,8 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     set({
       currentPhase: data.phase,
       phaseTimeRemaining: data.timeRemaining,
-      // Reject stale or unreasonable phaseEndTime (>30s in the future = clock skew)
-      phaseEndTime: data.phaseEndTime && (data.phaseEndTime - Date.now()) < 30000
-        ? data.phaseEndTime
-        : data.phaseEndTime && (data.phaseEndTime - Date.now()) > 0
-          ? Date.now() + data.timeRemaining * 1000
-          : null,
+      // Always use broadcast phaseEndTime for perfect sync across all clients
+      phaseEndTime: data.phaseEndTime || null,
       currentQuestionIndex: data.questionIndex,
       currentStage: data.stageNumber,
       currentQuestion: question,
@@ -385,12 +381,35 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       });
     }
 
-    set({
-      playerInventory: {
-        ...playerInventory,
-        [jokerType]: playerInventory[jokerType] - 1,
-      },
-    });
+    const updatedInventory = {
+      ...playerInventory,
+      [jokerType]: playerInventory[jokerType] - 1,
+    };
+
+    set({ playerInventory: updatedInventory });
+
+    // Persist inventory to DB to prevent reload exploit
+    try {
+      const { data: playerData } = await supabase
+        .from('session_players')
+        .select('settings')
+        .eq('id', playerId)
+        .single();
+
+      const currentSettings = (playerData?.settings as Record<string, unknown>) || {};
+      await supabase
+        .from('session_players')
+        .update({
+          settings: {
+            ...currentSettings,
+            jokerInventory: updatedInventory,
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', playerId);
+    } catch (err) {
+      console.error('Failed to persist joker inventory:', err);
+    }
 
     // Re-read activeEffects after inventory update (may have been updated by broadcasts)
     const latestEffects = get().activeEffects;

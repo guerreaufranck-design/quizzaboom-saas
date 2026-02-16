@@ -212,14 +212,42 @@ export const PlayerView: React.FC = () => {
     // Fetch current phase from DB immediately on mount (don't wait for first 3s poll)
     pollPhaseFromDB();
 
-    // Initialize joker inventory from session settings (configurable per quiz)
-    if (currentSession?.settings) {
-      const settings = currentSession.settings as Record<string, unknown>;
-      const customInventory = settings.jokerInventory as { protection: number; block: number; steal: number; double_points: number } | undefined;
-      if (customInventory) {
-        initializeInventory(customInventory);
+    // Initialize joker inventory from player's saved state (or fallback to session default)
+    const loadPlayerInventory = async () => {
+      if (!currentPlayer?.id) return;
+
+      try {
+        const { data } = await supabase
+          .from('session_players')
+          .select('settings')
+          .eq('id', currentPlayer.id)
+          .single();
+
+        if (data?.settings) {
+          const playerSettings = data.settings as Record<string, unknown>;
+          const savedInventory = playerSettings.jokerInventory as { protection: number; block: number; steal: number; double_points: number } | undefined;
+
+          if (savedInventory) {
+            // Use saved inventory (prevents reload exploit)
+            initializeInventory(savedInventory);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load player inventory:', err);
       }
-    }
+
+      // Fallback: use session default if no saved inventory
+      if (currentSession?.settings) {
+        const settings = currentSession.settings as Record<string, unknown>;
+        const defaultInventory = settings.jokerInventory as { protection: number; block: number; steal: number; double_points: number } | undefined;
+        if (defaultInventory) {
+          initializeInventory(defaultInventory);
+        }
+      }
+    };
+
+    loadPlayerInventory();
   }, [currentQuiz?.id, sessionCode]);
 
   useEffect(() => {

@@ -138,9 +138,9 @@ export const HostDashboard: React.FC = () => {
   };
 
   const handlePhaseComplete = () => {
-    // If tutorial just ended, start the real quiz
+    // If tutorial just ended, go directly to first question (skip theme announcement)
     if (currentPhaseState === 'tutorial') {
-      changePhase('theme_announcement', 0);
+      changePhase('question_display', 0);
       return;
     }
 
@@ -213,6 +213,7 @@ export const HostDashboard: React.FC = () => {
     setCurrentPhaseState('commercial_break');
     setPhaseEndTime(endTime);
     setPausedRemaining(null);
+    setIsPlaying(true);  // Ensure quiz auto-resumes after break
 
     const phaseData = {
       phase: 'commercial_break' as GamePhase,
