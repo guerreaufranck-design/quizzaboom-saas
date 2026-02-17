@@ -722,8 +722,7 @@ export const TVDisplay: React.FC = () => {
   if (currentPhase === 'question_display') {
     const questionText = currentQuestion?.question_text || t('common.loading');
     const hasImage = !!currentQuestion?.image_url;
-    // Long questions (>80 chars) → skip image to give max space for text
-    const showQuestionImage = hasImage && questionImgVisible && questionText.length <= 80;
+    const showQuestionImage = hasImage && questionImgVisible;
 
     return (
       <div className="h-screen bg-gradient-to-br from-indigo-700 via-purple-600 to-fuchsia-600 p-4 overflow-hidden relative">
@@ -734,7 +733,7 @@ export const TVDisplay: React.FC = () => {
         </div>
 
         <div className="h-full flex flex-col relative z-10">
-          {/* Top bar: Question badge left + Timer right — compact */}
+          {/* Top bar */}
           <div className="flex items-center justify-between shrink-0 mb-2">
             <div className="anim-pop bg-yellow-400 rounded-2xl px-5 py-1.5 shadow-lg shadow-yellow-500/30">
               <span className="font-cartoon text-2xl font-bold text-gray-900">
@@ -749,10 +748,9 @@ export const TVDisplay: React.FC = () => {
             </div>
           </div>
 
-          {/* Main content: AutoFitText fills ALL available space */}
+          {/* Image on top (40%) + Question below (60%) — always keep image */}
           {showQuestionImage ? (
-            <div className="flex-1 min-h-0 flex flex-col gap-3">
-              {/* Image — top 40% */}
+            <div className="flex-1 min-h-0 flex flex-col gap-2">
               <div className="flex items-center justify-center anim-pop" style={{ height: '40%' }}>
                 <img
                   src={currentQuestion!.image_url}
@@ -761,14 +759,13 @@ export const TVDisplay: React.FC = () => {
                   onError={() => setQuestionImgVisible(false)}
                 />
               </div>
-              {/* Question — fills remaining 60% */}
-              <div className="flex-1 anim-slide bg-white/15 backdrop-blur-xl rounded-[2rem] p-6 border-2 border-white/20 shadow-2xl">
-                <AutoFitText text={questionText} className="font-cartoon font-medium text-white" maxFontSize={160} padding={24} />
+              <div className="flex-1 anim-slide bg-white/15 backdrop-blur-xl rounded-[2rem] p-4 border-2 border-white/20 shadow-2xl">
+                <AutoFitText text={questionText} className="font-cartoon font-medium text-white" maxFontSize={150} padding={16} />
               </div>
             </div>
           ) : (
-            <div className="flex-1 anim-pop bg-white/15 backdrop-blur-xl rounded-[2rem] p-8 border-2 border-white/20 shadow-2xl">
-              <AutoFitText text={questionText} className="font-cartoon font-medium text-white" maxFontSize={220} padding={32} />
+            <div className="flex-1 anim-pop bg-white/15 backdrop-blur-xl rounded-[2rem] p-6 border-2 border-white/20 shadow-2xl">
+              <AutoFitText text={questionText} className="font-cartoon font-medium text-white" maxFontSize={200} padding={24} />
             </div>
           )}
         </div>
