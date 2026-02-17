@@ -774,10 +774,10 @@ export const TVDisplay: React.FC = () => {
                   onError={() => setQuestionImgVisible(false)}
                 />
               </div>
-              {/* Question text — bottom portion, fills remaining space */}
+              {/* Question text — fills remaining height + width */}
               <div className="flex-1 flex items-center justify-center anim-slide">
-                <div className="bg-white/15 backdrop-blur-xl rounded-[2rem] p-8 w-full border-2 border-white/20 shadow-2xl">
-                  <h2 className={`font-cartoon font-bold text-white leading-tight text-center ${questionTextClass}`}>
+                <div className="bg-white/15 backdrop-blur-xl rounded-[2rem] p-6 w-full h-full flex items-center justify-center border-2 border-white/20 shadow-2xl">
+                  <h2 className={`font-cartoon font-medium text-white leading-snug text-center ${questionTextClass}`}>
                     {questionText}
                   </h2>
                 </div>
@@ -785,8 +785,8 @@ export const TVDisplay: React.FC = () => {
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center anim-pop">
-              <div className="bg-white/15 backdrop-blur-xl rounded-[2rem] p-12 w-full border-2 border-white/20 shadow-2xl">
-                <h2 className={`font-cartoon font-bold text-white leading-tight text-center ${questionTextClass}`}>
+              <div className="bg-white/15 backdrop-blur-xl rounded-[2rem] p-10 w-full h-full flex items-center justify-center border-2 border-white/20 shadow-2xl">
+                <h2 className={`font-cartoon font-medium text-white leading-snug text-center ${questionTextClass}`}>
                   {questionText}
                 </h2>
               </div>
@@ -805,13 +805,13 @@ export const TVDisplay: React.FC = () => {
     const hasImage = !!currentQuestion?.image_url;
     const showImage = hasImage && answerImgVisible;
     const options = currentQuestion?.options || [];
-    // Maximized text sizes for TV projection — must be readable from back of room
+    // Maximized text sizes for TV projection — no bold, use height for bigger chars
     const answerQuestionClass = showImage
       ? getAdaptiveTextSize(questionText, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' })
       : getAdaptiveTextSize(questionText, { xl: 'text-7xl', lg: 'text-6xl', md: 'text-5xl', sm: 'text-4xl' });
     const optionTextClass = showImage
-      ? getAdaptiveOptionSize(options, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' })
-      : getAdaptiveOptionSize(options, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' });
+      ? getAdaptiveOptionSize(options, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' })
+      : getAdaptiveOptionSize(options, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
     const isUrgent = displaySeconds <= 5;
 
     return (
@@ -872,9 +872,9 @@ export const TVDisplay: React.FC = () => {
 
             {/* Column: question on top + 4 answer cards below — fill ALL space */}
             <div className={`flex flex-col gap-2 ${showImage ? 'flex-1' : 'w-full h-full'}`}>
-              {/* Question text — fills available space */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-center shrink-0">
-                <h2 className={`font-cartoon font-bold text-white text-center leading-tight ${answerQuestionClass}`}>
+              {/* Question text — fills available width + height */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-2 flex items-center justify-center">
+                <h2 className={`font-cartoon font-medium text-white text-center leading-snug ${answerQuestionClass}`}>
                   {currentQuestion?.question_text}
                 </h2>
               </div>
@@ -890,12 +890,12 @@ export const TVDisplay: React.FC = () => {
                       style={{ animationDelay: `${idx * 0.1}s`, animationFillMode: 'backwards' }}
                     >
                       {/* Letter badge — top left */}
-                      <div className={`w-12 h-12 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner mb-1`}>
-                        <span className="font-cartoon text-3xl font-bold text-white">{color.letter}</span>
+                      <div className={`w-11 h-11 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner`}>
+                        <span className="font-cartoon text-2xl font-semibold text-white">{color.letter}</span>
                       </div>
-                      {/* Answer text — fills remaining space, centered */}
-                      <div className="flex-1 flex items-center justify-center">
-                        <span className={`${optionTextClass} text-white font-bold drop-shadow-md leading-tight text-center`}>
+                      {/* Answer text — fills ALL remaining height + width, centered */}
+                      <div className="flex-1 flex items-center justify-center min-h-0">
+                        <span className={`${optionTextClass} text-white font-medium drop-shadow-md leading-snug text-center`}>
                           {option}
                         </span>
                       </div>
