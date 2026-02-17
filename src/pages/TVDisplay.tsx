@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { supabase } from '../services/supabase/client';
-import { Card } from '../components/ui/Card';
 import { QRCodeDisplay } from '../components/ui/QRCodeDisplay';
 import { Clock, Trophy, Star, Lightbulb, Users, Award } from 'lucide-react';
 import type { Player } from '../types/quiz';
