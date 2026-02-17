@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -19,6 +19,14 @@ import {
   UtensilsCrossed,
   Hotel,
   PartyPopper,
+  Users,
+  Upload,
+  FileSpreadsheet,
+  AlertCircle,
+  Globe,
+  MapPin,
+  Shield,
+  Sparkles,
 } from 'lucide-react';
 
 const SALES_PASSWORD = import.meta.env.VITE_SALES_PASSWORD || '';
@@ -135,6 +143,22 @@ interface Lead {
   template?: TemplateId;
 }
 
+interface Signup {
+  id: string;
+  name: string;
+  type: string;
+  plan: string;
+  status: string;
+  trial_ends_at: string | null;
+  quizzes_used: number;
+  quiz_limit: number;
+  created_at: string;
+  country: string;
+  city: string;
+  business_type: string;
+  verification_status: string;
+}
+
 // ─── Password gate ───────────────────────────────────────────────
 function PasswordGate({ onAuth }: { onAuth: () => void }) {
   const [pw, setPw] = useState('');
@@ -205,6 +229,79 @@ function TemplateBadge({ templateId }: { templateId?: TemplateId }) {
   );
 }
 
+// ─── Verification badge ─────────────────────────────────────────
+function VerifBadge({ status }: { status: string }) {
+  const config: Record<string, { color: string; label: string }> = {
+    approved: { color: 'text-green-400 bg-green-400/10', label: 'Verified' },
+    pending: { color: 'text-yellow-400 bg-yellow-400/10', label: 'Pending' },
+    rejected: { color: 'text-red-400 bg-red-400/10', label: 'Rejected' },
+    none: { color: 'text-white/30 bg-white/5', label: 'No verif' },
+  };
+  const c = config[status] || config.none;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${c.color}`}>
+      <Shield className="w-3 h-3" />
+      {c.label}
+    </span>
+  );
+}
+
+// ─── Sub badge ───────────────────────────────────────────────────
+function SubBadge({ status, plan }: { status: string; plan: string }) {
+  const color =
+    status === 'active' ? 'text-green-400 bg-green-400/10' :
+    status === 'trial' ? 'text-cyan-400 bg-cyan-400/10' :
+    status === 'cancelled' ? 'text-red-400 bg-red-400/10' :
+    'text-white/30 bg-white/5';
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${color}`}>
+      <Sparkles className="w-3 h-3" />
+      {plan} / {status}
+    </span>
+  );
+}
+
+// ─── Venue type icon ─────────────────────────────────────────────
+function VenueTypeIcon({ type }: { type: string }) {
+  const icons: Record<string, typeof Beer> = {
+    bar: Beer,
+    restaurant: UtensilsCrossed,
+    hotel: Hotel,
+    event_company: PartyPopper,
+  };
+  const Icon = icons[type] || Building2;
+  return <Icon className="w-4 h-4 text-qb-purple shrink-0" />;
+}
+
+// ─── CSV parser (client-side) ────────────────────────────────────
+function parseCsv(text: string): { venueName: string; email: string; template: string }[] {
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+  if (lines.length < 2) return []; // Need header + at least 1 row
+
+  const header = lines[0].toLowerCase();
+  const sep = header.includes('\t') ? '\t' : header.includes(';') ? ';' : ',';
+  const cols = header.split(sep).map((c) => c.trim().replace(/"/g, ''));
+
+  // Find column indices
+  const nameIdx = cols.findIndex((c) => c.includes('name') || c.includes('venue') || c.includes('nom') || c.includes('etablissement'));
+  const emailIdx = cols.findIndex((c) => c.includes('email') || c.includes('mail'));
+  const templateIdx = cols.findIndex((c) => c.includes('template') || c.includes('type'));
+
+  if (nameIdx === -1 || emailIdx === -1) return [];
+
+  const rows: { venueName: string; email: string; template: string }[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = lines[i].split(sep).map((v) => v.trim().replace(/"/g, ''));
+    const venueName = vals[nameIdx] || '';
+    const email = vals[emailIdx] || '';
+    const template = templateIdx >= 0 ? (vals[templateIdx] || '') : '';
+    if (venueName && email && email.includes('@')) {
+      rows.push({ venueName, email, template });
+    }
+  }
+  return rows;
+}
+
 // ─── Main component ──────────────────────────────────────────────
 export function SalesOutreach() {
   const [authed, setAuthed] = useState(sessionStorage.getItem('sales_auth') === '1');
@@ -220,8 +317,22 @@ export function SalesOutreach() {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>('pub_with_quiz');
   const [formError, setFormError] = useState('');
 
-  // View
+  // Main navigation tabs
+  const [section, setSection] = useState<'outreach' | 'signups' | 'import'>('outreach');
+
+  // Outreach sub-tabs
   const [tab, setTab] = useState<'today' | 'history'>('today');
+
+  // Signups
+  const [signups, setSignups] = useState<Signup[]>([]);
+  const [signupsLoading, setSignupsLoading] = useState(false);
+
+  // Import CSV
+  const [csvPreview, setCsvPreview] = useState<{ venueName: string; email: string; template: string }[]>([]);
+  const [importTemplate, setImportTemplate] = useState<TemplateId>('pub_with_quiz');
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ imported: number; skipped: number; errors: number } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
@@ -233,7 +344,6 @@ export function SalesOutreach() {
       });
       const data = await res.json();
       if (res.ok) {
-        // Map DB leads — notes field stores the template id
         const mapped = (data.leads || []).map((l: Lead & { notes?: string }) => ({
           ...l,
           template: l.notes as TemplateId || undefined,
@@ -247,11 +357,34 @@ export function SalesOutreach() {
     }
   }, [tab]);
 
-  useEffect(() => {
-    if (authed) fetchLeads();
-  }, [authed, fetchLeads]);
+  const fetchSignups = useCallback(async () => {
+    setSignupsLoading(true);
+    try {
+      const res = await fetch('/api/sales-outreach-signups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: SALES_PASSWORD, days: 90 }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSignups(data.signups || []);
+      }
+    } catch {
+      // silent
+    } finally {
+      setSignupsLoading(false);
+    }
+  }, []);
 
-  // ─── Add lead → save to DB immediately ─────────────────────────
+  useEffect(() => {
+    if (authed && section === 'outreach') fetchLeads();
+  }, [authed, section, fetchLeads]);
+
+  useEffect(() => {
+    if (authed && section === 'signups') fetchSignups();
+  }, [authed, section, fetchSignups]);
+
+  // ─── Add lead ─────────────────────────────────────────────────
   const addLead = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
@@ -287,7 +420,6 @@ export function SalesOutreach() {
         return;
       }
 
-      // Add the DB-saved lead to the list
       const newLead: Lead = {
         ...data.lead,
         template: selectedTemplate,
@@ -302,10 +434,9 @@ export function SalesOutreach() {
     }
   };
 
-  // ─── Delete lead from DB ───────────────────────────────────────
+  // ─── Delete lead ──────────────────────────────────────────────
   const removeLead = async (id: string) => {
     setLeads((prev) => prev.filter((l) => l.id !== id));
-    // Fire-and-forget DB delete
     fetch('/api/sales-outreach-delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -313,6 +444,7 @@ export function SalesOutreach() {
     }).catch(() => {});
   };
 
+  // ─── Send emails ──────────────────────────────────────────────
   const sendOne = async (lead: Lead) => {
     setSendingId(lead.id);
     try {
@@ -380,6 +512,53 @@ export function SalesOutreach() {
     }
   };
 
+  // ─── CSV file handler ─────────────────────────────────────────
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportResult(null);
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      const rows = parseCsv(text);
+      setCsvPreview(rows);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleImport = async () => {
+    if (csvPreview.length === 0) return;
+    setImporting(true);
+    setImportResult(null);
+
+    try {
+      const rows = csvPreview.map((r) => ({
+        venueName: r.venueName,
+        email: r.email,
+        template: r.template || importTemplate,
+      }));
+
+      const res = await fetch('/api/sales-outreach-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: SALES_PASSWORD, rows }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setImportResult({ imported: data.imported, skipped: data.skipped, errors: data.errors });
+        // Refresh leads list
+        if (data.imported > 0) {
+          fetchLeads();
+        }
+      }
+    } catch {
+      setImportResult({ imported: 0, skipped: 0, errors: csvPreview.length });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   if (!authed) return <PasswordGate onAuth={() => setAuthed(true)} />;
 
   const pendingCount = leads.filter((l) => l.status === 'pending').length;
@@ -398,230 +577,569 @@ export function SalesOutreach() {
             </h1>
             <p className="text-white/50 mt-1">B2B prospecting — UK & Ireland venues</p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<RefreshCw className="w-4 h-4" />}
-            onClick={fetchLeads}
-            loading={loading}
+        </div>
+
+        {/* Main Navigation */}
+        <div className="flex gap-2 border-b border-white/10 pb-1">
+          <button
+            onClick={() => setSection('outreach')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-lg text-sm font-medium transition-all ${
+              section === 'outreach'
+                ? 'bg-qb-purple/20 text-qb-purple border-b-2 border-qb-purple'
+                : 'text-white/50 hover:text-white/80 hover:bg-white/5'
+            }`}
           >
-            Refresh
-          </Button>
+            <Mail className="w-4 h-4" />
+            Outreach
+          </button>
+          <button
+            onClick={() => setSection('signups')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-lg text-sm font-medium transition-all ${
+              section === 'signups'
+                ? 'bg-qb-cyan/20 text-qb-cyan border-b-2 border-qb-cyan'
+                : 'text-white/50 hover:text-white/80 hover:bg-white/5'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Pro Signups
+            {signups.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-qb-cyan/20 text-qb-cyan text-xs">{signups.length}</span>
+            )}
+          </button>
+          <button
+            onClick={() => setSection('import')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-lg text-sm font-medium transition-all ${
+              section === 'import'
+                ? 'bg-green-500/20 text-green-400 border-b-2 border-green-400'
+                : 'text-white/50 hover:text-white/80 hover:bg-white/5'
+            }`}
+          >
+            <Upload className="w-4 h-4" />
+            Import CSV
+          </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <Card gradient>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-yellow-400">{pendingCount}</p>
-              <p className="text-white/60 text-sm mt-1">Pending</p>
+        {/* ══════════════════════════════════════════════════════════════
+            SECTION: OUTREACH
+           ══════════════════════════════════════════════════════════════ */}
+        {section === 'outreach' && (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4">
+              <Card gradient>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-yellow-400">{pendingCount}</p>
+                  <p className="text-white/60 text-sm mt-1">Pending</p>
+                </div>
+              </Card>
+              <Card gradient>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-green-400">{sentCount}</p>
+                  <p className="text-white/60 text-sm mt-1">Sent</p>
+                </div>
+              </Card>
+              <Card gradient>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-red-400">{failedCount}</p>
+                  <p className="text-white/60 text-sm mt-1">Failed</p>
+                </div>
+              </Card>
             </div>
-          </Card>
-          <Card gradient>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-green-400">{sentCount}</p>
-              <p className="text-white/60 text-sm mt-1">Sent</p>
-            </div>
-          </Card>
-          <Card gradient>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-red-400">{failedCount}</p>
-              <p className="text-white/60 text-sm mt-1">Failed</p>
-            </div>
-          </Card>
-        </div>
 
-        {/* Template selector */}
-        <Card gradient>
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Mail className="w-5 h-5 text-qb-cyan" />
-            Email Template
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {TEMPLATE_GROUPS.map((group) => (
-              <div key={group.group}>
-                <p className="text-white/40 text-xs uppercase tracking-wider mb-2">{group.group}</p>
-                <div className="space-y-2">
-                  {group.templates.map((tpl) => {
+            {/* Template selector */}
+            <Card gradient>
+              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Mail className="w-5 h-5 text-qb-cyan" />
+                Email Template
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {TEMPLATE_GROUPS.map((group) => (
+                  <div key={group.group}>
+                    <p className="text-white/40 text-xs uppercase tracking-wider mb-2">{group.group}</p>
+                    <div className="space-y-2">
+                      {group.templates.map((tpl) => {
+                        const Icon = tpl.icon;
+                        const isSelected = selectedTemplate === tpl.id;
+                        return (
+                          <button
+                            key={tpl.id}
+                            onClick={() => setSelectedTemplate(tpl.id)}
+                            className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                              isSelected
+                                ? 'border-qb-purple bg-qb-purple/20'
+                                : 'border-white/10 bg-white/5 hover:border-white/20'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <Icon className={`w-4 h-4 ${tpl.color}`} />
+                              <span className="text-white text-sm font-medium">{tpl.label}</span>
+                            </div>
+                            <p className="text-white/40 text-xs">{tpl.description}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Add prospect form */}
+            <Card gradient>
+              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Plus className="w-5 h-5 text-qb-cyan" />
+                Add Prospect
+              </h2>
+              <form onSubmit={addLead} className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Venue name (e.g. The Crown Pub)"
+                    value={venueName}
+                    onChange={(e) => { setVenueName(e.target.value); setFormError(''); }}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Input
+                    type="email"
+                    placeholder="Email address"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setFormError(''); }}
+                  />
+                </div>
+                <Button type="submit" variant="primary" icon={<Plus className="w-4 h-4" />} className="shrink-0" loading={adding}>
+                  Add
+                </Button>
+              </form>
+              {formError && <p className="text-red-400 text-sm mt-2">{formError}</p>}
+              <p className="text-white/30 text-xs mt-2">
+                Template: <TemplateBadge templateId={selectedTemplate} /> — change above before adding
+              </p>
+            </Card>
+
+            {/* Sub-tabs + Send All */}
+            <div className="flex items-center justify-between">
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={tab === 'today' ? 'primary' : 'ghost'}
+                  onClick={() => setTab('today')}
+                  icon={<Clock className="w-4 h-4" />}
+                >
+                  Today
+                </Button>
+                <Button
+                  size="sm"
+                  variant={tab === 'history' ? 'primary' : 'ghost'}
+                  onClick={() => setTab('history')}
+                  icon={<BarChart3 className="w-4 h-4" />}
+                >
+                  Last 30 days
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  icon={<RefreshCw className="w-4 h-4" />}
+                  onClick={fetchLeads}
+                  loading={loading}
+                >
+                  Refresh
+                </Button>
+              </div>
+              {pendingCount > 0 && (
+                <Button
+                  gradient
+                  size="sm"
+                  icon={<Send className="w-4 h-4" />}
+                  onClick={sendAllPending}
+                  loading={sending}
+                >
+                  Send All Pending ({pendingCount})
+                </Button>
+              )}
+            </div>
+
+            {/* Leads table */}
+            <Card>
+              {leads.length === 0 ? (
+                <div className="text-center py-12">
+                  <Building2 className="w-12 h-12 text-white/20 mx-auto mb-3" />
+                  <p className="text-white/40">No prospects yet. Add your first one above.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Venue</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Email</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Template</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Status</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Date</th>
+                        <th className="text-right text-white/60 text-xs uppercase tracking-wider py-3 px-2">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {leads.map((lead) => (
+                        <tr key={lead.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                          <td className="py-3 px-2">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-qb-purple shrink-0" />
+                              <span className="text-white font-medium text-sm">{lead.venue_name}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-2">
+                            <span className="text-white/70 text-sm">{lead.email}</span>
+                          </td>
+                          <td className="py-3 px-2">
+                            <TemplateBadge templateId={lead.template} />
+                          </td>
+                          <td className="py-3 px-2">
+                            <StatusBadge status={lead.status} />
+                          </td>
+                          <td className="py-3 px-2 text-white/40 text-sm whitespace-nowrap">
+                            {new Date(lead.created_at).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </td>
+                          <td className="py-3 px-2">
+                            <div className="flex items-center justify-end gap-2">
+                              {lead.status === 'pending' && (
+                                <Button
+                                  size="sm"
+                                  variant="success"
+                                  icon={<Send className="w-3.5 h-3.5" />}
+                                  onClick={() => sendOne(lead)}
+                                  loading={sendingId === lead.id}
+                                >
+                                  Send
+                                </Button>
+                              )}
+                              {lead.status === 'failed' && (
+                                <Button
+                                  size="sm"
+                                  variant="danger"
+                                  icon={<RefreshCw className="w-3.5 h-3.5" />}
+                                  onClick={() => {
+                                    setLeads((prev) => prev.map((l) => l.id === lead.id ? { ...l, status: 'pending' } : l));
+                                  }}
+                                >
+                                  Retry
+                                </Button>
+                              )}
+                              {lead.status !== 'sent' && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  icon={<Trash2 className="w-3.5 h-3.5" />}
+                                  onClick={() => removeLead(lead.id)}
+                                />
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════
+            SECTION: PRO SIGNUPS
+           ══════════════════════════════════════════════════════════════ */}
+        {section === 'signups' && (
+          <>
+            {/* Stats row */}
+            <div className="grid grid-cols-4 gap-4">
+              <Card gradient>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-qb-cyan">{signups.length}</p>
+                  <p className="text-white/60 text-sm mt-1">Total (90d)</p>
+                </div>
+              </Card>
+              <Card gradient>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-green-400">
+                    {signups.filter((s) => s.status === 'active').length}
+                  </p>
+                  <p className="text-white/60 text-sm mt-1">Active</p>
+                </div>
+              </Card>
+              <Card gradient>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-cyan-400">
+                    {signups.filter((s) => s.status === 'trial').length}
+                  </p>
+                  <p className="text-white/60 text-sm mt-1">Trial</p>
+                </div>
+              </Card>
+              <Card gradient>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-amber-400">
+                    {signups.filter((s) => s.quizzes_used > 0).length}
+                  </p>
+                  <p className="text-white/60 text-sm mt-1">Used quiz</p>
+                </div>
+              </Card>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-qb-cyan" />
+                Pro Registrations (last 90 days)
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<RefreshCw className="w-4 h-4" />}
+                onClick={fetchSignups}
+                loading={signupsLoading}
+              >
+                Refresh
+              </Button>
+            </div>
+
+            <Card>
+              {signupsLoading && signups.length === 0 ? (
+                <div className="text-center py-12">
+                  <RefreshCw className="w-8 h-8 text-white/20 mx-auto mb-3 animate-spin" />
+                  <p className="text-white/40">Loading signups...</p>
+                </div>
+              ) : signups.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="w-12 h-12 text-white/20 mx-auto mb-3" />
+                  <p className="text-white/40">No pro signups yet in the last 90 days.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Organisation</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Type</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Location</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Plan</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Verif</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Usage</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Signed up</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {signups.map((s) => (
+                        <tr key={s.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                          <td className="py-3 px-2">
+                            <div className="flex items-center gap-2">
+                              <VenueTypeIcon type={s.type} />
+                              <span className="text-white font-medium text-sm">{s.name}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-2">
+                            <span className="text-white/60 text-sm capitalize">{s.business_type || s.type || '—'}</span>
+                          </td>
+                          <td className="py-3 px-2">
+                            <div className="flex items-center gap-1.5 text-white/60 text-sm">
+                              {s.country && (
+                                <>
+                                  <Globe className="w-3 h-3" />
+                                  <span className="uppercase">{s.country}</span>
+                                </>
+                              )}
+                              {s.city && (
+                                <>
+                                  <MapPin className="w-3 h-3 ml-1" />
+                                  <span>{s.city}</span>
+                                </>
+                              )}
+                              {!s.country && !s.city && <span className="text-white/30">—</span>}
+                            </div>
+                          </td>
+                          <td className="py-3 px-2">
+                            <SubBadge status={s.status} plan={s.plan} />
+                          </td>
+                          <td className="py-3 px-2">
+                            <VerifBadge status={s.verification_status} />
+                          </td>
+                          <td className="py-3 px-2">
+                            <span className={`text-sm font-medium ${s.quizzes_used > 0 ? 'text-green-400' : 'text-white/30'}`}>
+                              {s.quizzes_used}/{s.quiz_limit || '?'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-2 text-white/40 text-sm whitespace-nowrap">
+                            {new Date(s.created_at).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════
+            SECTION: IMPORT CSV
+           ══════════════════════════════════════════════════════════════ */}
+        {section === 'import' && (
+          <>
+            {/* Instructions */}
+            <Card gradient>
+              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-green-400" />
+                Import Prospects from CSV
+              </h2>
+              <div className="bg-white/5 rounded-lg p-4 mb-4">
+                <p className="text-white/70 text-sm mb-2">Your CSV file should have these columns:</p>
+                <div className="bg-qb-darker rounded p-3 font-mono text-xs text-qb-cyan">
+                  name,email,template<br />
+                  The Crown Pub,info@thecrownpub.co.uk,pub_with_quiz<br />
+                  The Red Lion,hello@redlion.ie,pub_no_quiz<br />
+                  Hotel Marais,contact@hotelmarais.com,hotel_no_quiz
+                </div>
+                <p className="text-white/40 text-xs mt-2">
+                  Accepted separators: comma, semicolon, or tab. Column names are flexible (name/venue/nom, email/mail).
+                  Template is optional — if missing, the default template below will be used.
+                </p>
+                <p className="text-white/40 text-xs mt-1">
+                  Valid templates: <span className="text-white/60">pub_with_quiz, pub_no_quiz, restaurant_with_quiz, restaurant_no_quiz, hotel_with_quiz, hotel_no_quiz, animation_with_quiz, animation_no_quiz</span>
+                </p>
+              </div>
+
+              {/* Default template for rows without one */}
+              <div className="mb-4">
+                <p className="text-white/50 text-sm mb-2">Default template for rows without a template column:</p>
+                <div className="flex flex-wrap gap-2">
+                  {ALL_TEMPLATES.map((tpl) => {
                     const Icon = tpl.icon;
-                    const isSelected = selectedTemplate === tpl.id;
                     return (
                       <button
                         key={tpl.id}
-                        onClick={() => setSelectedTemplate(tpl.id)}
-                        className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                          isSelected
-                            ? 'border-qb-purple bg-qb-purple/20'
-                            : 'border-white/10 bg-white/5 hover:border-white/20'
+                        onClick={() => setImportTemplate(tpl.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all ${
+                          importTemplate === tpl.id
+                            ? 'bg-qb-purple/20 border border-qb-purple text-white'
+                            : 'bg-white/5 border border-white/10 text-white/50 hover:border-white/20'
                         }`}
                       >
-                        <div className="flex items-center gap-2 mb-1">
-                          <Icon className={`w-4 h-4 ${tpl.color}`} />
-                          <span className="text-white text-sm font-medium">{tpl.label}</span>
-                        </div>
-                        <p className="text-white/40 text-xs">{tpl.description}</p>
+                        <Icon className={`w-3.5 h-3.5 ${tpl.color}`} />
+                        {tpl.label}
                       </button>
                     );
                   })}
                 </div>
               </div>
-            ))}
-          </div>
-        </Card>
 
-        {/* Add prospect form */}
-        <Card gradient>
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Plus className="w-5 h-5 text-qb-cyan" />
-            Add Prospect
-          </h2>
-          <form onSubmit={addLead} className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <Input
-                placeholder="Venue name (e.g. The Crown Pub)"
-                value={venueName}
-                onChange={(e) => { setVenueName(e.target.value); setFormError(''); }}
-              />
-            </div>
-            <div className="flex-1">
-              <Input
-                type="email"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); setFormError(''); }}
-              />
-            </div>
-            <Button type="submit" variant="primary" icon={<Plus className="w-4 h-4" />} className="shrink-0" loading={adding}>
-              Add
-            </Button>
-          </form>
-          {formError && <p className="text-red-400 text-sm mt-2">{formError}</p>}
-          <p className="text-white/30 text-xs mt-2">
-            Template: <TemplateBadge templateId={selectedTemplate} /> — change above before adding
-          </p>
-        </Card>
+              {/* File upload */}
+              <div className="flex gap-3 items-center">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.tsv,.txt"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Button
+                  variant="secondary"
+                  icon={<Upload className="w-4 h-4" />}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Choose CSV File
+                </Button>
+                {csvPreview.length > 0 && (
+                  <span className="text-white/60 text-sm">
+                    {csvPreview.length} rows detected
+                  </span>
+                )}
+              </div>
+            </Card>
 
-        {/* Tabs + Send All */}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant={tab === 'today' ? 'primary' : 'ghost'}
-              onClick={() => setTab('today')}
-              icon={<Clock className="w-4 h-4" />}
-            >
-              Today
-            </Button>
-            <Button
-              size="sm"
-              variant={tab === 'history' ? 'primary' : 'ghost'}
-              onClick={() => setTab('history')}
-              icon={<BarChart3 className="w-4 h-4" />}
-            >
-              Last 30 days
-            </Button>
-          </div>
-          {pendingCount > 0 && (
-            <Button
-              gradient
-              size="sm"
-              icon={<Send className="w-4 h-4" />}
-              onClick={sendAllPending}
-              loading={sending}
-            >
-              Send All Pending ({pendingCount})
-            </Button>
-          )}
-        </div>
+            {/* Preview */}
+            {csvPreview.length > 0 && (
+              <Card>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-semibold flex items-center gap-2">
+                    <FileSpreadsheet className="w-4 h-4 text-green-400" />
+                    Preview ({csvPreview.length} rows)
+                  </h3>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => { setCsvPreview([]); setImportResult(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                    >
+                      Clear
+                    </Button>
+                    <Button
+                      size="sm"
+                      gradient
+                      icon={<Upload className="w-4 h-4" />}
+                      onClick={handleImport}
+                      loading={importing}
+                    >
+                      Import {csvPreview.length} prospects
+                    </Button>
+                  </div>
+                </div>
 
-        {/* Leads table */}
-        <Card>
-          {leads.length === 0 ? (
-            <div className="text-center py-12">
-              <Building2 className="w-12 h-12 text-white/20 mx-auto mb-3" />
-              <p className="text-white/40">No prospects yet. Add your first one above.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Venue</th>
-                    <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Email</th>
-                    <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Template</th>
-                    <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Status</th>
-                    <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Date</th>
-                    <th className="text-right text-white/60 text-xs uppercase tracking-wider py-3 px-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leads.map((lead) => (
-                    <tr key={lead.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                      <td className="py-3 px-2">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-qb-purple shrink-0" />
-                          <span className="text-white font-medium text-sm">{lead.venue_name}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-2">
-                        <span className="text-white/70 text-sm">{lead.email}</span>
-                      </td>
-                      <td className="py-3 px-2">
-                        <TemplateBadge templateId={lead.template} />
-                      </td>
-                      <td className="py-3 px-2">
-                        <StatusBadge status={lead.status} />
-                      </td>
-                      <td className="py-3 px-2 text-white/40 text-sm whitespace-nowrap">
-                        {new Date(lead.created_at).toLocaleDateString('en-GB', {
-                          day: '2-digit',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </td>
-                      <td className="py-3 px-2">
-                        <div className="flex items-center justify-end gap-2">
-                          {lead.status === 'pending' && (
-                            <Button
-                              size="sm"
-                              variant="success"
-                              icon={<Send className="w-3.5 h-3.5" />}
-                              onClick={() => sendOne(lead)}
-                              loading={sendingId === lead.id}
-                            >
-                              Send
-                            </Button>
-                          )}
-                          {lead.status === 'failed' && (
-                            <Button
-                              size="sm"
-                              variant="danger"
-                              icon={<RefreshCw className="w-3.5 h-3.5" />}
-                              onClick={() => {
-                                setLeads((prev) => prev.map((l) => l.id === lead.id ? { ...l, status: 'pending' } : l));
-                              }}
-                            >
-                              Retry
-                            </Button>
-                          )}
-                          {lead.status !== 'sent' && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              icon={<Trash2 className="w-3.5 h-3.5" />}
-                              onClick={() => removeLead(lead.id)}
-                            />
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
+                {importResult && (
+                  <div className={`mb-4 p-3 rounded-lg border text-sm flex items-center gap-2 ${
+                    importResult.errors > 0
+                      ? 'bg-red-500/10 border-red-500/30 text-red-400'
+                      : 'bg-green-500/10 border-green-500/30 text-green-400'
+                  }`}>
+                    {importResult.errors > 0 ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
+                    <span>
+                      <strong>{importResult.imported}</strong> imported, <strong>{importResult.skipped}</strong> skipped (duplicates), <strong>{importResult.errors}</strong> errors
+                    </span>
+                  </div>
+                )}
+
+                <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-2 px-2">#</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-2 px-2">Venue</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-2 px-2">Email</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-2 px-2">Template</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {csvPreview.slice(0, 100).map((row, i) => (
+                        <tr key={i} className="border-b border-white/5">
+                          <td className="py-2 px-2 text-white/30 text-xs">{i + 1}</td>
+                          <td className="py-2 px-2 text-white text-sm">{row.venueName}</td>
+                          <td className="py-2 px-2 text-white/70 text-sm">{row.email}</td>
+                          <td className="py-2 px-2">
+                            {row.template ? (
+                              <TemplateBadge templateId={row.template as TemplateId} />
+                            ) : (
+                              <span className="text-white/30 text-xs">default: <TemplateBadge templateId={importTemplate} /></span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {csvPreview.length > 100 && (
+                    <p className="text-white/30 text-xs text-center py-2">
+                      Showing first 100 of {csvPreview.length} rows
+                    </p>
+                  )}
+                </div>
+              </Card>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
