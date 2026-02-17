@@ -297,25 +297,29 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         }
       }
 
-      // Reset answer state for the new question
-      set({
-        activeEffects: {
-          protections: {},
-          blocks: {},
-          steals: {},
-          doublePoints: {},
-        },
-        preSelectedAnswer: null,
-        selectedAnswer: null,
-        hasAnswered: false,
-        answerSubmittedAt: null,
-        answeredCount: 0,
-        commentaryPopups: [],
-      });
+      // Reset answer state ONLY when question actually changes
+      // (NOT on duplicate theme_announcement for the same question from poll/broadcast/reconnect)
+      // This is THE critical guard that preserves joker effects set during theme_announcement
+      if (data.questionIndex !== prevQIdx) {
+        set({
+          activeEffects: {
+            protections: {},
+            blocks: {},
+            steals: {},
+            doublePoints: {},
+          },
+          preSelectedAnswer: null,
+          selectedAnswer: null,
+          hasAnswered: false,
+          answerSubmittedAt: null,
+          answeredCount: 0,
+          commentaryPopups: [],
+        });
 
-      // Clear persisted answer state and effects for new question
-      try { sessionStorage.removeItem('qb_answered'); } catch (_) {}
-      try { sessionStorage.removeItem('qb_effects'); } catch (_) {}
+        // Clear persisted answer state and effects for new question
+        try { sessionStorage.removeItem('qb_answered'); } catch (_) {}
+        try { sessionStorage.removeItem('qb_effects'); } catch (_) {}
+      }
     }
 
     // On reconnect: restore active joker effects from sessionStorage
@@ -848,8 +852,19 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
     globalRealtimeChannel
       .on('broadcast', { event: 'phase_change' }, (payload: { payload: PhaseData }) => {
-        console.log('📢 Phase change received:', payload.payload.phase);
-        get().setPhaseData(payload.payload);
+        const data = payload.payload;
+        const localState = get();
+        // Deduplicate: skip if same phase + same question + same phaseEndTime
+        const dbEndTime = (data.phaseEndTime as number) || 0;
+        const localEnd = localState.phaseEndTime || 0;
+        if (data.phase === localState.currentPhase
+          && (data.questionIndex as number) === localState.currentQuestionIndex
+          && dbEndTime === localEnd) {
+          console.log('📢 Broadcast: duplicate phase, skipping');
+          return;
+        }
+        console.log('📢 Phase change received:', data.phase, 'Q:', data.questionIndex);
+        get().setPhaseData(data);
       })
       .on('broadcast', { event: 'score_updated' }, () => {
         const sessionId = useQuizStore.getState().currentSession?.id;
@@ -933,8 +948,20 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       const currentPhase = settings?.currentPhase as PhaseData | undefined;
 
       if (currentPhase) {
-        console.log('✅ Resynced to phase:', currentPhase.phase, 'question:', currentPhase.questionIndex);
-        get().setPhaseData(currentPhase);
+        // Guard: only sync if DB phase is genuinely newer to avoid wiping joker effects
+        const localState = get();
+        const dbEndTime = (currentPhase.phaseEndTime as number) || 0;
+        const localEnd = localState.phaseEndTime || 0;
+        const isNewer = (currentPhase.questionIndex as number) > localState.currentQuestionIndex
+          || ((currentPhase.questionIndex as number) === localState.currentQuestionIndex && dbEndTime > localEnd)
+          || (currentPhase.phase === 'quiz_complete' && localState.currentPhase !== 'quiz_complete');
+
+        if (isNewer) {
+          console.log('✅ Resynced to NEWER phase:', currentPhase.phase, 'question:', currentPhase.questionIndex);
+          get().setPhaseData(currentPhase);
+        } else {
+          console.log('⏭️ Reconnect: DB phase not newer, skipping setPhaseData to preserve effects');
+        }
       }
     } catch (error) {
       console.error('Reconnection error:', error);

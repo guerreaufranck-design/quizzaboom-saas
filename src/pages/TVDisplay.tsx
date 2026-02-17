@@ -805,13 +805,13 @@ export const TVDisplay: React.FC = () => {
     const hasImage = !!currentQuestion?.image_url;
     const showImage = hasImage && answerImgVisible;
     const options = currentQuestion?.options || [];
-    // Much bigger text sizes for TV projection readability
+    // Maximized text sizes for TV projection — must be readable from back of room
     const answerQuestionClass = showImage
       ? getAdaptiveTextSize(questionText, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
+      : getAdaptiveTextSize(questionText, { xl: 'text-7xl', lg: 'text-6xl', md: 'text-5xl', sm: 'text-4xl' });
     const optionTextClass = showImage
-      ? getAdaptiveOptionSize(options, { xl: 'text-3xl', lg: 'text-2xl', md: 'text-xl', sm: 'text-lg' })
-      : getAdaptiveOptionSize(options, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' });
+      ? getAdaptiveOptionSize(options, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' })
+      : getAdaptiveOptionSize(options, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' });
     const isUrgent = displaySeconds <= 5;
 
     return (
@@ -856,9 +856,9 @@ export const TVDisplay: React.FC = () => {
             </div>
           </div>
 
-          {/* Main content: image left + (question top-right + answers below-right) */}
-          <div className={`flex-1 min-h-0 flex ${showImage ? 'gap-4' : 'flex-col'}`}>
-            {/* Image column — larger (40%) */}
+          {/* Main content: image left + (question top + answers below) */}
+          <div className={`flex-1 min-h-0 flex ${showImage ? 'gap-3' : 'flex-col'}`}>
+            {/* Image column — 40% */}
             {showImage && (
               <div className="w-[40%] shrink-0 flex items-center justify-center anim-pop">
                 <img
@@ -870,31 +870,35 @@ export const TVDisplay: React.FC = () => {
               </div>
             )}
 
-            {/* Right column: question on top + 4 answer cards below */}
+            {/* Column: question on top + 4 answer cards below — fill ALL space */}
             <div className={`flex flex-col gap-2 ${showImage ? 'flex-1' : 'w-full h-full'}`}>
-              {/* Question text — top area */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 shrink-0">
+              {/* Question text — fills available space */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-center shrink-0">
                 <h2 className={`font-cartoon font-bold text-white text-center leading-tight ${answerQuestionClass}`}>
                   {currentQuestion?.question_text}
                 </h2>
               </div>
 
-              {/* 4 answer cards — fill remaining space, 2x2 grid */}
+              {/* 4 answer cards — fill ALL remaining space, 2x2 grid */}
               <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
                 {options.map((option, idx) => {
                   const color = OPTION_COLORS[idx] || OPTION_COLORS[0];
                   return (
                     <div
                       key={idx}
-                      className={`rounded-2xl bg-gradient-to-br ${color.bg} border-3 ${color.border} flex items-center gap-3 px-4 shadow-lg anim-slide overflow-hidden`}
+                      className={`rounded-2xl bg-gradient-to-br ${color.bg} border-2 ${color.border} p-3 flex flex-col shadow-lg anim-slide overflow-hidden`}
                       style={{ animationDelay: `${idx * 0.1}s`, animationFillMode: 'backwards' }}
                     >
-                      <div className={`w-14 h-14 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner`}>
+                      {/* Letter badge — top left */}
+                      <div className={`w-12 h-12 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner mb-1`}>
                         <span className="font-cartoon text-3xl font-bold text-white">{color.letter}</span>
                       </div>
-                      <span className={`${optionTextClass} text-white font-bold flex-1 drop-shadow-md leading-tight`}>
-                        {option}
-                      </span>
+                      {/* Answer text — fills remaining space, centered */}
+                      <div className="flex-1 flex items-center justify-center">
+                        <span className={`${optionTextClass} text-white font-bold drop-shadow-md leading-tight text-center`}>
+                          {option}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
