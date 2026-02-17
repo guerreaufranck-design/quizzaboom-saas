@@ -417,6 +417,12 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
     set({ playerInventory: updatedInventory });
 
+    // ALWAYS persist inventory to sessionStorage first (instant, survives refresh)
+    try {
+      sessionStorage.setItem('qb_inventory', JSON.stringify(updatedInventory));
+      console.log('💾 Joker inventory saved to sessionStorage:', updatedInventory);
+    } catch (_) {}
+
     // Persist inventory to DB via server API (bypasses RLS)
     try {
       const { data: playerData } = await supabase
@@ -822,6 +828,10 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
   initializeInventory: (jokerInventory) => {
     console.log('🎯 Initializing joker inventory:', jokerInventory);
     set({ playerInventory: jokerInventory });
+    // Also save to sessionStorage for instant restore on refresh
+    try {
+      sessionStorage.setItem('qb_inventory', JSON.stringify(jokerInventory));
+    } catch (_) {}
   },
 
   listenToPhaseChanges: (sessionCode) => {

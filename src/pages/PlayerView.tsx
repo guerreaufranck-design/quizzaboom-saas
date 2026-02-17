@@ -88,11 +88,19 @@ export const PlayerView: React.FC = () => {
       const dbPhase = settings?.currentPhase as { phase: string; questionIndex: number; stageNumber: number; timeRemaining: number; phaseEndTime?: number; currentQuestion: unknown; themeTitle?: string } | undefined;
 
       if (dbPhase) {
-        const { currentPhase: localPhase, currentQuestionIndex: localQIdx } = useStrategicQuizStore.getState();
+        const { currentPhase: localPhase, currentQuestionIndex: localQIdx, phaseEndTime: localEndTime } = useStrategicQuizStore.getState();
 
-        // Phase or question has changed → sync
-        if (dbPhase.phase !== localPhase || dbPhase.questionIndex !== localQIdx) {
-          console.log('🔄 Poll detected phase change:', localPhase, '→', dbPhase.phase, 'Q:', localQIdx, '→', dbPhase.questionIndex);
+        // Only sync if DB phase is NEWER (higher phaseEndTime or higher questionIndex)
+        // This prevents the poll from reverting to an older phase (e.g. theme_announcement)
+        // which would reset active joker effects
+        const dbEndTime = dbPhase.phaseEndTime || 0;
+        const localEnd = localEndTime || 0;
+        const isNewer = dbPhase.questionIndex > localQIdx
+          || (dbPhase.questionIndex === localQIdx && dbEndTime > localEnd)
+          || (dbPhase.phase === 'quiz_complete' && localPhase !== 'quiz_complete');
+
+        if (isNewer && (dbPhase.phase !== localPhase || dbPhase.questionIndex !== localQIdx)) {
+          console.log('🔄 Poll detected NEWER phase:', localPhase, '→', dbPhase.phase, 'Q:', localQIdx, '→', dbPhase.questionIndex);
           setPhaseData(dbPhase as any);
         }
       }
@@ -215,12 +223,25 @@ export const PlayerView: React.FC = () => {
   }, [currentQuiz?.id, sessionCode]);
 
   // Load joker inventory ONLY when currentPlayer becomes available (ONCE per session)
-  // Uses inventoryLoadedRef (declared above) to prevent re-initialization after first successful DB load
+  // Priority: 1) sessionStorage (instant) 2) DB settings 3) session defaults
   useEffect(() => {
     const loadPlayerInventory = async () => {
       if (!currentPlayer?.id) return;
-      if (inventoryLoadedRef.current) return; // Already loaded from DB — skip
+      if (inventoryLoadedRef.current) return; // Already loaded — skip
 
+      // 1) Try sessionStorage first (instant, survives page refresh)
+      try {
+        const cached = sessionStorage.getItem('qb_inventory');
+        if (cached) {
+          const cachedInventory = JSON.parse(cached) as { protection: number; block: number; steal: number; double_points: number };
+          console.log('🃏 Loading joker inventory from sessionStorage:', cachedInventory);
+          initializeInventory(cachedInventory);
+          inventoryLoadedRef.current = true;
+          return;
+        }
+      } catch (_) {}
+
+      // 2) Try DB (server-persisted inventory)
       try {
         const { data } = await supabase
           .from('session_players')
@@ -233,18 +254,17 @@ export const PlayerView: React.FC = () => {
           const savedInventory = playerSettings.jokerInventory as { protection: number; block: number; steal: number; double_points: number } | undefined;
 
           if (savedInventory) {
-            // Use saved inventory (prevents reload exploit)
-            console.log('🃏 Loading saved joker inventory:', savedInventory);
+            console.log('🃏 Loading saved joker inventory from DB:', savedInventory);
             initializeInventory(savedInventory);
             inventoryLoadedRef.current = true;
             return;
           }
         }
       } catch (err) {
-        console.error('Failed to load player inventory:', err);
+        console.error('Failed to load player inventory from DB:', err);
       }
 
-      // Fallback: use session default if no saved inventory found in player settings
+      // 3) Fallback: use session default if nothing saved
       if (currentSession?.settings) {
         const settings = currentSession.settings as Record<string, unknown>;
         const defaultInventory = settings.jokerInventory as { protection: number; block: number; steal: number; double_points: number } | undefined;

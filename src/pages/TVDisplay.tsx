@@ -33,12 +33,13 @@ const getAdaptiveTextSize = (
  * Adaptive text size for answer options — based on the longest option in the set.
  * Bumped up for TV readability at distance.
  */
-const getAdaptiveOptionSize = (options: string[]): string => {
+const getAdaptiveOptionSize = (options: string[], sizes?: { xl: string; lg: string; md: string; sm: string }): string => {
+  const s = sizes || { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' };
   const maxLen = Math.max(...options.map(o => o.length));
-  if (maxLen > 100) return 'text-3xl';
-  if (maxLen > 60) return 'text-4xl';
-  if (maxLen > 30) return 'text-5xl';
-  return 'text-6xl';
+  if (maxLen > 100) return s.sm;
+  if (maxLen > 60) return s.md;
+  if (maxLen > 30) return s.lg;
+  return s.xl;
 };
 
 export const TVDisplay: React.FC = () => {
@@ -69,6 +70,8 @@ export const TVDisplay: React.FC = () => {
   const [showInstructions, setShowInstructions] = useState(true);
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [isTeamMode, setIsTeamMode] = useState(false);
+  const [questionImgVisible, setQuestionImgVisible] = useState(true);
+  const [answerImgVisible, setAnswerImgVisible] = useState(true);
   const preloadedRef = useRef(false);
 
   useEffect(() => {
@@ -152,6 +155,12 @@ export const TVDisplay: React.FC = () => {
       });
     }
   }, [allQuestions]);
+
+  // Reset image visibility when question changes
+  useEffect(() => {
+    setQuestionImgVisible(true);
+    setAnswerImgVisible(true);
+  }, [currentQuestion?.question_text]);
 
   useEffect(() => {
     // Hide instructions as soon as the host starts the quiz (any active phase received)
@@ -256,9 +265,14 @@ export const TVDisplay: React.FC = () => {
         const settings = session.settings as Record<string, unknown>;
         const dbPhase = settings.currentPhase as Record<string, unknown> | undefined;
 
-        if (dbPhase?.phase && dbPhase.phase !== currentPhase && dbPhase.phaseEndTime) {
-          console.log('🔄 TV fallback: phase mismatch detected, syncing from DB:', dbPhase.phase);
-          useStrategicQuizStore.getState().setPhaseData(dbPhase as never);
+        if (dbPhase?.phase && dbPhase.phaseEndTime) {
+          const dbEndTime = dbPhase.phaseEndTime as number;
+          const localEndTime = phaseEndTime || 0;
+          // Only sync if DB phase is newer (higher phaseEndTime)
+          if (dbEndTime > localEndTime && dbPhase.phase !== currentPhase) {
+            console.log('🔄 TV fallback: NEWER phase detected, syncing from DB:', dbPhase.phase);
+            useStrategicQuizStore.getState().setPhaseData(dbPhase as never);
+          }
         }
       } catch (err) {
         console.error('TV fallback poll error:', err);
@@ -695,34 +709,38 @@ export const TVDisplay: React.FC = () => {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // PHASE 2: Question Display — image + text side by side if image, or big text if no image
+  // PHASE 2: Question Display — image + question + countdown
+  // Layout: image left (40%) + question right when image present, or centered big text
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'question_display') {
     const questionText = currentQuestion?.question_text || t('common.loading');
     const hasImage = !!currentQuestion?.image_url;
-    const imageLoaded = hasImage && loadedImages.has(currentQuestion!.image_url!);
-    const questionTextClass = hasImage
-      ? getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-8xl', lg: 'text-7xl', md: 'text-6xl', sm: 'text-5xl' });
+    const questionTextClass = hasImage && questionImgVisible
+      ? getAdaptiveTextSize(questionText, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' })
+      : getAdaptiveTextSize(questionText, { xl: 'text-7xl', lg: 'text-6xl', md: 'text-5xl', sm: 'text-4xl' });
 
     return (
-      <div className="h-screen bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-500 flex items-center justify-center p-6 overflow-hidden">
-        <div className="max-w-7xl w-full h-full flex flex-col items-center justify-center">
-          {hasImage ? (
-            /* With image: side by side layout */
-            <div className="flex items-center gap-8 w-full flex-1 min-h-0">
-              <div className="w-[45%] shrink-0 flex items-center justify-center">
-                {!imageLoaded ? (
-                  <div className="w-64 h-48 bg-white/10 rounded-2xl animate-pulse" />
-                ) : (
-                  <img
-                    src={currentQuestion!.image_url}
-                    alt=""
-                    className="max-h-[65vh] max-w-full object-contain rounded-2xl shadow-2xl"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                )}
+      <div className="h-screen bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-500 p-5 overflow-hidden">
+        <div className="max-w-7xl mx-auto h-full flex flex-col">
+          {/* Countdown bar at top */}
+          <div className="flex items-center justify-center gap-4 shrink-0 mb-4">
+            <Clock className="w-10 h-10 text-white animate-pulse" />
+            <span className="text-6xl font-mono font-bold text-white">{displaySeconds}</span>
+          </div>
+
+          {/* Main content */}
+          {hasImage && questionImgVisible ? (
+            <div className="flex gap-6 flex-1 min-h-0 items-center">
+              {/* Image left 40% */}
+              <div className="w-[40%] shrink-0 flex items-center justify-center h-full">
+                <img
+                  src={currentQuestion!.image_url}
+                  alt=""
+                  className="max-h-[70vh] max-w-full object-contain rounded-2xl shadow-2xl"
+                  onError={() => setQuestionImgVisible(false)}
+                />
               </div>
+              {/* Question right 60% */}
               <div className="flex-1 flex items-center">
                 <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-8 w-full">
                   <h2 className={`font-bold text-white leading-tight ${questionTextClass}`}>
@@ -733,89 +751,80 @@ export const TVDisplay: React.FC = () => {
             </div>
           ) : (
             /* No image: centered big text */
-            <>
-              <div className="text-8xl mb-4">📖</div>
-              <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-10 mb-6 w-full max-w-6xl">
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="text-7xl mb-4">📖</div>
+              <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-10 w-full max-w-6xl">
                 <h2 className={`font-bold text-white leading-tight text-center ${questionTextClass}`}>
                   {questionText}
                 </h2>
               </div>
-            </>
+            </div>
           )}
-          <div className="flex items-center justify-center gap-4 text-white mt-4">
-            <Clock className="w-12 h-12 animate-pulse" />
-            <span className="text-7xl font-mono font-bold">{displaySeconds}</span>
-          </div>
         </div>
       </div>
     );
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // PHASE 3: Answer Selection — image left + question/answers right (or full width if no image)
+  // PHASE 3: Answer Selection — image + question + answers + countdown
+  // Layout: compact top bar (timer+progress), image left + Q&A right, or full width if no image
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'answer_selection') {
     const questionText = currentQuestion?.question_text || '';
     const hasImage = !!currentQuestion?.image_url;
-    const imageLoaded = hasImage && loadedImages.has(currentQuestion!.image_url!);
-    const answerQuestionClass = hasImage
-      ? getAdaptiveTextSize(questionText, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
+    const showImage = hasImage && answerImgVisible;
+    const answerQuestionClass = showImage
+      ? getAdaptiveTextSize(questionText, { xl: 'text-3xl', lg: 'text-2xl', md: 'text-xl', sm: 'text-lg' })
+      : getAdaptiveTextSize(questionText, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' });
     const options = currentQuestion?.options || [];
-    const optionTextClass = hasImage ? getAdaptiveOptionSize(options) : getAdaptiveOptionSize(options);
+    const optionTextClass = showImage
+      ? getAdaptiveOptionSize(options, { xl: 'text-2xl', lg: 'text-xl', md: 'text-lg', sm: 'text-base' })
+      : getAdaptiveOptionSize(options);
     const maxOptionLen = Math.max(...options.map(o => o.length), 0);
     const gridCols = maxOptionLen > 60 ? 'grid-cols-1' : 'grid-cols-2';
 
     return (
-      <div className="h-screen bg-qb-dark p-4 overflow-hidden">
+      <div className="h-screen bg-qb-dark p-3 overflow-hidden">
         <div className="max-w-7xl mx-auto h-full flex flex-col">
-          {/* Timer + counter */}
-          <div className="text-center shrink-0">
-            <div className="inline-flex items-center gap-4 px-8 py-2 bg-qb-cyan/20 rounded-3xl">
-              <Clock className="w-10 h-10 text-qb-cyan animate-pulse" />
-              <span className="text-6xl font-mono font-bold text-white">
-                {displaySeconds}
+          {/* Timer + counter — compact bar */}
+          <div className="flex items-center justify-center gap-4 shrink-0 mb-2">
+            <div className="inline-flex items-center gap-3 px-6 py-1.5 bg-qb-cyan/20 rounded-2xl">
+              <Clock className="w-8 h-8 text-qb-cyan animate-pulse" />
+              <span className="text-5xl font-mono font-bold text-white">{displaySeconds}</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-1.5 bg-qb-purple/30 rounded-full">
+              <Users className="w-5 h-5 text-qb-yellow" />
+              <span className="text-white font-bold text-lg">
+                {t('tv.answeredCount', { count: answeredCount, total: topPlayers.length })}
               </span>
             </div>
-            <div className="mt-1 flex items-center justify-center gap-3">
-              <div className="flex items-center gap-2 px-4 py-1 bg-qb-purple/30 rounded-full">
-                <Users className="w-5 h-5 text-qb-yellow" />
-                <span className="text-white font-bold text-lg">
-                  {t('tv.answeredCount', { count: answeredCount, total: topPlayers.length })}
-                </span>
+            {topPlayers.length > 0 && (
+              <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min((answeredCount / topPlayers.length) * 100, 100)}%` }}
+                />
               </div>
-              {topPlayers.length > 0 && (
-                <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min((answeredCount / topPlayers.length) * 100, 100)}%` }}
-                  />
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Main content area */}
-          <div className={`flex-1 min-h-0 my-2 ${hasImage ? 'flex gap-4' : ''}`}>
+          <div className={`flex-1 min-h-0 ${showImage ? 'flex gap-4' : ''}`}>
             {/* Image column (left side) */}
-            {hasImage && (
-              <div className="w-[35%] shrink-0 flex items-center justify-center">
-                {!imageLoaded ? (
-                  <div className="w-48 h-48 bg-white/10 rounded-xl animate-pulse" />
-                ) : (
-                  <img
-                    src={currentQuestion!.image_url}
-                    alt=""
-                    className="max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                )}
+            {showImage && (
+              <div className="w-[30%] shrink-0 flex items-center justify-center">
+                <img
+                  src={currentQuestion!.image_url}
+                  alt=""
+                  className="max-h-[70vh] max-w-full object-contain rounded-2xl shadow-2xl"
+                  onError={() => setAnswerImgVisible(false)}
+                />
               </div>
             )}
 
             {/* Question + Answers column */}
-            <Card className={`p-4 bg-gradient-to-br from-qb-purple/30 to-qb-cyan/30 border-white/20 flex flex-col justify-between ${hasImage ? 'flex-1' : 'w-full h-full'}`}>
-              <h2 className={`font-bold text-white text-center mb-3 ${answerQuestionClass}`}>
+            <Card className={`p-4 bg-gradient-to-br from-qb-purple/30 to-qb-cyan/30 border-white/20 flex flex-col justify-between ${showImage ? 'flex-1' : 'w-full h-full'}`}>
+              <h2 className={`font-bold text-white text-center mb-2 ${answerQuestionClass}`}>
                 {currentQuestion?.question_text}
               </h2>
 
@@ -823,10 +832,10 @@ export const TVDisplay: React.FC = () => {
                 {options.map((option, idx) => (
                   <div
                     key={idx}
-                    className="p-4 rounded-2xl bg-qb-darker border-2 border-white/20 flex items-center gap-4"
+                    className="p-3 rounded-2xl bg-qb-darker border-2 border-white/20 flex items-center gap-3"
                   >
-                    <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                      <span className="text-3xl font-bold text-white">
+                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                      <span className="text-2xl font-bold text-white">
                         {['A', 'B', 'C', 'D'][idx]}
                       </span>
                     </div>
