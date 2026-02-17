@@ -253,127 +253,97 @@ export const TVDisplay: React.FC = () => {
   }, [displaySeconds, sessionId, currentPhase, phaseEndTime]);
 
   // ═══════════════════════════════════════════════════════════════
-  // PHASE 0: Instructions Screen — compact, fits 1080p
+  // PHASE 0: QR Code + Email Warning — looping display
   // Only show if no active phase has been received yet
   // ═══════════════════════════════════════════════════════════════
-  // phaseEndTime is null at init and only set when a broadcast arrives from the host
   const hostHasStarted = phaseEndTime !== null && phaseEndTime > 0;
   if ((showInstructions || !isReady || allQuestions.length === 0) && !hostHasStarted) {
     const joinUrl = `${window.location.origin}/join?code=${sessionCode}`;
 
     return (
-      <div className="h-screen bg-gradient-to-br from-qb-purple via-qb-dark to-qb-cyan p-3 overflow-hidden">
-        <div className="max-w-7xl mx-auto h-full flex flex-col">
-          {/* Header */}
-          <div className="text-center mb-1">
-            <h1 className="text-3xl font-bold text-white">{t('tv.howToPlay')}</h1>
-            <p className="text-lg text-yellow-300 font-bold">{t('tv.followSteps')}</p>
-          </div>
+      <div className="h-screen bg-gradient-to-br from-qb-purple via-qb-dark to-qb-cyan p-6 overflow-hidden">
+        {/* Animated CSS for TV */}
+        <style>{`
+          @keyframes tv-pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.4); }
+            50% { transform: scale(1.02); box-shadow: 0 0 60px 15px rgba(250, 204, 21, 0.3); }
+          }
+          @keyframes tv-bounce {
+            0%, 100% { transform: translateY(0); }
+            25% { transform: translateY(-15px); }
+            75% { transform: translateY(8px); }
+          }
+          @keyframes tv-glow {
+            0%, 100% { text-shadow: 0 0 30px rgba(250, 204, 21, 0.5); }
+            50% { text-shadow: 0 0 60px rgba(250, 204, 21, 0.9), 0 0 90px rgba(250, 204, 21, 0.5); }
+          }
+        `}</style>
 
-          {/* Main layout: QR code left + Instructions right */}
-          <div className="flex gap-4 flex-1 min-h-0">
-            {/* LEFT: QR Code + Session Code */}
-            <div className="flex flex-col items-center justify-center w-[320px] shrink-0">
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-yellow-300/50 flex flex-col items-center">
-                <p className="text-lg font-bold text-yellow-300 mb-2">{t('tv.scanToJoin')}</p>
-                <QRCodeDisplay value={joinUrl} size={200} className="rounded-xl" />
-                <div className="mt-3 text-center">
-                  <p className="text-sm text-white/70">quizzaboom.app/join</p>
-                  <p className="text-3xl font-mono font-black text-yellow-300 tracking-widest mt-1">{sessionCode}</p>
+        <div className="max-w-7xl mx-auto h-full flex flex-col justify-center">
+          {/* Main layout: QR left + Email warning right */}
+          <div className="flex gap-8 items-center flex-1 min-h-0">
+            {/* LEFT: QR Code — big and prominent */}
+            <div className="flex flex-col items-center justify-center w-[400px] shrink-0">
+              <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 border-4 border-yellow-300/60 flex flex-col items-center">
+                <p className="text-3xl font-black text-yellow-300 mb-4">{t('tv.scanToJoin')}</p>
+                <QRCodeDisplay value={joinUrl} size={280} className="rounded-2xl" />
+                <div className="mt-4 text-center">
+                  <p className="text-xl text-white/70">quizzaboom.app/join</p>
+                  <p className="text-5xl font-mono font-black text-yellow-300 tracking-widest mt-2">{sessionCode}</p>
                 </div>
               </div>
             </div>
 
-            {/* RIGHT: Instructions */}
-            <div className="space-y-1.5 flex-1 min-h-0">
-              {/* Step 1: Join */}
-              <div className="bg-white/10 backdrop-blur-xl rounded-xl p-2.5 border border-white/30">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">📱</div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-bold text-white">{t('tv.step1Title')}</h2>
-                    <p className="text-base text-white/90">
-                      {t('tv.step1DescQR')} <span className="text-yellow-300 font-bold">{t('tv.step1DescCode')}</span>
-                    </p>
+            {/* RIGHT: Email Warning — the main message */}
+            <div className="flex-1 flex flex-col justify-center gap-6">
+              {/* Email warning card */}
+              <div
+                className="rounded-3xl bg-gradient-to-br from-yellow-400 via-orange-400 to-yellow-500 p-8 border-4 border-yellow-300"
+                style={{ animation: 'tv-pulse 2.5s ease-in-out infinite' }}
+              >
+                <div className="text-center">
+                  <div className="inline-block text-8xl mb-4" style={{ animation: 'tv-bounce 1.5s ease-in-out infinite' }}>
+                    📧
                   </div>
-                </div>
-              </div>
-
-              {/* Step 2: Email */}
-              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-2.5 border border-yellow-300 shadow-lg shadow-yellow-500/50 animate-pulse">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl animate-bounce">📧</div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-bold text-gray-900">{t('tv.step2Title')}</h2>
-                    <p className="text-base text-gray-900 font-bold">
-                      {t('tv.step2Desc')}
-                      <span className="ml-2">{t('tv.step2Ranking')}</span>
-                      <span className="ml-2">{t('tv.step2Statistics')}</span>
-                      <span className="ml-2">{t('tv.step2Certificate')}</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Step 3: Jokers */}
-              <div className="bg-white/10 backdrop-blur-xl rounded-xl p-2.5 border border-purple-400">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">🎯</div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-bold text-white">{t('tv.step3Title')}</h2>
-                    <div className="flex items-center gap-3">
-                      <p className="text-sm text-white/90">
-                        {t('tv.step3During')}
-                      </p>
-                      <div className="flex gap-1.5">
-                        <div className="bg-blue-500/30 rounded px-1.5 py-0.5 text-center">
-                          <span className="text-base">🛡️</span>
-                          <span className="text-xs text-white ml-1">{t('tv.jokerProtection')}</span>
-                        </div>
-                        <div className="bg-red-500/30 rounded px-1.5 py-0.5 text-center">
-                          <span className="text-base">🚫</span>
-                          <span className="text-xs text-white ml-1">{t('tv.jokerBlock')}</span>
-                        </div>
-                        <div className="bg-yellow-500/30 rounded px-1.5 py-0.5 text-center">
-                          <span className="text-base">💰</span>
-                          <span className="text-xs text-white ml-1">{t('tv.jokerSteal')}</span>
-                        </div>
-                        <div className="bg-green-500/30 rounded px-1.5 py-0.5 text-center">
-                          <span className="text-base">⭐</span>
-                          <span className="text-xs text-white ml-1">{t('tv.jokerDouble')}</span>
-                        </div>
-                      </div>
+                  <h2
+                    className="text-6xl font-black text-gray-900 mb-4"
+                    style={{ animation: 'tv-glow 2s ease-in-out infinite' }}
+                  >
+                    {t('tv.emailWarningTitle')}
+                  </h2>
+                  <p className="text-3xl font-bold text-gray-800 mb-6">
+                    {t('tv.emailWarningDesc')}
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-4 mb-4">
+                    <div className="bg-white/30 backdrop-blur-sm rounded-2xl px-6 py-3 flex items-center gap-3">
+                      <span className="text-4xl">🏆</span>
+                      <span className="font-bold text-gray-900 text-2xl">{t('tv.emailBenefitRanking')}</span>
+                    </div>
+                    <div className="bg-white/30 backdrop-blur-sm rounded-2xl px-6 py-3 flex items-center gap-3">
+                      <span className="text-4xl">📊</span>
+                      <span className="font-bold text-gray-900 text-2xl">{t('tv.emailBenefitStats')}</span>
+                    </div>
+                    <div className="bg-white/30 backdrop-blur-sm rounded-2xl px-6 py-3 flex items-center gap-3">
+                      <span className="text-4xl">🎯</span>
+                      <span className="font-bold text-gray-900 text-2xl">{t('tv.emailBenefitDetails')}</span>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Step 4: Phases */}
-              <div className="bg-white/10 backdrop-blur-xl rounded-xl p-2.5 border border-cyan-400">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">⏱️</div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-bold text-white">{t('tv.step4Title')}</h2>
-                    <div className="grid grid-cols-2 gap-1 text-sm text-white/90">
-                      <div className="bg-purple-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseTheme')}</div>
-                      <div className="bg-blue-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseQuestion')}</div>
-                      <div className="bg-cyan-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseAnswer')}</div>
-                      <div className="bg-green-500/20 px-2 py-0.5 rounded">{t('tv.step4PhaseResults')}</div>
-                    </div>
-                  </div>
+                  <p className="text-xl text-gray-700 italic">
+                    {t('tv.emailSafetyNote')}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Bottom */}
-          <div className="text-center mt-1.5">
-            <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-2.5">
-              <p className="text-xl font-bold text-white">
+          {/* Bottom: waiting bar */}
+          <div className="text-center mt-4">
+            <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-3">
+              <p className="text-2xl font-bold text-white">
                 {t('tv.waitingForHost')}
               </p>
-              <p className="text-base text-white/90 font-mono">
-                {t('tv.sessionLabel')} <span className="font-bold">{sessionCode}</span>
+              <p className="text-lg text-white/90 font-mono">
+                {t('tv.sessionLabel')} <span className="font-bold text-2xl">{sessionCode}</span>
               </p>
             </div>
           </div>

@@ -4,7 +4,7 @@ import { useQuizStore } from '../stores/useQuizStore';
 import { useAppNavigate } from '../hooks/useAppNavigate';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { ArrowLeft, QrCode, UserCircle, Users } from 'lucide-react';
+import { ArrowLeft, QrCode, UserCircle, Users, Mail, Trophy, BarChart3, Target } from 'lucide-react';
 import { supabase } from '../services/supabase/client';
 
 export const JoinQuiz: React.FC = () => {
@@ -20,6 +20,7 @@ export const JoinQuiz: React.FC = () => {
   const [showTeamSelection, setShowTeamSelection] = useState(false);
   const [teamNames, setTeamNames] = useState<string[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   const TEAM_COLORS = [
     'bg-blue-500', 'bg-red-500', 'bg-green-500', 'bg-yellow-500',
@@ -76,32 +77,124 @@ export const JoinQuiz: React.FC = () => {
     }
   };
 
+  // Pre-registration landing: show email warning first, then form
+  if (!showForm) {
+    return (
+      <div className="min-h-screen bg-qb-dark">
+        {/* Animated CSS */}
+        <style>{`
+          @keyframes join-pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.4); }
+            50% { transform: scale(1.02); box-shadow: 0 0 40px 10px rgba(250, 204, 21, 0.2); }
+          }
+          @keyframes join-bounce {
+            0%, 100% { transform: translateY(0); }
+            25% { transform: translateY(-10px); }
+            75% { transform: translateY(5px); }
+          }
+          @keyframes join-glow {
+            0%, 100% { text-shadow: 0 0 20px rgba(250, 204, 21, 0.5); }
+            50% { text-shadow: 0 0 40px rgba(250, 204, 21, 0.8), 0 0 60px rgba(250, 204, 21, 0.4); }
+          }
+        `}</style>
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-lg mx-auto space-y-6">
+            {/* Logo / Title */}
+            <div className="text-center">
+              <h1 className="text-5xl font-black gradient-primary bg-clip-text text-transparent">
+                QuizzaBoom
+              </h1>
+              <p className="text-white/60 mt-1 text-lg">{t('join.subtitle')}</p>
+            </div>
+
+            {/* BIG Email Warning — the star of this screen */}
+            <div
+              className="rounded-2xl bg-gradient-to-br from-yellow-400 via-orange-400 to-yellow-500 p-6 border-4 border-yellow-300"
+              style={{ animation: 'join-pulse 2s ease-in-out infinite' }}
+            >
+              <div className="text-center">
+                <div className="inline-block text-6xl mb-3" style={{ animation: 'join-bounce 1.5s ease-in-out infinite' }}>
+                  📧
+                </div>
+                <h2
+                  className="text-3xl font-black text-gray-900 mb-2"
+                  style={{ animation: 'join-glow 2s ease-in-out infinite' }}
+                >
+                  {t('join.preRegWarningTitle')}
+                </h2>
+                <p className="text-lg font-bold text-gray-800 mb-4">
+                  {t('join.preRegWarningDesc')}
+                </p>
+                <div className="flex flex-wrap justify-center gap-3 mb-3">
+                  <div className="bg-white/30 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-gray-900" />
+                    <span className="font-bold text-gray-900">{t('join.preRegBenefitRanking')}</span>
+                  </div>
+                  <div className="bg-white/30 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-gray-900" />
+                    <span className="font-bold text-gray-900">{t('join.preRegBenefitStats')}</span>
+                  </div>
+                  <div className="bg-white/30 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2">
+                    <Target className="w-5 h-5 text-gray-900" />
+                    <span className="font-bold text-gray-900">{t('join.preRegBenefitDetails')}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-700 italic">
+                  {t('join.preRegSafetyNote')}
+                </p>
+              </div>
+            </div>
+
+            {/* CTA Button */}
+            <Button
+              size="xl"
+              gradient
+              fullWidth
+              onClick={() => setShowForm(true)}
+              className="text-2xl py-6"
+            >
+              {`🎮 ${t('join.preRegCTA')}`}
+            </Button>
+
+            {/* Back */}
+            <div className="text-center">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('home')}
+                icon={<ArrowLeft />}
+              >
+                {t('common.back')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-qb-dark py-12">
+    <div className="min-h-screen bg-qb-dark py-8">
       <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto space-y-8">
+        <div className="max-w-2xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
-              onClick={() => navigate('home')}
+              onClick={() => setShowForm(false)}
               icon={<ArrowLeft />}
             >
               {t('common.back')}
             </Button>
             <div>
-              <h1 className="text-4xl font-bold gradient-primary bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold gradient-primary bg-clip-text text-transparent">
                 {t('join.title')}
               </h1>
-              <p className="text-white/70 mt-2">
-                {t('join.subtitle')}
-              </p>
             </div>
           </div>
 
           {/* Form */}
-          <Card gradient className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <Card gradient className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               {/* Session Code */}
               <div>
                 <label className="block text-white font-medium mb-2 flex items-center gap-2">
@@ -117,9 +210,6 @@ export const JoinQuiz: React.FC = () => {
                   maxLength={6}
                   className="w-full px-4 py-3 rounded-lg bg-qb-darker text-white text-center text-2xl font-mono tracking-widest border border-white/20 focus:border-qb-cyan focus:outline-none focus:ring-2 focus:ring-qb-cyan/30 uppercase"
                 />
-                <p className="text-sm text-white/50 mt-2 text-center">
-                  {t('join.codeHint')}
-                </p>
               </div>
 
               {/* Player Name */}
@@ -138,21 +228,18 @@ export const JoinQuiz: React.FC = () => {
                 />
               </div>
 
-              {/* Email (Optional but needed for results) */}
+              {/* Email — highlighted with warning */}
               <div>
-                <label className="block text-white font-medium mb-2">
+                <label className="block text-white font-medium mb-2 flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-yellow-400" />
                   {t('join.email')}
+                  <span className="text-xs bg-yellow-500/30 text-yellow-300 px-2 py-0.5 rounded-full font-bold">{t('join.emailRecommended')}</span>
                 </label>
-                <div className="mb-2 p-2 bg-yellow-500/15 border border-yellow-500/40 rounded-lg flex items-center gap-2">
-                  <span className="text-yellow-400 text-lg">⚠️</span>
-                  <p className="text-sm text-yellow-300 font-medium">{t('join.emailResultsWarning')}</p>
-                </div>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    // Auto-consent when entering email
                     if (e.target.value && !emailConsent) {
                       setEmailConsent(true);
                     }
@@ -161,11 +248,11 @@ export const JoinQuiz: React.FC = () => {
                     }
                   }}
                   placeholder={t('join.emailPlaceholder')}
-                  className="w-full px-4 py-3 rounded-lg bg-qb-darker text-white border border-white/20 focus:border-qb-purple focus:outline-none focus:ring-2 focus:ring-qb-purple/30"
+                  className="w-full px-4 py-3 rounded-lg bg-qb-darker text-white border-2 border-yellow-500/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
                 />
                 {email && (
-                  <div className="mt-3 p-3 bg-qb-purple/10 border border-qb-purple/30 rounded-lg">
-                    <label className="flex items-start gap-3 cursor-pointer">
+                  <div className="mt-2 p-2 bg-qb-purple/10 border border-qb-purple/30 rounded-lg">
+                    <label className="flex items-start gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={emailConsent}
@@ -176,33 +263,33 @@ export const JoinQuiz: React.FC = () => {
                         <span className="text-sm text-white/80 font-medium">
                           {t('join.emailConsentTitle')}
                         </span>
-                        <p className="text-xs text-white/50 mt-1">
+                        <p className="text-xs text-white/50 mt-0.5">
                           {t('join.emailConsent')}{' '}
                           <a href="/privacy" className="text-qb-cyan underline">{t('join.privacyPolicy')}</a>
                         </p>
                       </div>
                     </label>
-                    {!emailConsent && (
-                      <p className="text-xs text-qb-yellow mt-2 flex items-center gap-1">
-                        ⚠️ {t('join.emailConsentWarning')}
-                      </p>
-                    )}
                   </div>
+                )}
+                {!email && (
+                  <p className="text-xs text-yellow-400 mt-1 flex items-center gap-1">
+                    {t('join.emailResultsWarning')}
+                  </p>
                 )}
               </div>
 
-              {/* Avatar Selection */}
+              {/* Avatar Selection — compact */}
               <div>
-                <label className="block text-white font-medium mb-3">
+                <label className="block text-white font-medium mb-2">
                   {t('join.chooseAvatar')}
                 </label>
-                <div className="grid grid-cols-8 gap-2">
+                <div className="grid grid-cols-8 gap-1.5">
                   {emojis.map((emoji) => (
                     <button
                       key={emoji}
                       type="button"
                       onClick={() => setSelectedEmoji(emoji)}
-                      className={`text-4xl p-3 rounded-lg transition-all ${
+                      className={`text-3xl p-2 rounded-lg transition-all ${
                         selectedEmoji === emoji
                           ? 'bg-qb-cyan scale-110'
                           : 'bg-qb-darker hover:bg-white/10'
@@ -216,8 +303,8 @@ export const JoinQuiz: React.FC = () => {
 
               {/* Error Display */}
               {error && (
-                <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
-                  <p className="text-red-200">{error}</p>
+                <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
+                  <p className="text-red-200 text-sm">{error}</p>
                 </div>
               )}
 
@@ -233,13 +320,6 @@ export const JoinQuiz: React.FC = () => {
                 {isLoading ? t('join.joining') : `🎮 ${t('join.joinBattle')}`}
               </Button>
             </form>
-          </Card>
-
-          {/* Info */}
-          <Card className="p-6 text-center">
-            <p className="text-white/70">
-              <span className="font-bold text-qb-cyan">{t('common.tip')}:</span> {t('join.connectionTip')}
-            </p>
           </Card>
         </div>
       </div>

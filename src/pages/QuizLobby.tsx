@@ -180,35 +180,10 @@ export const QuizLobby: React.FC = () => {
     );
   }
 
-  // PLAYER VIEW - Simplified lobby: email warning + players grid
+  // PLAYER VIEW - Clean lobby: waiting + players grid (email warning is shown BEFORE registration)
   if (!isHost) {
     return (
       <div className="min-h-screen bg-qb-dark py-6">
-        {/* Animated email warning CSS */}
-        <style>{`
-          @keyframes email-pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.4); }
-            50% { transform: scale(1.02); box-shadow: 0 0 40px 10px rgba(250, 204, 21, 0.2); }
-          }
-          @keyframes email-bounce {
-            0%, 100% { transform: translateY(0); }
-            25% { transform: translateY(-8px); }
-            75% { transform: translateY(4px); }
-          }
-          @keyframes email-glow {
-            0%, 100% { text-shadow: 0 0 20px rgba(250, 204, 21, 0.5); }
-            50% { text-shadow: 0 0 40px rgba(250, 204, 21, 0.8), 0 0 60px rgba(250, 204, 21, 0.4); }
-          }
-          .email-warning-card {
-            animation: email-pulse 2s ease-in-out infinite;
-          }
-          .email-icon-bounce {
-            animation: email-bounce 1.5s ease-in-out infinite;
-          }
-          .email-glow-text {
-            animation: email-glow 2s ease-in-out infinite;
-          }
-        `}</style>
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Quiz title + session code */}
@@ -219,53 +194,21 @@ export const QuizLobby: React.FC = () => {
               </div>
             </div>
 
-            {/* BIG animated email warning — the main feature of this screen */}
-            <div className="email-warning-card rounded-2xl bg-gradient-to-br from-yellow-400 via-orange-400 to-yellow-500 p-6 border-4 border-yellow-300">
-              <div className="text-center">
-                <div className="email-icon-bounce inline-block text-6xl mb-3">📧</div>
-                <h2 className="text-3xl font-black text-gray-900 mb-2 email-glow-text">
-                  {t('lobby.emailWarningTitle')}
+            {/* Waiting for host */}
+            <Card className="p-6 text-center bg-gradient-to-br from-qb-purple/20 to-qb-cyan/20">
+              <div className="flex flex-col items-center gap-3">
+                <div className="text-5xl">⏳</div>
+                <h2 className="text-2xl font-bold text-white">
+                  {t('lobby.waitingForHost')}
                 </h2>
-                <p className="text-xl font-bold text-gray-800 mb-3">
-                  {t('lobby.emailWarningDesc')}
-                </p>
-                <div className="flex flex-wrap justify-center gap-3">
-                  <div className="bg-white/30 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2">
-                    <span className="text-2xl">🏆</span>
-                    <span className="font-bold text-gray-900">{t('lobby.emailBenefitRanking')}</span>
-                  </div>
-                  <div className="bg-white/30 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2">
-                    <span className="text-2xl">📊</span>
-                    <span className="font-bold text-gray-900">{t('lobby.emailBenefitStats')}</span>
-                  </div>
-                  <div className="bg-white/30 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2">
-                    <span className="text-2xl">🎯</span>
-                    <span className="font-bold text-gray-900">{t('lobby.emailBenefitDetails')}</span>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-700 mt-3 italic">
-                  {t('lobby.emailSafetyNote')}
-                </p>
-              </div>
-            </div>
-
-            {/* Waiting for host — compact */}
-            <Card className="p-4 text-center bg-gradient-to-br from-qb-purple/20 to-qb-cyan/20">
-              <div className="flex items-center justify-center gap-3">
-                <div className="text-3xl">⏳</div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">
-                    {t('lobby.waitingForHost')}
-                  </h2>
-                  <div className="flex items-center justify-center gap-2 text-white/50 text-sm">
-                    <Clock className="w-4 h-4 animate-pulse" />
-                    <span>{t('lobby.stayConnected')}</span>
-                  </div>
+                <div className="flex items-center justify-center gap-2 text-white/50">
+                  <Clock className="w-5 h-5 animate-pulse" />
+                  <span>{t('lobby.stayConnected')}</span>
                 </div>
               </div>
             </Card>
 
-            {/* Players Grid — compact */}
+            {/* Players Grid */}
             <Card gradient className="p-4">
               <h3 className="text-lg font-bold text-white mb-3 text-center">
                 {t('lobby.playersInLobby', { count: players.length })}
