@@ -417,7 +417,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
     set({ playerInventory: updatedInventory });
 
-    // Persist inventory to DB to prevent reload exploit
+    // Persist inventory to DB via server API (bypasses RLS)
     try {
       const { data: playerData } = await supabase
         .from('session_players')
@@ -426,16 +426,24 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         .single();
 
       const currentSettings = (playerData?.settings as Record<string, unknown>) || {};
-      await supabase
-        .from('session_players')
-        .update({
-          settings: {
-            ...currentSettings,
-            jokerInventory: updatedInventory,
+      const newSettings = { ...currentSettings, jokerInventory: updatedInventory };
+
+      const res = await fetch('/api/update-player', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playerId,
+          updates: {
+            settings: newSettings,
+            updated_at: new Date().toISOString(),
           },
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', playerId);
+        }),
+      });
+      if (!res.ok) {
+        console.error('❌ Failed to persist joker inventory via API:', await res.text());
+      } else {
+        console.log('✅ Joker inventory persisted to DB:', updatedInventory);
+      }
     } catch (err) {
       console.error('Failed to persist joker inventory:', err);
     }
@@ -584,12 +592,30 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
     const isCorrect = answer === currentQuestion?.correct_answer;
     const timestamp = Date.now();
 
+    // Check double points from both live state AND sessionStorage fallback
     const basePoints = 5;
-    const hasDoublePoints = activeEffects.doublePoints[playerId];
+    let hasDoublePoints = !!activeEffects.doublePoints[playerId];
+
+    // Fallback: check sessionStorage in case broadcast was missed
+    if (!hasDoublePoints) {
+      try {
+        const savedEffects = sessionStorage.getItem('qb_effects');
+        if (savedEffects) {
+          const parsed = JSON.parse(savedEffects);
+          if (parsed.questionIndex === get().currentQuestionIndex && parsed.effects?.doublePoints?.[playerId]) {
+            hasDoublePoints = true;
+            console.log('🃏 Double points restored from sessionStorage fallback');
+          }
+        }
+      } catch (_) {}
+    }
+
     let pointsToAdd = 0;
     if (isCorrect) {
       pointsToAdd = hasDoublePoints ? basePoints * 2 : basePoints;
     }
+
+    console.log('🎯 Scoring:', { isCorrect, hasDoublePoints, basePoints, pointsToAdd, effectsState: JSON.stringify(activeEffects.doublePoints) });
 
     // ── STEAL: if this player is stolen, their points go to the thief ──
     const thiefId = activeEffects.steals[playerId];

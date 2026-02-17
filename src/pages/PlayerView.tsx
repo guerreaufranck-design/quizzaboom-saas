@@ -252,7 +252,7 @@ export const PlayerView: React.FC = () => {
           console.log('🃏 Using default joker inventory:', defaultInventory);
           initializeInventory(defaultInventory);
           inventoryLoadedRef.current = true;
-          // Persist to player settings immediately so next reload picks it up
+          // Persist to player settings via server API (bypasses RLS)
           try {
             const { data: playerData } = await supabase
               .from('session_players')
@@ -260,13 +260,17 @@ export const PlayerView: React.FC = () => {
               .eq('id', currentPlayer.id)
               .single();
             const currentSettings = (playerData?.settings as Record<string, unknown>) || {};
-            await supabase
-              .from('session_players')
-              .update({
-                settings: { ...currentSettings, jokerInventory: defaultInventory },
-                updated_at: new Date().toISOString(),
-              })
-              .eq('id', currentPlayer.id);
+            await fetch('/api/update-player', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                playerId: currentPlayer.id,
+                updates: {
+                  settings: { ...currentSettings, jokerInventory: defaultInventory },
+                  updated_at: new Date().toISOString(),
+                },
+              }),
+            });
           } catch (_) {}
         }
       }

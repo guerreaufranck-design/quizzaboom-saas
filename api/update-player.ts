@@ -40,6 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     'protection_uses_remaining', 'block_uses_remaining',
     'steal_uses_remaining', 'double_points_uses_remaining',
     'strategic_actions_taken', 'successful_strategic_actions',
+    'settings', 'updated_at',
   ];
 
   const sanitized: Record<string, unknown> = {};

@@ -365,6 +365,7 @@ PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
 REQUIREMENTS:
 - Difficulty: ${difficulty}
 - Language: ${fullLanguage} — write NATIVELY, not translated
+- QUESTION LENGTH: Each question_text MUST be concise — maximum 3 short sentences or approximately 120 characters. This is critical for TV display readability. Prefer single-sentence questions when possible.
 - Return ONLY valid JSON, no markdown, no commentary
 
 {
