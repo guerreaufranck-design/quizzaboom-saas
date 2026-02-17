@@ -232,6 +232,16 @@ QUESTION STYLE:
 `;
   }
 
+  // Pre-compute localized strings to avoid quote escaping issues in template literal
+  const visualIdQuestion = fullLanguage === 'French' ? "Qu'est-ce que c'est ?"
+    : fullLanguage === 'German' ? 'Was ist das?'
+    : fullLanguage === 'Spanish' ? '¿Qué es esto?'
+    : 'What is this?';
+  const visualIdMicroTheme = fullLanguage === 'French' ? 'Identification Visuelle'
+    : fullLanguage === 'German' ? 'Visuelle Identifikation'
+    : fullLanguage === 'Spanish' ? 'Identificación Visual'
+    : 'Visual Identification';
+
   return `${batchContext}You are a PROFESSIONAL QUIZ WRITER for a Trivia night event.
 
 Your job: write ${batchQuestionCount} questions in ${fullLanguage} about: ${theme}
@@ -288,9 +298,9 @@ PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
    - Comparison: "Which is heavier/longer/older: X or Y?"
    - Process: "What happens when / How is X made...?"
    - Origin: "Where does X come from / Who invented...?"
-   - Visual identification (INCLUDE 2-3 PER BATCH): "${fullLanguage === 'French' ? 'Qu\\'est-ce que c\\'est ?' : fullLanguage === 'German' ? 'Was ist das?' : fullLanguage === 'Spanish' ? '¿Qué es esto?' : 'What is this?'}"
+   - Visual identification (INCLUDE 2-3 PER BATCH): "${visualIdQuestion}"
      * The question asks the player to identify something UNUSUAL shown in an image
-     * question_text: "${fullLanguage === 'French' ? 'Qu\\'est-ce que c\\'est ?' : fullLanguage === 'German' ? 'Was ist das?' : fullLanguage === 'Spanish' ? '¿Qué es esto?' : 'What is this?'}" (short, the image does the talking)
+     * question_text: "${visualIdQuestion}" (short, the image does the talking)
      * Options: 4 plausible text answers from the same category (e.g., 4 animal names, 4 plant names)
      * MANDATORY: Use UNUSUAL/BIZARRE/RARE subjects ONLY — things most people have never seen:
        - Rare animals: axolotl, blobfish, narwhal, pangolin, quokka, aye-aye, fossa, okapi, saiga antelope, tarsier, star-nosed mole, glass frog, mantis shrimp, leafy sea dragon, shoebill
@@ -299,7 +309,7 @@ PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
        - Forgotten inventions or obscure objects: astrolabe, orrery, theremin, zoetrope
      * NEVER use everyday things: no cat, dog, horse, car, house, flower, tree, lion, elephant
      * EXCEPTION for image_search_term: for these visual ID questions, the search term MUST be the CORRECT ANSWER (e.g., "axolotl", "blobfish") because the whole point is showing the unusual thing
-     * micro_theme should be "${fullLanguage === 'French' ? 'Identification Visuelle' : fullLanguage === 'German' ? 'Visuelle Identifikation' : fullLanguage === 'Spanish' ? 'Identificación Visual' : 'Visual Identification'}"
+     * micro_theme should be "${visualIdMicroTheme}"
 
 4. STAGE THEMES:
    - Each stage needs a distinct sub-topic within the main theme
