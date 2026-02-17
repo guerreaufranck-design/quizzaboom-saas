@@ -92,8 +92,9 @@ export const SupportChat: React.FC = () => {
     }
   };
 
-  // Don't show on TV display
-  if (window.location.pathname === '/tv') return null;
+  // Don't show on TV display or player screen
+  const path = window.location.pathname;
+  if (path === '/tv' || path === '/play') return null;
 
   return (
     <>
