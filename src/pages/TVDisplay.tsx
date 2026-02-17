@@ -12,6 +12,7 @@ import { useCountdown } from '../hooks/useCountdown';
 import { AnimatedLogo } from '../components/AnimatedLogo';
 import { CommentaryPopupChain } from '../components/CommentaryPopupChain';
 import { TutorialSlides } from '../components/TutorialSlides';
+import { AutoFitText } from '../components/AutoFitText';
 
 /**
  * Adaptive text sizing: returns a Tailwind class based on string length.
@@ -721,11 +722,8 @@ export const TVDisplay: React.FC = () => {
   if (currentPhase === 'question_display') {
     const questionText = currentQuestion?.question_text || t('common.loading');
     const hasImage = !!currentQuestion?.image_url;
-    // Dynamic vh-based font — fills available space, scales with screen
-    const qLen = questionText.length;
-    const questionDisplayFontSize = hasImage && questionImgVisible
-      ? (qLen > 100 ? '4vh' : qLen > 60 ? '5vh' : qLen > 30 ? '6.5vh' : '8vh')
-      : (qLen > 100 ? '5.5vh' : qLen > 60 ? '7vh' : qLen > 30 ? '9vh' : '11vh');
+    // Long questions (>80 chars) → skip image to give max space for text
+    const showQuestionImage = hasImage && questionImgVisible && questionText.length <= 80;
 
     return (
       <div className="h-screen bg-gradient-to-br from-indigo-700 via-purple-600 to-fuchsia-600 p-4 overflow-hidden relative">
@@ -751,11 +749,11 @@ export const TVDisplay: React.FC = () => {
             </div>
           </div>
 
-          {/* Main content: image on TOP, question text BELOW — fill all space */}
-          {hasImage && questionImgVisible ? (
+          {/* Main content: AutoFitText fills ALL available space */}
+          {showQuestionImage ? (
             <div className="flex-1 min-h-0 flex flex-col gap-3">
-              {/* Image — top portion, constrained height */}
-              <div className="flex items-center justify-center anim-pop" style={{ maxHeight: '45%' }}>
+              {/* Image — top 40% */}
+              <div className="flex items-center justify-center anim-pop" style={{ height: '40%' }}>
                 <img
                   src={currentQuestion!.image_url}
                   alt=""
@@ -763,22 +761,14 @@ export const TVDisplay: React.FC = () => {
                   onError={() => setQuestionImgVisible(false)}
                 />
               </div>
-              {/* Question text — fills remaining height + width */}
-              <div className="flex-1 flex items-center justify-center anim-slide">
-                <div className="bg-white/15 backdrop-blur-xl rounded-[2rem] p-6 w-full h-full flex items-center justify-center border-2 border-white/20 shadow-2xl">
-                  <h2 className="font-cartoon font-medium text-white leading-snug text-center" style={{ fontSize: questionDisplayFontSize }}>
-                    {questionText}
-                  </h2>
-                </div>
+              {/* Question — fills remaining 60% */}
+              <div className="flex-1 anim-slide bg-white/15 backdrop-blur-xl rounded-[2rem] p-6 border-2 border-white/20 shadow-2xl">
+                <AutoFitText text={questionText} className="font-cartoon font-medium text-white" maxFontSize={160} padding={24} />
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center anim-pop">
-              <div className="bg-white/15 backdrop-blur-xl rounded-[2rem] p-10 w-full h-full flex items-center justify-center border-2 border-white/20 shadow-2xl">
-                <h2 className="font-cartoon font-medium text-white leading-snug text-center" style={{ fontSize: questionDisplayFontSize }}>
-                  {questionText}
-                </h2>
-              </div>
+            <div className="flex-1 anim-pop bg-white/15 backdrop-blur-xl rounded-[2rem] p-8 border-2 border-white/20 shadow-2xl">
+              <AutoFitText text={questionText} className="font-cartoon font-medium text-white" maxFontSize={220} padding={32} />
             </div>
           )}
         </div>
@@ -794,16 +784,6 @@ export const TVDisplay: React.FC = () => {
     const hasImage = !!currentQuestion?.image_url;
     const showImage = hasImage && answerImgVisible;
     const options = currentQuestion?.options || [];
-    // Dynamic font sizes using vh units — scales with screen, fills available space
-    // Question: short text → huge (8vh), long text → smaller but still big (4vh)
-    const qLen = questionText.length;
-    const questionFontSize = showImage
-      ? (qLen > 100 ? '3vh' : qLen > 60 ? '3.5vh' : qLen > 30 ? '4.5vh' : '5.5vh')
-      : (qLen > 100 ? '4.5vh' : qLen > 60 ? '5.5vh' : qLen > 30 ? '7vh' : '8.5vh');
-    const maxOptLen = Math.max(...options.map(o => o.length), 0);
-    const optionFontSize = showImage
-      ? (maxOptLen > 40 ? '2.5vh' : maxOptLen > 25 ? '3vh' : maxOptLen > 15 ? '3.5vh' : '4.5vh')
-      : (maxOptLen > 40 ? '3.5vh' : maxOptLen > 25 ? '4.5vh' : maxOptLen > 15 ? '5.5vh' : '6.5vh');
     const isUrgent = displaySeconds <= 5;
 
     return (
@@ -817,8 +797,8 @@ export const TVDisplay: React.FC = () => {
         </div>
 
         <div className="h-full flex flex-col relative z-10">
-          {/* Top bar: Q number left + Timer center + Answered count right — compact */}
-          <div className="flex items-center justify-between shrink-0 mb-2">
+          {/* Top bar — compact */}
+          <div className="flex items-center justify-between shrink-0 mb-1">
             <div className="anim-pop bg-yellow-400 rounded-xl px-4 py-1 shadow-lg">
               <span className="font-cartoon text-xl font-bold text-gray-900">
                 Q{currentQuestionIndex + 1}/{allQuestions.length}
@@ -837,22 +817,13 @@ export const TVDisplay: React.FC = () => {
               <span className="text-white font-bold text-sm">
                 {answeredCount}/{topPlayers.length}
               </span>
-              {topPlayers.length > 0 && (
-                <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min((answeredCount / topPlayers.length) * 100, 100)}%` }}
-                  />
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Main content: image left + (question top + answers below) */}
+          {/* Main: image left + (question + answers) */}
           <div className={`flex-1 min-h-0 flex ${showImage ? 'gap-3' : 'flex-col'}`}>
-            {/* Image column — 40% */}
             {showImage && (
-              <div className="w-[40%] shrink-0 flex items-center justify-center anim-pop">
+              <div className="w-[35%] shrink-0 flex items-center justify-center anim-pop">
                 <img
                   src={currentQuestion!.image_url}
                   alt=""
@@ -862,34 +833,40 @@ export const TVDisplay: React.FC = () => {
               </div>
             )}
 
-            {/* Column: question (30% height) + 4 answer cards (70% height) */}
-            <div className={`flex flex-col gap-2 ${showImage ? 'flex-1' : 'w-full h-full'}`}>
-              {/* Question — 28% height, font in vh units fills the space */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-2 flex items-center justify-center" style={{ height: '28%' }}>
-                <h2 className="font-cartoon font-medium text-white text-center leading-snug" style={{ fontSize: questionFontSize }}>
-                  {currentQuestion?.question_text}
-                </h2>
+            {/* Column: question (25%) + 4 answer cards (75%) */}
+            <div className={`flex flex-col gap-1.5 ${showImage ? 'flex-1' : 'w-full h-full'}`}>
+              {/* Question — AutoFitText fills the zone */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-1" style={{ height: '22%' }}>
+                <AutoFitText
+                  text={questionText}
+                  className="font-cartoon font-medium text-white"
+                  maxFontSize={showImage ? 80 : 120}
+                  padding={16}
+                />
               </div>
 
-              {/* 4 answer cards — fill remaining ~70% height, 2x2 grid */}
-              <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
+              {/* 4 answer cards — AutoFitText in each */}
+              <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0">
                 {options.map((option, idx) => {
                   const color = OPTION_COLORS[idx] || OPTION_COLORS[0];
                   return (
                     <div
                       key={idx}
-                      className={`rounded-2xl bg-gradient-to-br ${color.bg} border-2 ${color.border} p-4 flex flex-col shadow-lg anim-slide overflow-hidden`}
+                      className={`rounded-2xl bg-gradient-to-br ${color.bg} border-2 ${color.border} flex flex-col shadow-lg anim-slide overflow-hidden`}
                       style={{ animationDelay: `${idx * 0.1}s`, animationFillMode: 'backwards' }}
                     >
                       {/* Letter badge — top left */}
-                      <div className={`w-14 h-14 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner`}>
-                        <span className="font-cartoon text-4xl font-semibold text-white">{color.letter}</span>
+                      <div className={`w-12 h-12 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner m-2`}>
+                        <span className="font-cartoon text-3xl font-semibold text-white">{color.letter}</span>
                       </div>
-                      {/* Answer text — fills ALL remaining space, wraps vertically */}
-                      <div className="flex-1 flex items-center justify-center min-h-0">
-                        <span className="text-white font-medium drop-shadow-md leading-snug text-center" style={{ fontSize: optionFontSize }}>
-                          {option}
-                        </span>
+                      {/* Answer — AutoFitText fills ALL remaining space */}
+                      <div className="flex-1 min-h-0 px-3 pb-2">
+                        <AutoFitText
+                          text={option}
+                          className="font-cartoon font-medium text-white drop-shadow-md"
+                          maxFontSize={showImage ? 60 : 90}
+                          padding={4}
+                        />
                       </div>
                     </div>
                   );

@@ -356,11 +356,15 @@ PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
    - 2-4 word general category (e.g., "Marine Biology", "European History")
    - NEVER include the answer in the micro-theme
 
-8. IMAGE SEARCH TERM:
+8. IMAGE SEARCH TERM (CRITICAL — must NOT spoil the answer):
    - Provide a 2-3 word ENGLISH search term for finding a relevant photo on Unsplash
    - Must be CONCRETE and VISUAL (objects, places, animals — not abstract concepts)
-   - For REGULAR questions: the image must illustrate the THEME or TOPIC, NOT the correct answer
-   - NEVER search for the correct answer directly — the photo must NOT give away the answer
+   - The image MUST illustrate the GENERAL THEME or CATEGORY, NEVER the specific answer
+   - ABSOLUTELY FORBIDDEN: if the question is "In which country is X forbidden?", the image must NOT be about that country. Use a generic image like "chewing gum" or "public transport"
+   - ABSOLUTELY FORBIDDEN: if the question is "Who invented X?", the image must NOT show the inventor. Use the invention itself or a generic lab/workshop
+   - ABSOLUTELY FORBIDDEN: if the answer is a specific place, person, animal or object, the search term must NOT contain that answer
+   - Good examples: Q="Which planet has the most moons?" → image="solar system planets" (NOT "saturn" or "jupiter")
+   - Good examples: Q="In which country is it illegal to chew gum?" → image="chewing gum pack" (NOT "singapore")
    - EXCEPTION for visual identification questions (see rule 3): the image_search_term MUST be the correct answer (e.g., "axolotl", "pangolin") since showing the subject IS the question
    - Think: "What broad visual context helps the player understand the topic?"
    - Good: Question "Which ocean is the deepest?" → image_search_term: "ocean waves" (shows the topic, not the answer)
