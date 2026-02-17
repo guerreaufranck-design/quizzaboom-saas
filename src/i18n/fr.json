@@ -163,7 +163,8 @@
     "joining": "Connexion...",
     "connectionTip": "Assurez-vous d'etre connecte a internet et que l'hote a demarre la session !",
     "selectTeam": "Choisis ton équipe",
-    "yourTeam": "Ton équipe"
+    "yourTeam": "Ton équipe",
+    "emailResultsWarning": "Sans email, vous ne recevrez pas vos résultats, classement et stats !"
   },
   "create": {
     "title": "Creez votre Quiz",
@@ -682,7 +683,13 @@
     "previewQuestions": "Voir les questions",
     "previewTitle": "Aperçu du quiz",
     "correctAnswer": "Bonne réponse",
-    "closePreview": "Fermer l'aperçu"
+    "closePreview": "Fermer l'aperçu",
+    "emailWarningTitle": "ATTENTION !",
+    "emailWarningDesc": "Pour recevoir vos résultats, vous devez avoir renseigné votre adresse email lors de l'inscription !",
+    "emailBenefitRanking": "Votre classement",
+    "emailBenefitStats": "Vos statistiques",
+    "emailBenefitDetails": "Détails complets",
+    "emailSafetyNote": "Aucun spam, juste vos résultats. Promis !"
   },
   "offer": {
     "badge": "OFFRE EXCLUSIVE",

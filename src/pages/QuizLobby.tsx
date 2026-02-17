@@ -180,57 +180,112 @@ export const QuizLobby: React.FC = () => {
     );
   }
 
-  // PLAYER VIEW - Simplified lobby without controls
+  // PLAYER VIEW - Simplified lobby: email warning + players grid
   if (!isHost) {
     return (
-      <div className="min-h-screen bg-qb-dark py-12">
+      <div className="min-h-screen bg-qb-dark py-6">
+        {/* Animated email warning CSS */}
+        <style>{`
+          @keyframes email-pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.4); }
+            50% { transform: scale(1.02); box-shadow: 0 0 40px 10px rgba(250, 204, 21, 0.2); }
+          }
+          @keyframes email-bounce {
+            0%, 100% { transform: translateY(0); }
+            25% { transform: translateY(-8px); }
+            75% { transform: translateY(4px); }
+          }
+          @keyframes email-glow {
+            0%, 100% { text-shadow: 0 0 20px rgba(250, 204, 21, 0.5); }
+            50% { text-shadow: 0 0 40px rgba(250, 204, 21, 0.8), 0 0 60px rgba(250, 204, 21, 0.4); }
+          }
+          .email-warning-card {
+            animation: email-pulse 2s ease-in-out infinite;
+          }
+          .email-icon-bounce {
+            animation: email-bounce 1.5s ease-in-out infinite;
+          }
+          .email-glow-text {
+            animation: email-glow 2s ease-in-out infinite;
+          }
+        `}</style>
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto space-y-8">
-            {/* Quiz Info */}
+          <div className="max-w-4xl mx-auto space-y-6">
+            {/* Quiz title + session code */}
             <div className="text-center">
-              <h1 className="text-4xl font-bold text-white mb-2">{currentQuiz.title}</h1>
-              <p className="text-white/70 mb-4">{currentQuiz.description}</p>
-              <div className="inline-flex items-center gap-2 px-6 py-3 bg-qb-cyan/20 border border-qb-cyan rounded-full">
-                <span className="text-qb-cyan font-mono font-bold text-xl">{sessionCode}</span>
+              <h1 className="text-3xl font-bold text-white mb-1">{currentQuiz.title}</h1>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-qb-cyan/20 border border-qb-cyan rounded-full">
+                <span className="text-qb-cyan font-mono font-bold text-lg">{sessionCode}</span>
               </div>
             </div>
 
-            {/* Waiting Message */}
-            <Card className="p-12 text-center bg-gradient-to-br from-qb-purple/20 to-qb-cyan/20">
-              <div className="text-6xl mb-4">⏳</div>
-              <h2 className="text-3xl font-bold text-white mb-4">
-                {t('lobby.waitingForHost')}
-              </h2>
-              <p className="text-xl text-white/70 mb-6">
-                {t('lobby.getReady')}
-              </p>
-              <div className="flex items-center justify-center gap-2 text-white/50">
-                <Clock className="w-5 h-5 animate-pulse" />
-                <span>{t('lobby.stayConnected')}</span>
+            {/* BIG animated email warning — the main feature of this screen */}
+            <div className="email-warning-card rounded-2xl bg-gradient-to-br from-yellow-400 via-orange-400 to-yellow-500 p-6 border-4 border-yellow-300">
+              <div className="text-center">
+                <div className="email-icon-bounce inline-block text-6xl mb-3">📧</div>
+                <h2 className="text-3xl font-black text-gray-900 mb-2 email-glow-text">
+                  {t('lobby.emailWarningTitle')}
+                </h2>
+                <p className="text-xl font-bold text-gray-800 mb-3">
+                  {t('lobby.emailWarningDesc')}
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <div className="bg-white/30 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2">
+                    <span className="text-2xl">🏆</span>
+                    <span className="font-bold text-gray-900">{t('lobby.emailBenefitRanking')}</span>
+                  </div>
+                  <div className="bg-white/30 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2">
+                    <span className="text-2xl">📊</span>
+                    <span className="font-bold text-gray-900">{t('lobby.emailBenefitStats')}</span>
+                  </div>
+                  <div className="bg-white/30 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2">
+                    <span className="text-2xl">🎯</span>
+                    <span className="font-bold text-gray-900">{t('lobby.emailBenefitDetails')}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-700 mt-3 italic">
+                  {t('lobby.emailSafetyNote')}
+                </p>
+              </div>
+            </div>
+
+            {/* Waiting for host — compact */}
+            <Card className="p-4 text-center bg-gradient-to-br from-qb-purple/20 to-qb-cyan/20">
+              <div className="flex items-center justify-center gap-3">
+                <div className="text-3xl">⏳</div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">
+                    {t('lobby.waitingForHost')}
+                  </h2>
+                  <div className="flex items-center justify-center gap-2 text-white/50 text-sm">
+                    <Clock className="w-4 h-4 animate-pulse" />
+                    <span>{t('lobby.stayConnected')}</span>
+                  </div>
+                </div>
               </div>
             </Card>
 
-            {/* Players Grid */}
-            <Card gradient className="p-8">
-              <h3 className="text-2xl font-bold text-white mb-6 text-center">
+            {/* Players Grid — compact */}
+            <Card gradient className="p-4">
+              <h3 className="text-lg font-bold text-white mb-3 text-center">
                 {t('lobby.playersInLobby', { count: players.length })}
               </h3>
               {isTeamMode && teamNamesList.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {teamNamesList.map((teamName, idx) => {
                     const teamPlayers = playersByTeam[teamName] || [];
                     return (
-                      <div key={teamName} className={`rounded-xl border p-4 ${TEAM_COLORS[idx % TEAM_COLORS.length]}`}>
-                        <div className={`font-bold mb-3 flex items-center gap-2 ${TEAM_HEADER_COLORS[idx % TEAM_HEADER_COLORS.length]}`}>
+                      <div key={teamName} className={`rounded-xl border p-3 ${TEAM_COLORS[idx % TEAM_COLORS.length]}`}>
+                        <div className={`font-bold mb-2 flex items-center gap-2 text-sm ${TEAM_HEADER_COLORS[idx % TEAM_HEADER_COLORS.length]}`}>
                           <Users2 className="w-4 h-4" />
                           <span>{t('lobby.team')}: {teamName}</span>
                           <span className="text-xs text-white/50 ml-auto">{t('lobby.teamMembers', { count: teamPlayers.length })}</span>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-3 gap-2">
                           {teamPlayers.map((player) => (
-                            <div key={player.id} className="p-3 bg-qb-darker rounded-xl text-center">
-                              <div className="text-3xl mb-1">{player.avatar_emoji}</div>
-                              <div className="font-bold text-white text-sm truncate">{player.player_name}</div>
+                            <div key={player.id} className="p-2 bg-qb-darker rounded-xl text-center">
+                              <div className="text-2xl">{player.avatar_emoji}</div>
+                              <div className="font-bold text-white text-xs truncate">{player.player_name}</div>
                               <div
                                 className="w-2 h-2 rounded-full mx-auto mt-1"
                                 style={{ backgroundColor: player.is_connected ? '#10B981' : '#EF4444' }}
@@ -243,18 +298,18 @@ export const QuizLobby: React.FC = () => {
                   })}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
                   {players.map((player) => (
                     <div
                       key={player.id}
-                      className="p-4 bg-qb-darker rounded-xl text-center"
+                      className="p-3 bg-qb-darker rounded-xl text-center"
                     >
-                      <div className="text-4xl mb-2">{player.avatar_emoji}</div>
-                      <div className="font-bold text-white text-sm truncate">
+                      <div className="text-3xl mb-1">{player.avatar_emoji}</div>
+                      <div className="font-bold text-white text-xs truncate">
                         {player.player_name}
                       </div>
                       <div
-                        className="w-2 h-2 rounded-full mx-auto mt-2"
+                        className="w-2 h-2 rounded-full mx-auto mt-1"
                         style={{
                           backgroundColor: player.is_connected ? '#10B981' : '#EF4444',
                         }}
@@ -263,33 +318,6 @@ export const QuizLobby: React.FC = () => {
                   ))}
                 </div>
               )}
-            </Card>
-
-            {/* Quiz Details */}
-            <Card className="p-6">
-              <h3 className="text-lg font-bold text-white mb-4 text-center">{t('lobby.quizInfo')}</h3>
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <div className="text-3xl font-bold text-qb-cyan">{currentQuiz.estimated_duration}</div>
-                  <div className="text-sm text-white/70">{t('lobby.minutes')}</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-qb-magenta">{currentQuiz.total_stages}</div>
-                  <div className="text-sm text-white/70">{t('lobby.stages')}</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-qb-purple">
-                    ~{currentQuiz.total_stages * currentQuiz.questions_per_stage}
-                  </div>
-                  <div className="text-sm text-white/70">{t('lobby.questions')}</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-qb-yellow capitalize">
-                    {currentQuiz.difficulty}
-                  </div>
-                  <div className="text-sm text-white/70">{t('lobby.difficulty')}</div>
-                </div>
-              </div>
             </Card>
           </div>
         </div>

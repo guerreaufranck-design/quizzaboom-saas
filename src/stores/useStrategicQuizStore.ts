@@ -313,8 +313,37 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         commentaryPopups: [],
       });
 
-      // Clear persisted answer state for new question
+      // Clear persisted answer state and effects for new question
       try { sessionStorage.removeItem('qb_answered'); } catch (_) {}
+      try { sessionStorage.removeItem('qb_effects'); } catch (_) {}
+    }
+
+    // On reconnect: restore active joker effects from sessionStorage
+    if (data.phase === 'answer_selection' || data.phase === 'question_display' || data.phase === 'theme_announcement') {
+      try {
+        const savedEffects = sessionStorage.getItem('qb_effects');
+        if (savedEffects) {
+          const parsed = JSON.parse(savedEffects);
+          if (parsed.questionIndex === data.questionIndex && parsed.effects) {
+            const current = get().activeEffects;
+            const hasEffects = Object.keys(parsed.effects.protections || {}).length > 0
+              || Object.keys(parsed.effects.blocks || {}).length > 0
+              || Object.keys(parsed.effects.steals || {}).length > 0
+              || Object.keys(parsed.effects.doublePoints || {}).length > 0;
+            if (hasEffects) {
+              console.log('🃏 Restored active effects from sessionStorage:', parsed.effects);
+              set({
+                activeEffects: {
+                  protections: { ...current.protections, ...parsed.effects.protections },
+                  blocks: { ...current.blocks, ...parsed.effects.blocks },
+                  steals: { ...current.steals, ...parsed.effects.steals },
+                  doublePoints: { ...current.doublePoints, ...parsed.effects.doublePoints },
+                },
+              });
+            }
+          }
+        }
+      } catch (_) {}
     }
 
     // On reconnect during answer_selection: check if we already answered this question
@@ -475,6 +504,16 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         }
         break;
     }
+
+    // Persist active effects to sessionStorage so they survive page refresh
+    try {
+      const updatedEffects = get().activeEffects;
+      const questionIdx = get().currentQuestionIndex;
+      sessionStorage.setItem('qb_effects', JSON.stringify({
+        questionIndex: questionIdx,
+        effects: updatedEffects,
+      }));
+    } catch (_) {}
 
     // Broadcast joker event for TV host commentary
     const sessionCode = useQuizStore.getState().sessionCode;
@@ -791,19 +830,16 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         console.log('🃏 Joker effect received:', jokerType, 'from', playerId, 'target', targetPlayerId);
 
         if (jokerType === 'protection') {
-          // Protection must be applied first (no conditions)
           set({ activeEffects: { ...currentEffects, protections: { ...currentEffects.protections, [playerId]: true } } });
         } else if (jokerType === 'double_points') {
           set({ activeEffects: { ...currentEffects, doublePoints: { ...currentEffects.doublePoints, [playerId]: true } } });
         } else if (jokerType === 'block' && targetPlayerId) {
-          // Check protection: if target is protected, block fails silently
           if (currentEffects.protections[targetPlayerId]) {
             console.log('🛡️ Block effect ignored — target is protected');
           } else {
             set({ activeEffects: { ...currentEffects, blocks: { ...currentEffects.blocks, [targetPlayerId]: true } } });
           }
         } else if (jokerType === 'steal' && targetPlayerId) {
-          // Check protection + first-come-first-served
           if (currentEffects.protections[targetPlayerId]) {
             console.log('🛡️ Steal effect ignored — target is protected');
           } else if (currentEffects.steals[targetPlayerId]) {
@@ -812,6 +848,16 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
             set({ activeEffects: { ...currentEffects, steals: { ...currentEffects.steals, [targetPlayerId]: playerId } } });
           }
         }
+
+        // Persist effects to sessionStorage so they survive page refresh
+        try {
+          const updatedEffects = get().activeEffects;
+          const questionIdx = get().currentQuestionIndex;
+          sessionStorage.setItem('qb_effects', JSON.stringify({
+            questionIndex: questionIdx,
+            effects: updatedEffects,
+          }));
+        } catch (_) {}
       })
       .subscribe((status: string) => {
         console.log('📡 Realtime status:', status);

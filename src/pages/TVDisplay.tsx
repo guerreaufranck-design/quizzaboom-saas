@@ -31,14 +31,14 @@ const getAdaptiveTextSize = (
 
 /**
  * Adaptive text size for answer options — based on the longest option in the set.
- * Increased for better readability.
+ * Bumped up for TV readability at distance.
  */
 const getAdaptiveOptionSize = (options: string[]): string => {
   const maxLen = Math.max(...options.map(o => o.length));
-  if (maxLen > 100) return 'text-2xl';
-  if (maxLen > 60) return 'text-3xl';
-  if (maxLen > 30) return 'text-4xl';
-  return 'text-5xl';
+  if (maxLen > 100) return 'text-3xl';
+  if (maxLen > 60) return 'text-4xl';
+  if (maxLen > 30) return 'text-5xl';
+  return 'text-6xl';
 };
 
 export const TVDisplay: React.FC = () => {
@@ -661,13 +661,13 @@ export const TVDisplay: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'theme_announcement') {
     const themeName = currentThemeTitle || currentQuestion?.stage_id || t('tv.defaultTheme');
-    const themeTextClass = getAdaptiveTextSize(themeName, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
+    const themeTextClass = getAdaptiveTextSize(themeName, { xl: 'text-8xl', lg: 'text-7xl', md: 'text-6xl', sm: 'text-5xl' });
 
     return (
       <div className="h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center p-8 overflow-hidden">
         <div className="text-center max-w-6xl w-full flex flex-col items-center justify-center h-full">
-          <div className="text-7xl mb-4 animate-bounce">🎯</div>
-          <h1 className="text-6xl font-bold text-white mb-4 uppercase tracking-wider">
+          <div className="text-8xl mb-4 animate-bounce">🎯</div>
+          <h1 className="text-7xl font-bold text-white mb-4 uppercase tracking-wider">
             {t('tv.nextTheme')}
           </h1>
           <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-8 mb-6 w-full">
@@ -675,7 +675,7 @@ export const TVDisplay: React.FC = () => {
               {themeName}
             </p>
           </div>
-          <div className="mb-4 text-3xl text-white/90 bg-white/10 rounded-2xl p-4 inline-block">
+          <div className="mb-4 text-4xl text-white/90 bg-white/10 rounded-2xl p-4 inline-block">
             {t('tv.useJokersNow')}
           </div>
           <div className="flex items-center justify-center gap-4 text-white">
@@ -694,13 +694,13 @@ export const TVDisplay: React.FC = () => {
     const questionText = currentQuestion?.question_text || t('common.loading');
     const hasImage = !!currentQuestion?.image_url;
     const questionTextClass = hasImage
-      ? getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-8xl', lg: 'text-7xl', md: 'text-6xl', sm: 'text-5xl' });
+      ? getAdaptiveTextSize(questionText, { xl: 'text-7xl', lg: 'text-6xl', md: 'text-5xl', sm: 'text-4xl' })
+      : getAdaptiveTextSize(questionText, { xl: 'text-9xl', lg: 'text-8xl', md: 'text-7xl', sm: 'text-6xl' });
 
     return (
       <div className="h-screen bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-500 flex items-center justify-center p-8 overflow-hidden">
         <div className="max-w-6xl w-full text-center flex flex-col items-center justify-center h-full">
-          {!hasImage && <div className="text-7xl mb-4">📖</div>}
+          {!hasImage && <div className="text-8xl mb-4">📖</div>}
           {hasImage && (
             <div className="mb-4 w-full flex justify-center">
               {!loadedImages.has(currentQuestion!.image_url!) ? (
@@ -736,8 +736,8 @@ export const TVDisplay: React.FC = () => {
     const questionText = currentQuestion?.question_text || '';
     const hasImage = !!currentQuestion?.image_url;
     const answerQuestionClass = hasImage
-      ? getAdaptiveTextSize(questionText, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
+      ? getAdaptiveTextSize(questionText, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' })
+      : getAdaptiveTextSize(questionText, { xl: 'text-7xl', lg: 'text-6xl', md: 'text-5xl', sm: 'text-4xl' });
     const options = currentQuestion?.options || [];
     const optionTextClass = getAdaptiveOptionSize(options);
     const maxOptionLen = Math.max(...options.map(o => o.length), 0);
@@ -756,8 +756,8 @@ export const TVDisplay: React.FC = () => {
             {/* Live answer counter */}
             <div className="mt-2 flex items-center justify-center gap-3">
               <div className="flex items-center gap-2 px-4 py-1.5 bg-qb-purple/30 rounded-full">
-                <Users className="w-5 h-5 text-qb-yellow" />
-                <span className="text-white font-bold text-lg">
+                <Users className="w-6 h-6 text-qb-yellow" />
+                <span className="text-white font-bold text-xl">
                   {t('tv.answeredCount', { count: answeredCount, total: topPlayers.length })}
                 </span>
               </div>
@@ -795,10 +795,10 @@ export const TVDisplay: React.FC = () => {
               {options.map((option, idx) => (
                 <div
                   key={idx}
-                  className="p-4 rounded-2xl bg-qb-darker border-2 border-white/20 flex items-center gap-4"
+                  className="p-5 rounded-2xl bg-qb-darker border-2 border-white/20 flex items-center gap-4"
                 >
-                  <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                    <span className="text-3xl font-bold text-white">
+                  <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                    <span className="text-4xl font-bold text-white">
                       {['A', 'B', 'C', 'D'][idx]}
                     </span>
                   </div>
@@ -819,7 +819,7 @@ export const TVDisplay: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'results') {
     const correctAnswer = currentQuestion?.correct_answer || '';
-    const correctAnswerClass = getAdaptiveTextSize(correctAnswer, { xl: 'text-7xl', lg: 'text-6xl', md: 'text-5xl', sm: 'text-4xl' });
+    const correctAnswerClass = getAdaptiveTextSize(correctAnswer, { xl: 'text-8xl', lg: 'text-7xl', md: 'text-6xl', sm: 'text-5xl' });
     const hasImage = !!currentQuestion?.image_url;
 
     return (
@@ -835,8 +835,8 @@ export const TVDisplay: React.FC = () => {
           </div>
         )}
         <div className="max-w-7xl mx-auto h-full flex flex-col items-center justify-center relative z-10">
-          <div className="text-7xl mb-3 animate-bounce">✅</div>
-          <h1 className="text-6xl font-bold text-white mb-6">{t('tv.correctAnswer')}</h1>
+          <div className="text-8xl mb-3 animate-bounce">✅</div>
+          <h1 className="text-7xl font-bold text-white mb-6">{t('tv.correctAnswer')}</h1>
           <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-10 mb-6">
             <p className={`${correctAnswerClass} font-bold text-white`}>
               {correctAnswer}
@@ -854,10 +854,10 @@ export const TVDisplay: React.FC = () => {
           {currentQuestion?.fun_fact && (
             <div className="bg-yellow-500/10 backdrop-blur-xl border-2 border-yellow-400/50 rounded-2xl p-8 mb-6 max-w-5xl">
               <div className="flex items-center gap-4 mb-4">
-                <Lightbulb className="w-12 h-12 text-yellow-300" />
+                <Lightbulb className="w-14 h-14 text-yellow-300" />
                 <span className="text-yellow-300 font-bold text-5xl">{t('tv.funFact')}</span>
               </div>
-              <p className="text-white/95 text-4xl leading-relaxed font-medium">{currentQuestion.fun_fact}</p>
+              <p className="text-white/95 text-5xl leading-relaxed font-medium">{currentQuestion.fun_fact}</p>
             </div>
           )}
 
@@ -883,10 +883,10 @@ export const TVDisplay: React.FC = () => {
       <div className="h-screen bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 p-6 overflow-hidden">
         <div className="max-w-6xl mx-auto h-full flex flex-col justify-between">
           <div className="text-center">
-            <h1 className="text-5xl font-bold text-white mb-2 flex items-center justify-center gap-4">
-              <Trophy className="w-10 h-10 text-yellow-300" />
+            <h1 className="text-6xl font-bold text-white mb-2 flex items-center justify-center gap-4">
+              <Trophy className="w-12 h-12 text-yellow-300" />
               {isTeamMode ? t('tv.teamLeaderboard') : t('tv.leaderboard')}
-              <Trophy className="w-10 h-10 text-yellow-300" />
+              <Trophy className="w-12 h-12 text-yellow-300" />
             </h1>
           </div>
 
@@ -949,21 +949,21 @@ export const TVDisplay: React.FC = () => {
                       : 'bg-white/10 border border-white/20'
                   }`}
                 >
-                  <div className="text-4xl font-bold text-white/80 w-16 text-center">
+                  <div className="text-5xl font-bold text-white/80 w-16 text-center">
                     {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                   </div>
-                  <div className="text-3xl">{player.avatar_emoji}</div>
+                  <div className="text-4xl">{player.avatar_emoji}</div>
                   <div className="flex-1">
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-3xl font-bold text-white">
                       {player.player_name}
                     </div>
-                    <div className="text-lg text-white/70">
+                    <div className="text-xl text-white/70">
                       {t('tv.playerStats', { correct: player.correct_answers, total: player.questions_answered })}
                     </div>
                   </div>
-                  <div className="text-3xl font-bold text-yellow-300">
+                  <div className="text-4xl font-bold text-yellow-300">
                     {player.total_score}
-                    {index === 0 && <Star className="inline w-8 h-8 ml-3 text-yellow-400" />}
+                    {index === 0 && <Star className="inline w-10 h-10 ml-3 text-yellow-400" />}
                   </div>
                 </div>
               ))}

@@ -138,11 +138,15 @@ export const JoinQuiz: React.FC = () => {
                 />
               </div>
 
-              {/* Email (Optional) */}
+              {/* Email (Optional but needed for results) */}
               <div>
                 <label className="block text-white font-medium mb-2">
                   {t('join.email')}
                 </label>
+                <div className="mb-2 p-2 bg-yellow-500/15 border border-yellow-500/40 rounded-lg flex items-center gap-2">
+                  <span className="text-yellow-400 text-lg">⚠️</span>
+                  <p className="text-sm text-yellow-300 font-medium">{t('join.emailResultsWarning')}</p>
+                </div>
                 <input
                   type="email"
                   value={email}
