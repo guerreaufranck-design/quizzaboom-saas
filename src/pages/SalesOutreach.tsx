@@ -15,10 +15,115 @@ import {
   Mail,
   BarChart3,
   RefreshCw,
+  Beer,
+  UtensilsCrossed,
+  Hotel,
+  PartyPopper,
 } from 'lucide-react';
 
 const SALES_PASSWORD = import.meta.env.VITE_SALES_PASSWORD || '';
 
+// ─── Template definitions ────────────────────────────────────────
+type TemplateId =
+  | 'pub_with_quiz'
+  | 'pub_no_quiz'
+  | 'restaurant_with_quiz'
+  | 'restaurant_no_quiz'
+  | 'hotel_with_quiz'
+  | 'hotel_no_quiz'
+  | 'animation_with_quiz'
+  | 'animation_no_quiz';
+
+interface TemplateOption {
+  id: TemplateId;
+  label: string;
+  description: string;
+  icon: typeof Beer;
+  color: string;
+}
+
+const TEMPLATE_GROUPS: { group: string; templates: TemplateOption[] }[] = [
+  {
+    group: 'Pub / Bar',
+    templates: [
+      {
+        id: 'pub_with_quiz',
+        label: 'Has quiz nights',
+        description: 'They already run quizzes — pitch the upgrade',
+        icon: Beer,
+        color: 'text-amber-400',
+      },
+      {
+        id: 'pub_no_quiz',
+        label: 'No quiz yet',
+        description: 'They don\'t do quizzes — pitch the opportunity',
+        icon: Beer,
+        color: 'text-amber-400',
+      },
+    ],
+  },
+  {
+    group: 'Restaurant',
+    templates: [
+      {
+        id: 'restaurant_with_quiz',
+        label: 'Has quiz/events',
+        description: 'They run events — pitch a polished upgrade',
+        icon: UtensilsCrossed,
+        color: 'text-orange-400',
+      },
+      {
+        id: 'restaurant_no_quiz',
+        label: 'No events',
+        description: 'No entertainment — pitch midweek table filler',
+        icon: UtensilsCrossed,
+        color: 'text-orange-400',
+      },
+    ],
+  },
+  {
+    group: 'Hotel',
+    templates: [
+      {
+        id: 'hotel_with_quiz',
+        label: 'Has entertainment',
+        description: 'They offer activities — pitch quiz as add-on',
+        icon: Hotel,
+        color: 'text-blue-400',
+      },
+      {
+        id: 'hotel_no_quiz',
+        label: 'No entertainment',
+        description: 'Keep guests on-site & spending at the bar',
+        icon: Hotel,
+        color: 'text-blue-400',
+      },
+    ],
+  },
+  {
+    group: 'Animation / Events',
+    templates: [
+      {
+        id: 'animation_with_quiz',
+        label: 'Offers quizzes',
+        description: 'They do quizzes — pitch scaling with AI + white label',
+        icon: PartyPopper,
+        color: 'text-pink-400',
+      },
+      {
+        id: 'animation_no_quiz',
+        label: 'No quiz service',
+        description: 'Add quiz nights to their catalogue instantly',
+        icon: PartyPopper,
+        color: 'text-pink-400',
+      },
+    ],
+  },
+];
+
+const ALL_TEMPLATES = TEMPLATE_GROUPS.flatMap((g) => g.templates);
+
+// ─── Interfaces ──────────────────────────────────────────────────
 interface Lead {
   id: string;
   venue_name: string;
@@ -27,9 +132,10 @@ interface Lead {
   sent_at: string | null;
   created_at: string;
   notes: string | null;
+  template?: TemplateId;
 }
 
-// Password gate
+// ─── Password gate ───────────────────────────────────────────────
 function PasswordGate({ onAuth }: { onAuth: () => void }) {
   const [pw, setPw] = useState('');
   const [error, setError] = useState('');
@@ -68,7 +174,7 @@ function PasswordGate({ onAuth }: { onAuth: () => void }) {
   );
 }
 
-// Status badge
+// ─── Status badge ────────────────────────────────────────────────
 function StatusBadge({ status }: { status: Lead['status'] }) {
   const config = {
     pending: { icon: Clock, color: 'text-yellow-400 bg-yellow-400/10', label: 'Pending' },
@@ -85,6 +191,21 @@ function StatusBadge({ status }: { status: Lead['status'] }) {
   );
 }
 
+// ─── Template badge ──────────────────────────────────────────────
+function TemplateBadge({ templateId }: { templateId?: TemplateId }) {
+  if (!templateId) return null;
+  const tpl = ALL_TEMPLATES.find((t) => t.id === templateId);
+  if (!tpl) return null;
+  const Icon = tpl.icon;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${tpl.color} bg-white/5`}>
+      <Icon className="w-3 h-3" />
+      {tpl.label}
+    </span>
+  );
+}
+
+// ─── Main component ──────────────────────────────────────────────
 export function SalesOutreach() {
   const [authed, setAuthed] = useState(sessionStorage.getItem('sales_auth') === '1');
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -95,9 +216,10 @@ export function SalesOutreach() {
   // Form
   const [venueName, setVenueName] = useState('');
   const [email, setEmail] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>('pub_with_quiz');
   const [formError, setFormError] = useState('');
 
-  // Stats
+  // View
   const [tab, setTab] = useState<'today' | 'history'>('today');
 
   const fetchLeads = useCallback(async () => {
@@ -128,12 +250,10 @@ export function SalesOutreach() {
     if (!venueName.trim()) return setFormError('Venue name required');
     if (!email.trim() || !email.includes('@')) return setFormError('Valid email required');
 
-    // Check duplicate
     if (leads.some((l) => l.email.toLowerCase() === email.toLowerCase().trim())) {
       return setFormError('Email already in list');
     }
 
-    // Optimistic add as local lead (will be saved to DB on send)
     const newLead: Lead = {
       id: crypto.randomUUID(),
       venue_name: venueName.trim(),
@@ -142,6 +262,7 @@ export function SalesOutreach() {
       sent_at: null,
       created_at: new Date().toISOString(),
       notes: null,
+      template: selectedTemplate,
     };
     setLeads((prev) => [newLead, ...prev]);
     setVenueName('');
@@ -160,7 +281,7 @@ export function SalesOutreach() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           password: SALES_PASSWORD,
-          prospects: [{ id: lead.id, venueName: lead.venue_name, email: lead.email }],
+          prospects: [{ id: lead.id, venueName: lead.venue_name, email: lead.email, template: lead.template || 'pub_no_quiz' }],
         }),
       });
       const data = await res.json();
@@ -193,7 +314,12 @@ export function SalesOutreach() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           password: SALES_PASSWORD,
-          prospects: pending.map((l) => ({ id: l.id, venueName: l.venue_name, email: l.email })),
+          prospects: pending.map((l) => ({
+            id: l.id,
+            venueName: l.venue_name,
+            email: l.email,
+            template: l.template || 'pub_no_quiz',
+          })),
         }),
       });
       const data = await res.json();
@@ -222,7 +348,7 @@ export function SalesOutreach() {
 
   return (
     <div className="min-h-screen bg-qb-dark p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -230,7 +356,7 @@ export function SalesOutreach() {
               <SendHorizonal className="w-8 h-8 text-qb-purple" />
               Sales Outreach
             </h1>
-            <p className="text-white/50 mt-1">B2B prospecting — UK & Ireland pubs/bars</p>
+            <p className="text-white/50 mt-1">B2B prospecting — UK & Ireland venues</p>
           </div>
           <Button
             variant="ghost"
@@ -265,6 +391,44 @@ export function SalesOutreach() {
           </Card>
         </div>
 
+        {/* Template selector */}
+        <Card gradient>
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <Mail className="w-5 h-5 text-qb-cyan" />
+            Email Template
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {TEMPLATE_GROUPS.map((group) => (
+              <div key={group.group}>
+                <p className="text-white/40 text-xs uppercase tracking-wider mb-2">{group.group}</p>
+                <div className="space-y-2">
+                  {group.templates.map((tpl) => {
+                    const Icon = tpl.icon;
+                    const isSelected = selectedTemplate === tpl.id;
+                    return (
+                      <button
+                        key={tpl.id}
+                        onClick={() => setSelectedTemplate(tpl.id)}
+                        className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                          isSelected
+                            ? 'border-qb-purple bg-qb-purple/20'
+                            : 'border-white/10 bg-white/5 hover:border-white/20'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <Icon className={`w-4 h-4 ${tpl.color}`} />
+                          <span className="text-white text-sm font-medium">{tpl.label}</span>
+                        </div>
+                        <p className="text-white/40 text-xs">{tpl.description}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
         {/* Add prospect form */}
         <Card gradient>
           <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -292,6 +456,9 @@ export function SalesOutreach() {
             </Button>
           </form>
           {formError && <p className="text-red-400 text-sm mt-2">{formError}</p>}
+          <p className="text-white/30 text-xs mt-2">
+            Template: <TemplateBadge templateId={selectedTemplate} /> — change above before adding
+          </p>
         </Card>
 
         {/* Tabs + Send All */}
@@ -341,6 +508,7 @@ export function SalesOutreach() {
                   <tr className="border-b border-white/10">
                     <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Venue</th>
                     <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Email</th>
+                    <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Template</th>
                     <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Status</th>
                     <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Date</th>
                     <th className="text-right text-white/60 text-xs uppercase tracking-wider py-3 px-2">Actions</th>
@@ -356,15 +524,15 @@ export function SalesOutreach() {
                         </div>
                       </td>
                       <td className="py-3 px-2">
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-white/30 shrink-0" />
-                          <span className="text-white/70 text-sm">{lead.email}</span>
-                        </div>
+                        <span className="text-white/70 text-sm">{lead.email}</span>
+                      </td>
+                      <td className="py-3 px-2">
+                        <TemplateBadge templateId={lead.template} />
                       </td>
                       <td className="py-3 px-2">
                         <StatusBadge status={lead.status} />
                       </td>
-                      <td className="py-3 px-2 text-white/40 text-sm">
+                      <td className="py-3 px-2 text-white/40 text-sm whitespace-nowrap">
                         {new Date(lead.created_at).toLocaleDateString('en-GB', {
                           day: '2-digit',
                           month: 'short',
