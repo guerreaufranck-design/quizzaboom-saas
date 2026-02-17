@@ -148,8 +148,8 @@ const generateMultiStageQuizChunked = async (
 
 /**
  * Main quiz generation function.
- * Routes to chunked approach for large quizzes (>25 questions) to avoid Vercel timeout.
- * Uses single API call for small quizzes (<=25 questions).
+ * Routes to chunked approach for quizzes >15 questions to avoid Vercel timeout.
+ * Uses single API call for small quizzes (<=15 questions).
  */
 export const generateMultiStageQuiz = async (
   request: QuizGenRequest,
@@ -158,12 +158,13 @@ export const generateMultiStageQuiz = async (
 ): Promise<AIQuizResponse> => {
   const questionCount = request.questionCount || 25;
 
-  // Use chunked approach for larger quizzes to avoid Vercel 60s timeout
-  if (questionCount > 25) {
+  // Use chunked approach for >15 questions to avoid Vercel 60s timeout
+  // Each chunk generates up to 15 questions — if a chunk fails, only that chunk retries
+  if (questionCount > CHUNK_SIZE) {
     return generateMultiStageQuizChunked(request, creatorId, onProgress);
   }
 
-  // Single-call approach for small quizzes (fast, stays under timeout)
+  // Single-call approach for small quizzes (≤15 questions, fast, stays under timeout)
   onProgress?.({ current: 1, total: 1, message: 'Generating...' });
 
   const response = await fetch('/api/generate-quiz', {
