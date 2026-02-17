@@ -369,11 +369,14 @@ export const PlayerView: React.FC = () => {
     lastPhaseRef.current = currentPhase;
   }, [currentPhase, currentPlayer?.total_score]);
 
+  // Initialize frozenScore ONCE on mount (or when player first loads)
+  const scoreInitRef = useRef(false);
   useEffect(() => {
-    if (currentPlayer && frozenScore === 0) {
+    if (currentPlayer && !scoreInitRef.current) {
+      scoreInitRef.current = true;
       setFrozenScore(currentPlayer.total_score || 0);
     }
-  }, [currentPlayer?.total_score, frozenScore]);
+  }, [currentPlayer?.id]);
 
   const handleJokerAction = async (jokerType: 'protection' | 'block' | 'steal' | 'double_points') => {
     try {

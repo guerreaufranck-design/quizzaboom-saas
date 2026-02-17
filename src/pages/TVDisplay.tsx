@@ -735,63 +735,57 @@ export const TVDisplay: React.FC = () => {
     const questionText = currentQuestion?.question_text || t('common.loading');
     const hasImage = !!currentQuestion?.image_url;
     const questionTextClass = hasImage && questionImgVisible
-      ? getAdaptiveTextSize(questionText, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
+      ? getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' })
+      : getAdaptiveTextSize(questionText, { xl: 'text-8xl', lg: 'text-7xl', md: 'text-6xl', sm: 'text-5xl' });
 
     return (
-      <div className="h-screen bg-gradient-to-br from-indigo-700 via-purple-600 to-fuchsia-600 p-5 overflow-hidden relative">
+      <div className="h-screen bg-gradient-to-br from-indigo-700 via-purple-600 to-fuchsia-600 p-4 overflow-hidden relative">
         <style>{TV_ANIMATIONS}</style>
-        {/* Decorative blurred shapes */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-10 left-10 w-40 h-40 bg-yellow-400/15 rounded-full blur-2xl" />
           <div className="absolute bottom-20 right-20 w-60 h-60 bg-cyan-400/10 rounded-full blur-3xl" />
         </div>
 
-        <div className="max-w-7xl mx-auto h-full flex flex-col relative z-10">
-          {/* Top bar: Question badge + Timer + Points */}
-          <div className="flex items-center justify-between shrink-0 mb-4">
-            <div className="anim-pop bg-yellow-400 rounded-2xl px-6 py-2 shadow-lg shadow-yellow-500/30">
-              <span className="font-cartoon text-3xl font-bold text-gray-900">
+        <div className="h-full flex flex-col relative z-10">
+          {/* Top bar: Question badge left + Timer right — compact */}
+          <div className="flex items-center justify-between shrink-0 mb-2">
+            <div className="anim-pop bg-yellow-400 rounded-2xl px-5 py-1.5 shadow-lg shadow-yellow-500/30">
+              <span className="font-cartoon text-2xl font-bold text-gray-900">
                 Question {currentQuestionIndex + 1}/{allQuestions.length}
               </span>
             </div>
-            <div className="anim-timer bg-white/20 backdrop-blur-xl rounded-2xl px-8 py-2 border-2 border-white/30">
-              <div className="flex items-center gap-3">
-                <Clock className="w-8 h-8 text-yellow-300" />
-                <span className="font-cartoon text-5xl font-bold text-white">{displaySeconds}</span>
+            <div className="anim-timer bg-white/20 backdrop-blur-xl rounded-2xl px-6 py-1.5 border-2 border-white/30">
+              <div className="flex items-center gap-2">
+                <Clock className="w-7 h-7 text-yellow-300" />
+                <span className="font-cartoon text-4xl font-bold text-white">{displaySeconds}</span>
               </div>
-            </div>
-            <div className="anim-pop bg-qb-cyan/80 rounded-2xl px-6 py-2 shadow-lg shadow-cyan-500/30">
-              <span className="font-cartoon text-2xl font-bold text-white">
-                {currentQuestion?.points || 5} pts
-              </span>
             </div>
           </div>
 
-          {/* Main content */}
+          {/* Main content: image on TOP, question text BELOW — fill all space */}
           {hasImage && questionImgVisible ? (
-            <div className="flex gap-6 flex-1 min-h-0 items-center">
-              {/* Image left 40% */}
-              <div className="w-[40%] shrink-0 flex items-center justify-center h-full anim-pop">
+            <div className="flex-1 min-h-0 flex flex-col gap-3">
+              {/* Image — top portion, constrained height */}
+              <div className="flex items-center justify-center anim-pop" style={{ maxHeight: '45%' }}>
                 <img
                   src={currentQuestion!.image_url}
                   alt=""
-                  className="max-h-[70vh] max-w-full object-contain rounded-2xl shadow-2xl ring-4 ring-white/20"
+                  className="max-h-full max-w-full object-contain rounded-2xl shadow-2xl ring-4 ring-white/20"
                   onError={() => setQuestionImgVisible(false)}
                 />
               </div>
-              {/* Question right 60% */}
-              <div className="flex-1 flex items-center anim-slide">
+              {/* Question text — bottom portion, fills remaining space */}
+              <div className="flex-1 flex items-center justify-center anim-slide">
                 <div className="bg-white/15 backdrop-blur-xl rounded-[2rem] p-8 w-full border-2 border-white/20 shadow-2xl">
-                  <h2 className={`font-cartoon font-bold text-white leading-tight ${questionTextClass}`}>
+                  <h2 className={`font-cartoon font-bold text-white leading-tight text-center ${questionTextClass}`}>
                     {questionText}
                   </h2>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center anim-pop">
-              <div className="bg-white/15 backdrop-blur-xl rounded-[2rem] p-10 w-full max-w-6xl border-2 border-white/20 shadow-2xl">
+            <div className="flex-1 flex items-center justify-center anim-pop">
+              <div className="bg-white/15 backdrop-blur-xl rounded-[2rem] p-12 w-full border-2 border-white/20 shadow-2xl">
                 <h2 className={`font-cartoon font-bold text-white leading-tight text-center ${questionTextClass}`}>
                   {questionText}
                 </h2>
@@ -810,15 +804,14 @@ export const TVDisplay: React.FC = () => {
     const questionText = currentQuestion?.question_text || '';
     const hasImage = !!currentQuestion?.image_url;
     const showImage = hasImage && answerImgVisible;
-    const answerQuestionClass = showImage
-      ? getAdaptiveTextSize(questionText, { xl: 'text-3xl', lg: 'text-2xl', md: 'text-xl', sm: 'text-lg' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' });
     const options = currentQuestion?.options || [];
+    // Much bigger text sizes for TV projection readability
+    const answerQuestionClass = showImage
+      ? getAdaptiveTextSize(questionText, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' })
+      : getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
     const optionTextClass = showImage
-      ? getAdaptiveOptionSize(options, { xl: 'text-xl', lg: 'text-lg', md: 'text-base', sm: 'text-sm' })
-      : getAdaptiveOptionSize(options, { xl: 'text-3xl', lg: 'text-2xl', md: 'text-xl', sm: 'text-lg' });
-    const maxOptionLen = Math.max(...options.map(o => o.length), 0);
-    const gridCols = maxOptionLen > 60 ? 'grid-cols-1' : 'grid-cols-2';
+      ? getAdaptiveOptionSize(options, { xl: 'text-3xl', lg: 'text-2xl', md: 'text-xl', sm: 'text-lg' })
+      : getAdaptiveOptionSize(options, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' });
     const isUrgent = displaySeconds <= 5;
 
     return (
@@ -826,37 +819,34 @@ export const TVDisplay: React.FC = () => {
         isUrgent ? 'ring-4 ring-red-500/50 ring-inset' : ''
       }`}>
         <style>{TV_ANIMATIONS}</style>
-        {/* Subtle decorative blurs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl" />
         </div>
 
-        <div className="max-w-7xl mx-auto h-full flex flex-col relative z-10">
-          {/* Top bar: Q number + Timer + Answered count */}
+        <div className="h-full flex flex-col relative z-10">
+          {/* Top bar: Q number left + Timer center + Answered count right — compact */}
           <div className="flex items-center justify-between shrink-0 mb-2">
-            <div className="anim-pop bg-yellow-400 rounded-xl px-5 py-1.5 shadow-lg">
-              <span className="font-cartoon text-2xl font-bold text-gray-900">
+            <div className="anim-pop bg-yellow-400 rounded-xl px-4 py-1 shadow-lg">
+              <span className="font-cartoon text-xl font-bold text-gray-900">
                 Q{currentQuestionIndex + 1}/{allQuestions.length}
               </span>
             </div>
-            <div className={`bg-white/15 backdrop-blur-xl rounded-xl px-6 py-1.5 border-2 ${
+            <div className={`bg-white/15 backdrop-blur-xl rounded-xl px-5 py-1 border-2 ${
               isUrgent ? 'border-red-400 anim-timer' : 'border-white/20'
             }`}>
-              <div className="flex items-center gap-3">
-                <Clock className={`w-7 h-7 ${isUrgent ? 'text-red-400' : 'text-qb-cyan'}`} />
-                <span className={`font-cartoon text-4xl font-bold ${isUrgent ? 'text-red-300' : 'text-white'}`}>{displaySeconds}</span>
+              <div className="flex items-center gap-2">
+                <Clock className={`w-6 h-6 ${isUrgent ? 'text-red-400' : 'text-qb-cyan'}`} />
+                <span className={`font-cartoon text-3xl font-bold ${isUrgent ? 'text-red-300' : 'text-white'}`}>{displaySeconds}</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-4 py-1.5 bg-white/10 rounded-xl">
-                <Users className="w-5 h-5 text-qb-yellow" />
-                <span className="text-white font-bold text-lg">
-                  {t('tv.answeredCount', { count: answeredCount, total: topPlayers.length })}
-                </span>
-              </div>
+            <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-xl">
+              <Users className="w-4 h-4 text-qb-yellow" />
+              <span className="text-white font-bold text-sm">
+                {answeredCount}/{topPlayers.length}
+              </span>
               {topPlayers.length > 0 && (
-                <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
+                <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full transition-all duration-500"
                     style={{ width: `${Math.min((answeredCount / topPlayers.length) * 100, 100)}%` }}
@@ -866,39 +856,43 @@ export const TVDisplay: React.FC = () => {
             </div>
           </div>
 
-          {/* Main content area */}
-          <div className={`flex-1 min-h-0 ${showImage ? 'flex gap-4' : ''}`}>
-            {/* Image column */}
+          {/* Main content: image left + (question top-right + answers below-right) */}
+          <div className={`flex-1 min-h-0 flex ${showImage ? 'gap-4' : 'flex-col'}`}>
+            {/* Image column — larger (40%) */}
             {showImage && (
-              <div className="w-[30%] shrink-0 flex items-center justify-center anim-pop">
+              <div className="w-[40%] shrink-0 flex items-center justify-center anim-pop">
                 <img
                   src={currentQuestion!.image_url}
                   alt=""
-                  className="max-h-[70vh] max-w-full object-contain rounded-2xl shadow-2xl ring-4 ring-white/20"
+                  className="max-h-full max-w-full object-contain rounded-2xl shadow-2xl ring-4 ring-white/20"
                   onError={() => setAnswerImgVisible(false)}
                 />
               </div>
             )}
 
-            {/* Question + Answers column */}
-            <div className={`p-4 rounded-[2rem] bg-white/5 backdrop-blur-sm border-2 border-white/10 flex flex-col justify-between ${showImage ? 'flex-1' : 'w-full h-full'}`}>
-              <h2 className={`font-cartoon font-bold text-white text-center mb-3 ${answerQuestionClass}`}>
-                {currentQuestion?.question_text}
-              </h2>
+            {/* Right column: question on top + 4 answer cards below */}
+            <div className={`flex flex-col gap-2 ${showImage ? 'flex-1' : 'w-full h-full'}`}>
+              {/* Question text — top area */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 shrink-0">
+                <h2 className={`font-cartoon font-bold text-white text-center leading-tight ${answerQuestionClass}`}>
+                  {currentQuestion?.question_text}
+                </h2>
+              </div>
 
-              <div className={`grid ${gridCols} gap-3 flex-1 min-h-0`}>
+              {/* 4 answer cards — fill remaining space, 2x2 grid */}
+              <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
                 {options.map((option, idx) => {
                   const color = OPTION_COLORS[idx] || OPTION_COLORS[0];
                   return (
                     <div
                       key={idx}
-                      className={`p-3 rounded-2xl bg-gradient-to-r ${color.bg} border-2 ${color.border} flex items-center gap-3 shadow-lg anim-slide`}
+                      className={`rounded-2xl bg-gradient-to-br ${color.bg} border-3 ${color.border} flex items-center gap-3 px-4 shadow-lg anim-slide overflow-hidden`}
                       style={{ animationDelay: `${idx * 0.1}s`, animationFillMode: 'backwards' }}
                     >
-                      <div className={`w-12 h-12 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner`}>
-                        <span className="font-cartoon text-2xl font-bold text-white">{color.letter}</span>
+                      <div className={`w-14 h-14 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner`}>
+                        <span className="font-cartoon text-3xl font-bold text-white">{color.letter}</span>
                       </div>
-                      <span className={`${optionTextClass} text-white font-semibold flex-1 drop-shadow-md`}>
+                      <span className={`${optionTextClass} text-white font-bold flex-1 drop-shadow-md leading-tight`}>
                         {option}
                       </span>
                     </div>
