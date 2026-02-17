@@ -889,9 +889,9 @@ export const TVDisplay: React.FC = () => {
                       className={`rounded-2xl bg-gradient-to-br ${color.bg} border-2 ${color.border} p-3 flex flex-col shadow-lg anim-slide overflow-hidden`}
                       style={{ animationDelay: `${idx * 0.1}s`, animationFillMode: 'backwards' }}
                     >
-                      {/* Letter badge — top left */}
-                      <div className={`w-11 h-11 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner`}>
-                        <span className="font-cartoon text-2xl font-semibold text-white">{color.letter}</span>
+                      {/* Letter badge — top left, large */}
+                      <div className={`w-16 h-16 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner`}>
+                        <span className="font-cartoon text-5xl font-semibold text-white">{color.letter}</span>
                       </div>
                       {/* Answer text — fills ALL remaining height + width, centered */}
                       <div className="flex-1 flex items-center justify-center min-h-0">
