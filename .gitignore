@@ -20,3 +20,8 @@ npm-debug.log*
 # Editor
 .vscode
 .idea
+.vercel
+
+# Google Cloud Service Account (contains sensitive credentials)
+service-account-key.json
+*-service-account-*.json

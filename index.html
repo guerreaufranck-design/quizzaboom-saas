@@ -10,6 +10,7 @@
     <meta name="keywords" content="quiz night, bar quiz, restaurant entertainment, AI quiz, multiplayer quiz, event quiz, trivia night, soiree quiz, quiz bar, quiz restaurant" />
     <meta name="author" content="QuizzaBoom" />
     <meta name="theme-color" content="#0a0a1a" />
+    <meta name="google-site-verification" content="ikGxdRVDaLi-bXGc4zhIM15OzVG4PT57mYN0G_6p-Ig" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://quizzaboom.app/" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -35,7 +36,7 @@
     <meta name="twitter:description" content="AI-powered quiz platform. 250 players, QR code join, 100% automatic. Free trial for venues." />
     <meta name="twitter:image" content="https://quizzaboom.app/og-image.png" />
 
-    <!-- Structured Data (JSON-LD) -->
+    <!-- Structured Data (JSON-LD) - SoftwareApplication -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -54,7 +55,8 @@
           "price": "69.00",
           "priceCurrency": "USD",
           "priceValidUntil": "2027-12-31",
-          "description": "5 quizzes/month, up to 250 players, 30-day free trial"
+          "description": "5 quizzes/month, up to 250 players, 30-day free trial",
+          "availability": "https://schema.org/InStock"
         },
         {
           "@type": "Offer",
@@ -62,14 +64,119 @@
           "price": "99.00",
           "priceCurrency": "USD",
           "priceValidUntil": "2027-12-31",
-          "description": "Unlimited quizzes, up to 250 players, white label, 2 team seats"
+          "description": "Unlimited quizzes, up to 250 players, white label, 2 team seats",
+          "availability": "https://schema.org/InStock"
         }
       ],
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": "4.8",
-        "ratingCount": "150"
+        "ratingCount": "150",
+        "bestRating": "5",
+        "worstRating": "1"
       }
+    }
+    </script>
+
+    <!-- Structured Data - Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "QuizzaBoom",
+      "url": "https://quizzaboom.app",
+      "logo": "https://quizzaboom.app/logo.png",
+      "sameAs": [
+        "https://twitter.com/quizzaboom",
+        "https://facebook.com/quizzaboom"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Support",
+        "email": "support@quizzaboom.app",
+        "availableLanguage": ["English", "French", "Spanish", "German"]
+      }
+    }
+    </script>
+
+    <!-- Structured Data - FAQPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How does QuizzaBoom work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "QuizzaBoom is an AI-powered quiz platform. You pick a theme, AI generates 30 questions in 10 seconds, players scan a QR code to join from their phones, and everything (scoring, leaderboard, results) is 100% automatic. Setup takes 90 seconds."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do players need to download an app?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Players simply scan a QR code with their phone camera and join instantly in their mobile browser. No app download, no sign-up required."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much does QuizzaBoom cost?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Starter plan is $69/month (5 quizzes, up to 250 players). Pro plan is $99/month (unlimited quizzes, white label). Both include a 30-day free trial with no credit card required."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use QuizzaBoom for pub quiz nights?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes! QuizzaBoom is specifically designed for pubs, bars, and restaurants. It's used by 500+ UK and Irish venues for their weekly quiz nights. AI generates fresh questions every week, saving 4+ hours of preparation time."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How many players can join a quiz?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Up to 250 players can join a single quiz. This works for both small pub quiz nights and large venue events or corporate team building."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Structured Data - HowTo -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Set Up a Quiz Night with QuizzaBoom",
+      "description": "Set up a professional automated quiz night in 90 seconds",
+      "totalTime": "PT2M",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Create Quiz",
+          "text": "Sign up and pick a quiz theme (Sports, History, Movies, etc). AI generates 30 unique questions instantly.",
+          "position": 1
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Display QR Code",
+          "text": "Show the QR code on your TV or screens. Players scan it to join from their phones.",
+          "position": 2
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Start Quiz",
+          "text": "Hit Start. Questions appear on TV, players answer on phones. Scoring and leaderboard are automatic.",
+          "position": 3
+        }
+      ]
     }
     </script>
   </head>

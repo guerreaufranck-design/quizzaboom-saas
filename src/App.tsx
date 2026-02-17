@@ -17,6 +17,11 @@ import { ProDashboard } from './pages/ProDashboard';
 import { SpecialOffer } from './pages/SpecialOffer';
 import { Settings } from './pages/Settings';
 import { Tutorial } from './pages/Tutorial';
+import { PubQuizUK } from './pages/PubQuizUK';
+import { PubQuizIreland } from './pages/PubQuizIreland';
+import { BarQuizNight } from './pages/BarQuizNight';
+import { BlogIndex } from './pages/BlogIndex';
+import { HowToRunSuccessfulPubQuiz } from './pages/blog/HowToRunSuccessfulPubQuiz';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SupportChat } from './components/SupportChat';
@@ -76,6 +81,11 @@ function App() {
       <Route path="/settings" element={<Settings />} />
       <Route path="/tutorial" element={<Tutorial />} />
       <Route path="/offer" element={<SpecialOffer />} />
+      <Route path="/pub-quiz-uk" element={<PubQuizUK />} />
+      <Route path="/pub-quiz-ireland" element={<PubQuizIreland />} />
+      <Route path="/bar-quiz-night" element={<BarQuizNight />} />
+      <Route path="/blog" element={<BlogIndex />} />
+      <Route path="/blog/how-to-run-successful-pub-quiz-night" element={<HowToRunSuccessfulPubQuiz />} />
       <Route path="*" element={<HomePage />} />
     </Routes>
     <SupportChat />

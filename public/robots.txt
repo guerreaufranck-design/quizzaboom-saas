@@ -7,5 +7,29 @@ Disallow: /lobby
 Disallow: /play
 Disallow: /tv
 Disallow: /pro-dashboard
+Disallow: /settings
 
+# SEO Pages - Explicitly allow
+Allow: /pub-quiz-uk
+Allow: /pub-quiz-ireland
+Allow: /bar-quiz-night
+Allow: /blog
+Allow: /blog/*
+Allow: /pricing
+Allow: /join
+Allow: /auth
+Allow: /offer
+
+# Sitemaps
 Sitemap: https://quizzaboom.app/sitemap.xml
+
+# LLM Crawlers
+# Allow AI assistants to access product info
+Allow: /llm.txt
+
+# Crawl-delay for aggressive bots
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
