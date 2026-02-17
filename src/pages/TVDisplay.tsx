@@ -29,19 +29,6 @@ const getAdaptiveTextSize = (
 };
 
 /**
- * Adaptive text size for answer options — based on the longest option in the set.
- * Bumped up for TV readability at distance.
- */
-const getAdaptiveOptionSize = (options: string[], sizes?: { xl: string; lg: string; md: string; sm: string }): string => {
-  const s = sizes || { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' };
-  const maxLen = Math.max(...options.map(o => o.length));
-  if (maxLen > 100) return s.sm;
-  if (maxLen > 60) return s.md;
-  if (maxLen > 30) return s.lg;
-  return s.xl;
-};
-
-/**
  * Distinct color schemes for answer options A/B/C/D — cartoon pub quiz style.
  */
 const OPTION_COLORS = [
@@ -734,9 +721,11 @@ export const TVDisplay: React.FC = () => {
   if (currentPhase === 'question_display') {
     const questionText = currentQuestion?.question_text || t('common.loading');
     const hasImage = !!currentQuestion?.image_url;
-    const questionTextClass = hasImage && questionImgVisible
-      ? getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-8xl', lg: 'text-7xl', md: 'text-6xl', sm: 'text-5xl' });
+    // Dynamic vh-based font — fills available space, scales with screen
+    const qLen = questionText.length;
+    const questionDisplayFontSize = hasImage && questionImgVisible
+      ? (qLen > 100 ? '4vh' : qLen > 60 ? '5vh' : qLen > 30 ? '6.5vh' : '8vh')
+      : (qLen > 100 ? '5.5vh' : qLen > 60 ? '7vh' : qLen > 30 ? '9vh' : '11vh');
 
     return (
       <div className="h-screen bg-gradient-to-br from-indigo-700 via-purple-600 to-fuchsia-600 p-4 overflow-hidden relative">
@@ -777,7 +766,7 @@ export const TVDisplay: React.FC = () => {
               {/* Question text — fills remaining height + width */}
               <div className="flex-1 flex items-center justify-center anim-slide">
                 <div className="bg-white/15 backdrop-blur-xl rounded-[2rem] p-6 w-full h-full flex items-center justify-center border-2 border-white/20 shadow-2xl">
-                  <h2 className={`font-cartoon font-medium text-white leading-snug text-center ${questionTextClass}`}>
+                  <h2 className="font-cartoon font-medium text-white leading-snug text-center" style={{ fontSize: questionDisplayFontSize }}>
                     {questionText}
                   </h2>
                 </div>
@@ -786,7 +775,7 @@ export const TVDisplay: React.FC = () => {
           ) : (
             <div className="flex-1 flex items-center justify-center anim-pop">
               <div className="bg-white/15 backdrop-blur-xl rounded-[2rem] p-10 w-full h-full flex items-center justify-center border-2 border-white/20 shadow-2xl">
-                <h2 className={`font-cartoon font-medium text-white leading-snug text-center ${questionTextClass}`}>
+                <h2 className="font-cartoon font-medium text-white leading-snug text-center" style={{ fontSize: questionDisplayFontSize }}>
                   {questionText}
                 </h2>
               </div>
@@ -805,13 +794,16 @@ export const TVDisplay: React.FC = () => {
     const hasImage = !!currentQuestion?.image_url;
     const showImage = hasImage && answerImgVisible;
     const options = currentQuestion?.options || [];
-    // Maximized text sizes for TV projection — no bold, use height for bigger chars
-    const answerQuestionClass = showImage
-      ? getAdaptiveTextSize(questionText, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-7xl', lg: 'text-6xl', md: 'text-5xl', sm: 'text-4xl' });
-    const optionTextClass = showImage
-      ? getAdaptiveOptionSize(options, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' })
-      : getAdaptiveOptionSize(options, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
+    // Dynamic font sizes using vh units — scales with screen, fills available space
+    // Question: short text → huge (8vh), long text → smaller but still big (4vh)
+    const qLen = questionText.length;
+    const questionFontSize = showImage
+      ? (qLen > 100 ? '3vh' : qLen > 60 ? '3.5vh' : qLen > 30 ? '4.5vh' : '5.5vh')
+      : (qLen > 100 ? '4.5vh' : qLen > 60 ? '5.5vh' : qLen > 30 ? '7vh' : '8.5vh');
+    const maxOptLen = Math.max(...options.map(o => o.length), 0);
+    const optionFontSize = showImage
+      ? (maxOptLen > 40 ? '2.5vh' : maxOptLen > 25 ? '3vh' : maxOptLen > 15 ? '3.5vh' : '4.5vh')
+      : (maxOptLen > 40 ? '3.5vh' : maxOptLen > 25 ? '4.5vh' : maxOptLen > 15 ? '5.5vh' : '6.5vh');
     const isUrgent = displaySeconds <= 5;
 
     return (
@@ -872,9 +864,9 @@ export const TVDisplay: React.FC = () => {
 
             {/* Column: question (30% height) + 4 answer cards (70% height) */}
             <div className={`flex flex-col gap-2 ${showImage ? 'flex-1' : 'w-full h-full'}`}>
-              {/* Question — 30% height so text wraps and chars can be HUGE */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-3 flex items-center justify-center" style={{ height: '28%' }}>
-                <h2 className={`font-cartoon font-medium text-white text-center leading-snug ${answerQuestionClass}`}>
+              {/* Question — 28% height, font in vh units fills the space */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-2 flex items-center justify-center" style={{ height: '28%' }}>
+                <h2 className="font-cartoon font-medium text-white text-center leading-snug" style={{ fontSize: questionFontSize }}>
                   {currentQuestion?.question_text}
                 </h2>
               </div>
@@ -895,7 +887,7 @@ export const TVDisplay: React.FC = () => {
                       </div>
                       {/* Answer text — fills ALL remaining space, wraps vertically */}
                       <div className="flex-1 flex items-center justify-center min-h-0">
-                        <span className={`${optionTextClass} text-white font-medium drop-shadow-md leading-snug text-center`}>
+                        <span className="text-white font-medium drop-shadow-md leading-snug text-center" style={{ fontSize: optionFontSize }}>
                           {option}
                         </span>
                       </div>

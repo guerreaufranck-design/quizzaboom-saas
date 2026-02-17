@@ -267,7 +267,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         stage.questions.map((q, qIndex) => ({
           id: uuidv4(),
           quiz_id: quizData.id,
-          stage_id: q.micro_theme || `Stage ${stageIndex + 1}`,
+          stage_id: stage.theme || `Stage ${stageIndex + 1}`,
           stage_order: qIndex,
           global_order: stageIndex * stage.questions.length + qIndex,
           question_text: q.question_text,
