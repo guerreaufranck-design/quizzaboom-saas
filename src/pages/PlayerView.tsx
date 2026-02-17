@@ -215,8 +215,7 @@ export const PlayerView: React.FC = () => {
   }, [currentQuiz?.id, sessionCode]);
 
   // Load joker inventory ONLY when currentPlayer becomes available (ONCE per session)
-  // Use a ref to prevent re-initialization after first successful DB load
-  const inventoryLoadedRef = useRef(false);
+  // Uses inventoryLoadedRef (declared above) to prevent re-initialization after first successful DB load
   useEffect(() => {
     const loadPlayerInventory = async () => {
       if (!currentPlayer?.id) return;
