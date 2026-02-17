@@ -417,52 +417,15 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
     set({ playerInventory: updatedInventory });
 
-    // ALWAYS persist inventory to sessionStorage first (instant, survives refresh)
-    try {
-      sessionStorage.setItem('qb_inventory', JSON.stringify(updatedInventory));
-      console.log('💾 Joker inventory saved to sessionStorage:', updatedInventory);
-    } catch (_) {}
-
-    // Persist inventory to DB via server API (bypasses RLS)
-    try {
-      const { data: playerData } = await supabase
-        .from('session_players')
-        .select('settings')
-        .eq('id', playerId)
-        .single();
-
-      const currentSettings = (playerData?.settings as Record<string, unknown>) || {};
-      const newSettings = { ...currentSettings, jokerInventory: updatedInventory };
-
-      const res = await fetch('/api/update-player', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          playerId,
-          updates: {
-            settings: newSettings,
-            updated_at: new Date().toISOString(),
-          },
-        }),
-      });
-      if (!res.ok) {
-        console.error('❌ Failed to persist joker inventory via API:', await res.text());
-      } else {
-        console.log('✅ Joker inventory persisted to DB:', updatedInventory);
-      }
-    } catch (err) {
-      console.error('Failed to persist joker inventory:', err);
-    }
-
-    // Re-read activeEffects after inventory update (may have been updated by broadcasts)
-    const latestEffects = get().activeEffects;
+    // ── STEP 1: Apply effects IMMEDIATELY (synchronous, before any async call) ──
+    const currentEffects = get().activeEffects;
 
     switch (jokerType) {
       case 'protection':
         set({
           activeEffects: {
-            ...latestEffects,
-            protections: { ...latestEffects.protections, [playerId]: true },
+            ...currentEffects,
+            protections: { ...currentEffects.protections, [playerId]: true },
           },
         });
         break;
@@ -470,24 +433,24 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       case 'double_points':
         set({
           activeEffects: {
-            ...latestEffects,
-            doublePoints: { ...latestEffects.doublePoints, [playerId]: true },
+            ...currentEffects,
+            doublePoints: { ...currentEffects.doublePoints, [playerId]: true },
           },
         });
+        console.log('⭐ Double points ACTIVATED for', playerId, '→ activeEffects:', JSON.stringify(get().activeEffects.doublePoints));
         break;
 
       case 'block':
         if (targetPlayerId) {
-          // Check if target is protected — if so, joker is wasted (already consumed above)
-          if (latestEffects.protections[targetPlayerId]) {
+          if (currentEffects.protections[targetPlayerId]) {
             console.log('🛡️ Block FAILED — target is protected! Joker wasted.');
             get().closeTargetSelector();
             break;
           }
           set({
             activeEffects: {
-              ...latestEffects,
-              blocks: { ...latestEffects.blocks, [targetPlayerId]: true },
+              ...currentEffects,
+              blocks: { ...currentEffects.blocks, [targetPlayerId]: true },
             },
           });
           get().closeTargetSelector();
@@ -496,28 +459,31 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
       case 'steal':
         if (targetPlayerId) {
-          // Check if target is protected — if so, joker is wasted (already consumed above)
-          if (latestEffects.protections[targetPlayerId]) {
+          if (currentEffects.protections[targetPlayerId]) {
             console.log('🛡️ Steal FAILED — target is protected! Joker wasted.');
             get().closeTargetSelector();
             break;
           }
-          // First-come-first-served: reject if already stolen
-          if (latestEffects.steals[targetPlayerId]) {
+          if (currentEffects.steals[targetPlayerId]) {
             console.log('💰 Steal FAILED — target already stolen by someone else!');
             get().closeTargetSelector();
             break;
           }
           set({
             activeEffects: {
-              ...latestEffects,
-              steals: { ...latestEffects.steals, [targetPlayerId]: playerId },
+              ...currentEffects,
+              steals: { ...currentEffects.steals, [targetPlayerId]: playerId },
             },
           });
           get().closeTargetSelector();
         }
         break;
     }
+
+    // ── STEP 2: Persist to sessionStorage IMMEDIATELY (survives refresh) ──
+    try {
+      sessionStorage.setItem('qb_inventory', JSON.stringify(updatedInventory));
+    } catch (_) {}
 
     // Persist active effects to sessionStorage so they survive page refresh
     try {
@@ -559,6 +525,40 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
         });
       }
     }
+
+    // ── STEP 3: Persist inventory to DB (fire-and-forget, non-blocking) ──
+    // This runs AFTER effects are applied and broadcast, so it never blocks the UI
+    (async () => {
+      try {
+        const { data: playerData } = await supabase
+          .from('session_players')
+          .select('settings')
+          .eq('id', playerId)
+          .single();
+
+        const currentSettings = (playerData?.settings as Record<string, unknown>) || {};
+        const newSettings = { ...currentSettings, jokerInventory: updatedInventory };
+
+        const res = await fetch('/api/update-player', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            playerId,
+            updates: {
+              settings: newSettings,
+              updated_at: new Date().toISOString(),
+            },
+          }),
+        });
+        if (!res.ok) {
+          console.error('❌ Failed to persist joker inventory via API:', await res.text());
+        } else {
+          console.log('✅ Joker inventory persisted to DB');
+        }
+      } catch (err) {
+        console.error('Failed to persist joker inventory:', err);
+      }
+    })();
   },
 
   selectAnswer: (answer) => {

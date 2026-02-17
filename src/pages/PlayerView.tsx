@@ -334,18 +334,21 @@ export const PlayerView: React.FC = () => {
   }, [players, currentPlayer]);
 
   useEffect(() => {
+    // Freeze score when answer_selection starts (don't show DB update during answering)
     if (currentPhase === 'answer_selection' && lastPhaseRef.current !== 'answer_selection') {
       console.log('🔒 Freezing score at:', currentPlayer?.total_score);
       setFrozenScore(currentPlayer?.total_score || 0);
     }
 
-    if (currentPhase === 'theme_announcement' && lastPhaseRef.current !== 'theme_announcement') {
-      console.log('🔓 Updating score to:', currentPlayer?.total_score);
-      setFrozenScore(currentPlayer?.total_score || 0);
-    }
-
-    // Play sound on results phase (correct/incorrect feedback)
+    // Reveal updated score when results phase starts (after correct answer shown)
     if (currentPhase === 'results' && lastPhaseRef.current !== 'results') {
+      // Small delay so player sees the answer reveal first, then score update
+      setTimeout(() => {
+        console.log('🔓 Revealing score on results:', currentPlayer?.total_score);
+        setFrozenScore(currentPlayer?.total_score || 0);
+      }, 800);
+
+      // Play sound
       if (hasAnswered && currentQuestion) {
         const correctAnswer = currentQuestion.correct_answer;
         const wasCorrect = selectedAnswer === correctAnswer;
@@ -356,6 +359,11 @@ export const PlayerView: React.FC = () => {
           playWrongSound();
         }
       }
+    }
+
+    // Also update on theme_announcement (new question round)
+    if (currentPhase === 'theme_announcement' && lastPhaseRef.current !== 'theme_announcement') {
+      setFrozenScore(currentPlayer?.total_score || 0);
     }
 
     lastPhaseRef.current = currentPhase;

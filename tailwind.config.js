@@ -21,6 +21,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        cartoon: ['Fredoka', 'Comic Sans MS', 'cursive'],
       },
       animation: {
         'bounce-slow': 'bounce 3s infinite',

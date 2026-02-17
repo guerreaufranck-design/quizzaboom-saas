@@ -288,6 +288,18 @@ PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
    - Comparison: "Which is heavier/longer/older: X or Y?"
    - Process: "What happens when / How is X made...?"
    - Origin: "Where does X come from / Who invented...?"
+   - Visual identification (INCLUDE 2-3 PER BATCH): "${fullLanguage === 'French' ? 'Qu\\'est-ce que c\\'est ?' : fullLanguage === 'German' ? 'Was ist das?' : fullLanguage === 'Spanish' ? '¿Qué es esto?' : 'What is this?'}"
+     * The question asks the player to identify something UNUSUAL shown in an image
+     * question_text: "${fullLanguage === 'French' ? 'Qu\\'est-ce que c\\'est ?' : fullLanguage === 'German' ? 'Was ist das?' : fullLanguage === 'Spanish' ? '¿Qué es esto?' : 'What is this?'}" (short, the image does the talking)
+     * Options: 4 plausible text answers from the same category (e.g., 4 animal names, 4 plant names)
+     * MANDATORY: Use UNUSUAL/BIZARRE/RARE subjects ONLY — things most people have never seen:
+       - Rare animals: axolotl, blobfish, narwhal, pangolin, quokka, aye-aye, fossa, okapi, saiga antelope, tarsier, star-nosed mole, glass frog, mantis shrimp, leafy sea dragon, shoebill
+       - Strange plants: Rafflesia, corpse flower, Venus flytrap, lithops (living stones), Welwitschia, dragon blood tree, baobab
+       - Natural phenomena: bioluminescent bay, basalt columns, rainbow mountains, penitentes, lenticular clouds
+       - Forgotten inventions or obscure objects: astrolabe, orrery, theremin, zoetrope
+     * NEVER use everyday things: no cat, dog, horse, car, house, flower, tree, lion, elephant
+     * EXCEPTION for image_search_term: for these visual ID questions, the search term MUST be the CORRECT ANSWER (e.g., "axolotl", "blobfish") because the whole point is showing the unusual thing
+     * micro_theme should be "${fullLanguage === 'French' ? 'Identification Visuelle' : fullLanguage === 'German' ? 'Visuelle Identifikation' : fullLanguage === 'Spanish' ? 'Identificación Visual' : 'Visual Identification'}"
 
 4. STAGE THEMES:
    - Each stage needs a distinct sub-topic within the main theme
@@ -337,8 +349,9 @@ PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
 8. IMAGE SEARCH TERM:
    - Provide a 2-3 word ENGLISH search term for finding a relevant photo on Unsplash
    - Must be CONCRETE and VISUAL (objects, places, animals — not abstract concepts)
-   - The image must illustrate the THEME or TOPIC of the question, NOT the correct answer
+   - For REGULAR questions: the image must illustrate the THEME or TOPIC, NOT the correct answer
    - NEVER search for the correct answer directly — the photo must NOT give away the answer
+   - EXCEPTION for visual identification questions (see rule 3): the image_search_term MUST be the correct answer (e.g., "axolotl", "pangolin") since showing the subject IS the question
    - Think: "What broad visual context helps the player understand the topic?"
    - Good: Question "Which ocean is the deepest?" → image_search_term: "ocean waves" (shows the topic, not the answer)
    - Good: Question "Who painted the Mona Lisa?" → image_search_term: "art museum painting" (NOT "Mona Lisa" or "Leonardo da Vinci")

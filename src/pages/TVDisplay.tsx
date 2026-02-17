@@ -42,6 +42,26 @@ const getAdaptiveOptionSize = (options: string[], sizes?: { xl: string; lg: stri
   return s.xl;
 };
 
+/**
+ * Distinct color schemes for answer options A/B/C/D — cartoon pub quiz style.
+ */
+const OPTION_COLORS = [
+  { bg: 'from-red-500 to-orange-500', border: 'border-red-400', label: 'bg-red-700', letter: 'A' },
+  { bg: 'from-blue-500 to-indigo-500', border: 'border-blue-400', label: 'bg-blue-700', letter: 'B' },
+  { bg: 'from-green-500 to-emerald-500', border: 'border-green-400', label: 'bg-green-700', letter: 'C' },
+  { bg: 'from-purple-500 to-pink-500', border: 'border-purple-400', label: 'bg-purple-700', letter: 'D' },
+];
+
+/** CSS animations for cartoon TV display */
+const TV_ANIMATIONS = `
+  @keyframes pop-in { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes slide-up { 0% { transform: translateY(30px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+  @keyframes timer-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  .anim-pop { animation: pop-in 0.5s ease-out forwards; }
+  .anim-slide { animation: slide-up 0.4s ease-out forwards; }
+  .anim-timer { animation: timer-pulse 1s ease-in-out infinite; }
+`;
+
 export const TVDisplay: React.FC = () => {
   const { t } = useTranslation();
   const {
@@ -50,6 +70,7 @@ export const TVDisplay: React.FC = () => {
     phaseEndTime,
     currentQuestion,
     currentThemeTitle,
+    currentQuestionIndex,
     allQuestions,
     listenToPhaseChanges,
     loadQuestions,
@@ -709,52 +730,70 @@ export const TVDisplay: React.FC = () => {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // PHASE 2: Question Display — image + question + countdown
-  // Layout: image left (40%) + question right when image present, or centered big text
+  // PHASE 2: Question Display — cartoon style with image + question + countdown
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'question_display') {
     const questionText = currentQuestion?.question_text || t('common.loading');
     const hasImage = !!currentQuestion?.image_url;
     const questionTextClass = hasImage && questionImgVisible
-      ? getAdaptiveTextSize(questionText, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-7xl', lg: 'text-6xl', md: 'text-5xl', sm: 'text-4xl' });
+      ? getAdaptiveTextSize(questionText, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' })
+      : getAdaptiveTextSize(questionText, { xl: 'text-6xl', lg: 'text-5xl', md: 'text-4xl', sm: 'text-3xl' });
 
     return (
-      <div className="h-screen bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-500 p-5 overflow-hidden">
-        <div className="max-w-7xl mx-auto h-full flex flex-col">
-          {/* Countdown bar at top */}
-          <div className="flex items-center justify-center gap-4 shrink-0 mb-4">
-            <Clock className="w-10 h-10 text-white animate-pulse" />
-            <span className="text-6xl font-mono font-bold text-white">{displaySeconds}</span>
+      <div className="h-screen bg-gradient-to-br from-indigo-700 via-purple-600 to-fuchsia-600 p-5 overflow-hidden relative">
+        <style>{TV_ANIMATIONS}</style>
+        {/* Decorative blurred shapes */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-10 left-10 w-40 h-40 bg-yellow-400/15 rounded-full blur-2xl" />
+          <div className="absolute bottom-20 right-20 w-60 h-60 bg-cyan-400/10 rounded-full blur-3xl" />
+        </div>
+
+        <div className="max-w-7xl mx-auto h-full flex flex-col relative z-10">
+          {/* Top bar: Question badge + Timer + Points */}
+          <div className="flex items-center justify-between shrink-0 mb-4">
+            <div className="anim-pop bg-yellow-400 rounded-2xl px-6 py-2 shadow-lg shadow-yellow-500/30">
+              <span className="font-cartoon text-3xl font-bold text-gray-900">
+                Question {currentQuestionIndex + 1}/{allQuestions.length}
+              </span>
+            </div>
+            <div className="anim-timer bg-white/20 backdrop-blur-xl rounded-2xl px-8 py-2 border-2 border-white/30">
+              <div className="flex items-center gap-3">
+                <Clock className="w-8 h-8 text-yellow-300" />
+                <span className="font-cartoon text-5xl font-bold text-white">{displaySeconds}</span>
+              </div>
+            </div>
+            <div className="anim-pop bg-qb-cyan/80 rounded-2xl px-6 py-2 shadow-lg shadow-cyan-500/30">
+              <span className="font-cartoon text-2xl font-bold text-white">
+                {currentQuestion?.points || 5} pts
+              </span>
+            </div>
           </div>
 
           {/* Main content */}
           {hasImage && questionImgVisible ? (
             <div className="flex gap-6 flex-1 min-h-0 items-center">
               {/* Image left 40% */}
-              <div className="w-[40%] shrink-0 flex items-center justify-center h-full">
+              <div className="w-[40%] shrink-0 flex items-center justify-center h-full anim-pop">
                 <img
                   src={currentQuestion!.image_url}
                   alt=""
-                  className="max-h-[70vh] max-w-full object-contain rounded-2xl shadow-2xl"
+                  className="max-h-[70vh] max-w-full object-contain rounded-2xl shadow-2xl ring-4 ring-white/20"
                   onError={() => setQuestionImgVisible(false)}
                 />
               </div>
               {/* Question right 60% */}
-              <div className="flex-1 flex items-center">
-                <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-8 w-full">
-                  <h2 className={`font-bold text-white leading-tight ${questionTextClass}`}>
+              <div className="flex-1 flex items-center anim-slide">
+                <div className="bg-white/15 backdrop-blur-xl rounded-[2rem] p-8 w-full border-2 border-white/20 shadow-2xl">
+                  <h2 className={`font-cartoon font-bold text-white leading-tight ${questionTextClass}`}>
                     {questionText}
                   </h2>
                 </div>
               </div>
             </div>
           ) : (
-            /* No image: centered big text */
-            <div className="flex-1 flex flex-col items-center justify-center">
-              <div className="text-7xl mb-4">📖</div>
-              <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-10 w-full max-w-6xl">
-                <h2 className={`font-bold text-white leading-tight text-center ${questionTextClass}`}>
+            <div className="flex-1 flex flex-col items-center justify-center anim-pop">
+              <div className="bg-white/15 backdrop-blur-xl rounded-[2rem] p-10 w-full max-w-6xl border-2 border-white/20 shadow-2xl">
+                <h2 className={`font-cartoon font-bold text-white leading-tight text-center ${questionTextClass}`}>
                   {questionText}
                 </h2>
               </div>
@@ -766,8 +805,7 @@ export const TVDisplay: React.FC = () => {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // PHASE 3: Answer Selection — image + question + answers + countdown
-  // Layout: compact top bar (timer+progress), image left + Q&A right, or full width if no image
+  // PHASE 3: Answer Selection — cartoon style with colored option pills
   // ═══════════════════════════════════════════════════════════════
   if (currentPhase === 'answer_selection') {
     const questionText = currentQuestion?.question_text || '';
@@ -775,77 +813,100 @@ export const TVDisplay: React.FC = () => {
     const showImage = hasImage && answerImgVisible;
     const answerQuestionClass = showImage
       ? getAdaptiveTextSize(questionText, { xl: 'text-3xl', lg: 'text-2xl', md: 'text-xl', sm: 'text-lg' })
-      : getAdaptiveTextSize(questionText, { xl: 'text-5xl', lg: 'text-4xl', md: 'text-3xl', sm: 'text-2xl' });
+      : getAdaptiveTextSize(questionText, { xl: 'text-4xl', lg: 'text-3xl', md: 'text-2xl', sm: 'text-xl' });
     const options = currentQuestion?.options || [];
     const optionTextClass = showImage
-      ? getAdaptiveOptionSize(options, { xl: 'text-2xl', lg: 'text-xl', md: 'text-lg', sm: 'text-base' })
-      : getAdaptiveOptionSize(options);
+      ? getAdaptiveOptionSize(options, { xl: 'text-xl', lg: 'text-lg', md: 'text-base', sm: 'text-sm' })
+      : getAdaptiveOptionSize(options, { xl: 'text-3xl', lg: 'text-2xl', md: 'text-xl', sm: 'text-lg' });
     const maxOptionLen = Math.max(...options.map(o => o.length), 0);
     const gridCols = maxOptionLen > 60 ? 'grid-cols-1' : 'grid-cols-2';
+    const isUrgent = displaySeconds <= 5;
 
     return (
-      <div className="h-screen bg-qb-dark p-3 overflow-hidden">
-        <div className="max-w-7xl mx-auto h-full flex flex-col">
-          {/* Timer + counter — compact bar */}
-          <div className="flex items-center justify-center gap-4 shrink-0 mb-2">
-            <div className="inline-flex items-center gap-3 px-6 py-1.5 bg-qb-cyan/20 rounded-2xl">
-              <Clock className="w-8 h-8 text-qb-cyan animate-pulse" />
-              <span className="text-5xl font-mono font-bold text-white">{displaySeconds}</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-1.5 bg-qb-purple/30 rounded-full">
-              <Users className="w-5 h-5 text-qb-yellow" />
-              <span className="text-white font-bold text-lg">
-                {t('tv.answeredCount', { count: answeredCount, total: topPlayers.length })}
+      <div className={`h-screen bg-gradient-to-br from-gray-900 via-indigo-950 to-gray-900 p-3 overflow-hidden relative ${
+        isUrgent ? 'ring-4 ring-red-500/50 ring-inset' : ''
+      }`}>
+        <style>{TV_ANIMATIONS}</style>
+        {/* Subtle decorative blurs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl" />
+        </div>
+
+        <div className="max-w-7xl mx-auto h-full flex flex-col relative z-10">
+          {/* Top bar: Q number + Timer + Answered count */}
+          <div className="flex items-center justify-between shrink-0 mb-2">
+            <div className="anim-pop bg-yellow-400 rounded-xl px-5 py-1.5 shadow-lg">
+              <span className="font-cartoon text-2xl font-bold text-gray-900">
+                Q{currentQuestionIndex + 1}/{allQuestions.length}
               </span>
             </div>
-            {topPlayers.length > 0 && (
-              <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min((answeredCount / topPlayers.length) * 100, 100)}%` }}
-                />
+            <div className={`bg-white/15 backdrop-blur-xl rounded-xl px-6 py-1.5 border-2 ${
+              isUrgent ? 'border-red-400 anim-timer' : 'border-white/20'
+            }`}>
+              <div className="flex items-center gap-3">
+                <Clock className={`w-7 h-7 ${isUrgent ? 'text-red-400' : 'text-qb-cyan'}`} />
+                <span className={`font-cartoon text-4xl font-bold ${isUrgent ? 'text-red-300' : 'text-white'}`}>{displaySeconds}</span>
               </div>
-            )}
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-1.5 bg-white/10 rounded-xl">
+                <Users className="w-5 h-5 text-qb-yellow" />
+                <span className="text-white font-bold text-lg">
+                  {t('tv.answeredCount', { count: answeredCount, total: topPlayers.length })}
+                </span>
+              </div>
+              {topPlayers.length > 0 && (
+                <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-qb-cyan to-qb-purple rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min((answeredCount / topPlayers.length) * 100, 100)}%` }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Main content area */}
           <div className={`flex-1 min-h-0 ${showImage ? 'flex gap-4' : ''}`}>
-            {/* Image column (left side) */}
+            {/* Image column */}
             {showImage && (
-              <div className="w-[30%] shrink-0 flex items-center justify-center">
+              <div className="w-[30%] shrink-0 flex items-center justify-center anim-pop">
                 <img
                   src={currentQuestion!.image_url}
                   alt=""
-                  className="max-h-[70vh] max-w-full object-contain rounded-2xl shadow-2xl"
+                  className="max-h-[70vh] max-w-full object-contain rounded-2xl shadow-2xl ring-4 ring-white/20"
                   onError={() => setAnswerImgVisible(false)}
                 />
               </div>
             )}
 
             {/* Question + Answers column */}
-            <Card className={`p-4 bg-gradient-to-br from-qb-purple/30 to-qb-cyan/30 border-white/20 flex flex-col justify-between ${showImage ? 'flex-1' : 'w-full h-full'}`}>
-              <h2 className={`font-bold text-white text-center mb-2 ${answerQuestionClass}`}>
+            <div className={`p-4 rounded-[2rem] bg-white/5 backdrop-blur-sm border-2 border-white/10 flex flex-col justify-between ${showImage ? 'flex-1' : 'w-full h-full'}`}>
+              <h2 className={`font-cartoon font-bold text-white text-center mb-3 ${answerQuestionClass}`}>
                 {currentQuestion?.question_text}
               </h2>
 
               <div className={`grid ${gridCols} gap-3 flex-1 min-h-0`}>
-                {options.map((option, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 rounded-2xl bg-qb-darker border-2 border-white/20 flex items-center gap-3"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                      <span className="text-2xl font-bold text-white">
-                        {['A', 'B', 'C', 'D'][idx]}
+                {options.map((option, idx) => {
+                  const color = OPTION_COLORS[idx] || OPTION_COLORS[0];
+                  return (
+                    <div
+                      key={idx}
+                      className={`p-3 rounded-2xl bg-gradient-to-r ${color.bg} border-2 ${color.border} flex items-center gap-3 shadow-lg anim-slide`}
+                      style={{ animationDelay: `${idx * 0.1}s`, animationFillMode: 'backwards' }}
+                    >
+                      <div className={`w-12 h-12 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner`}>
+                        <span className="font-cartoon text-2xl font-bold text-white">{color.letter}</span>
+                      </div>
+                      <span className={`${optionTextClass} text-white font-semibold flex-1 drop-shadow-md`}>
+                        {option}
                       </span>
                     </div>
-                    <span className={`${optionTextClass} text-white font-medium flex-1`}>
-                      {option}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-            </Card>
+            </div>
           </div>
         </div>
       </div>
