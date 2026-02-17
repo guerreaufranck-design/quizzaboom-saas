@@ -154,11 +154,47 @@ export const TVDisplay: React.FC = () => {
   }, [allQuestions]);
 
   useEffect(() => {
-    // Hide instructions as soon as the host starts the quiz (any active phase)
+    // Hide instructions as soon as the host starts the quiz (any active phase received)
     if (showInstructions && phaseEndTime && phaseEndTime > 0) {
       setShowInstructions(false);
     }
   }, [currentPhase, phaseEndTime]);
+
+  // Lobby poll: while waiting (showInstructions=true), poll DB every 3s to detect quiz start
+  // This catches the case where the Realtime broadcast is missed (e.g. tutorial phase)
+  useEffect(() => {
+    if (!showInstructions || !sessionId) return;
+
+    let active = true;
+    const pollForStart = async () => {
+      try {
+        const { data: session } = await supabase
+          .from('quiz_sessions')
+          .select('settings')
+          .eq('id', sessionId)
+          .single();
+
+        if (!active || !session?.settings) return;
+
+        const settings = session.settings as Record<string, unknown>;
+        const dbPhase = settings.currentPhase as Record<string, unknown> | undefined;
+
+        if (dbPhase?.phase && dbPhase.phaseEndTime) {
+          console.log('📺 Lobby poll: host started quiz, phase:', dbPhase.phase);
+          useStrategicQuizStore.getState().setPhaseData(dbPhase as never);
+          setShowInstructions(false);
+        }
+      } catch (err) {
+        console.error('Lobby poll error:', err);
+      }
+    };
+
+    const interval = setInterval(pollForStart, 3000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [showInstructions, sessionId]);
 
   // Trigger tick-tock audio per phase
   useEffect(() => {
@@ -256,8 +292,9 @@ export const TVDisplay: React.FC = () => {
   // PHASE 0: QR Code + Email Warning — looping display
   // Only show if no active phase has been received yet
   // ═══════════════════════════════════════════════════════════════
+  // Show lobby when: still in instructions mode AND host hasn't started (no phaseEndTime received)
   const hostHasStarted = phaseEndTime !== null && phaseEndTime > 0;
-  if ((showInstructions || !isReady || allQuestions.length === 0) && !hostHasStarted) {
+  if (!isReady || (showInstructions && !hostHasStarted)) {
     const joinUrl = `${window.location.origin}/join?code=${sessionCode}`;
 
     return (
