@@ -870,30 +870,30 @@ export const TVDisplay: React.FC = () => {
               </div>
             )}
 
-            {/* Column: question on top + 4 answer cards below — fill ALL space */}
+            {/* Column: question (30% height) + 4 answer cards (70% height) */}
             <div className={`flex flex-col gap-2 ${showImage ? 'flex-1' : 'w-full h-full'}`}>
-              {/* Question text — fills available width + height */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-2 flex items-center justify-center">
+              {/* Question — 30% height so text wraps and chars can be HUGE */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-3 flex items-center justify-center" style={{ height: '28%' }}>
                 <h2 className={`font-cartoon font-medium text-white text-center leading-snug ${answerQuestionClass}`}>
                   {currentQuestion?.question_text}
                 </h2>
               </div>
 
-              {/* 4 answer cards — fill ALL remaining space, 2x2 grid */}
+              {/* 4 answer cards — fill remaining ~70% height, 2x2 grid */}
               <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
                 {options.map((option, idx) => {
                   const color = OPTION_COLORS[idx] || OPTION_COLORS[0];
                   return (
                     <div
                       key={idx}
-                      className={`rounded-2xl bg-gradient-to-br ${color.bg} border-2 ${color.border} p-3 flex flex-col shadow-lg anim-slide overflow-hidden`}
+                      className={`rounded-2xl bg-gradient-to-br ${color.bg} border-2 ${color.border} p-4 flex flex-col shadow-lg anim-slide overflow-hidden`}
                       style={{ animationDelay: `${idx * 0.1}s`, animationFillMode: 'backwards' }}
                     >
-                      {/* Letter badge — top left, large */}
-                      <div className={`w-16 h-16 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner`}>
-                        <span className="font-cartoon text-5xl font-semibold text-white">{color.letter}</span>
+                      {/* Letter badge — top left */}
+                      <div className={`w-14 h-14 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner`}>
+                        <span className="font-cartoon text-4xl font-semibold text-white">{color.letter}</span>
                       </div>
-                      {/* Answer text — fills ALL remaining height + width, centered */}
+                      {/* Answer text — fills ALL remaining space, wraps vertically */}
                       <div className="flex-1 flex items-center justify-center min-h-0">
                         <span className={`${optionTextClass} text-white font-medium drop-shadow-md leading-snug text-center`}>
                           {option}
