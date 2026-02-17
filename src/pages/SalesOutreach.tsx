@@ -212,6 +212,7 @@ export function SalesOutreach() {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
 
   // Form
   const [venueName, setVenueName] = useState('');
@@ -231,7 +232,14 @@ export function SalesOutreach() {
         body: JSON.stringify({ password: SALES_PASSWORD, days: tab === 'today' ? 1 : 30 }),
       });
       const data = await res.json();
-      if (res.ok) setLeads(data.leads || []);
+      if (res.ok) {
+        // Map DB leads — notes field stores the template id
+        const mapped = (data.leads || []).map((l: Lead & { notes?: string }) => ({
+          ...l,
+          template: l.notes as TemplateId || undefined,
+        }));
+        setLeads(mapped);
+      }
     } catch {
       // silent
     } finally {
@@ -243,6 +251,7 @@ export function SalesOutreach() {
     if (authed) fetchLeads();
   }, [authed, fetchLeads]);
 
+  // ─── Add lead → save to DB immediately ─────────────────────────
   const addLead = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
@@ -254,23 +263,54 @@ export function SalesOutreach() {
       return setFormError('Email already in list');
     }
 
-    const newLead: Lead = {
-      id: crypto.randomUUID(),
-      venue_name: venueName.trim(),
-      email: email.trim().toLowerCase(),
-      status: 'pending',
-      sent_at: null,
-      created_at: new Date().toISOString(),
-      notes: null,
-      template: selectedTemplate,
-    };
-    setLeads((prev) => [newLead, ...prev]);
-    setVenueName('');
-    setEmail('');
+    setAdding(true);
+    try {
+      const res = await fetch('/api/sales-outreach-add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: SALES_PASSWORD,
+          venueName: venueName.trim(),
+          email: email.trim().toLowerCase(),
+          template: selectedTemplate,
+        }),
+      });
+      const data = await res.json();
+
+      if (res.status === 409) {
+        setFormError('Email already exists in database');
+        return;
+      }
+
+      if (!res.ok) {
+        setFormError(data.error || 'Failed to add');
+        return;
+      }
+
+      // Add the DB-saved lead to the list
+      const newLead: Lead = {
+        ...data.lead,
+        template: selectedTemplate,
+      };
+      setLeads((prev) => [newLead, ...prev]);
+      setVenueName('');
+      setEmail('');
+    } catch {
+      setFormError('Network error — try again');
+    } finally {
+      setAdding(false);
+    }
   };
 
-  const removeLead = (id: string) => {
+  // ─── Delete lead from DB ───────────────────────────────────────
+  const removeLead = async (id: string) => {
     setLeads((prev) => prev.filter((l) => l.id !== id));
+    // Fire-and-forget DB delete
+    fetch('/api/sales-outreach-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: SALES_PASSWORD, id }),
+    }).catch(() => {});
   };
 
   const sendOne = async (lead: Lead) => {
@@ -451,7 +491,7 @@ export function SalesOutreach() {
                 onChange={(e) => { setEmail(e.target.value); setFormError(''); }}
               />
             </div>
-            <Button type="submit" variant="primary" icon={<Plus className="w-4 h-4" />} className="shrink-0">
+            <Button type="submit" variant="primary" icon={<Plus className="w-4 h-4" />} className="shrink-0" loading={adding}>
               Add
             </Button>
           </form>

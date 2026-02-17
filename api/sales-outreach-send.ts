@@ -336,7 +336,7 @@ function buildOutreachEmail(venueName: string, templateId: TemplateId): string {
           <table width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
               <td style="text-align:center;padding:8px 0 24px;">
-                <a href="https://quizzaboom.app/pricing" style="display:inline-block;padding:16px 40px;background-color:#7B2FD8;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">
+                <a href="https://quizzaboom.app/pro-signup" style="display:inline-block;padding:16px 40px;background-color:#7B2FD8;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">
                   ${t.cta}
                 </a>
               </td>

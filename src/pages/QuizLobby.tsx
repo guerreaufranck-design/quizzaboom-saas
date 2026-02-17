@@ -54,12 +54,12 @@ export const QuizLobby: React.FC = () => {
       setupRealtimeSubscription(sessionCode);
     }
 
-    // Auto-refresh players every 500ms
+    // Auto-refresh players every 2s (reduced from 500ms to limit DB load at scale)
     const refreshInterval = setInterval(() => {
       if (currentSession?.id) {
         loadPlayers(currentSession.id);
       }
-    }, 500);
+    }, 2000);
 
     // Safety net for players: poll DB every 2s to detect quiz started
     // In case Realtime misses the quiz_started event
