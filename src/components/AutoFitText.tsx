@@ -1,47 +1,42 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 
 /**
  * AutoFitText — dynamically scales text to FILL its parent container.
  * Uses binary search to find the maximum font size that fits without overflow.
- * The parent MUST have a defined width and height (e.g. flex-1, h-full, explicit px/%).
+ * NEVER clips text — always fully visible.
  */
 export const AutoFitText: React.FC<{
   text: string;
   className?: string;
   minFontSize?: number;
   maxFontSize?: number;
-  padding?: number;
-}> = ({ text, className = '', minFontSize = 16, maxFontSize = 200, padding = 0 }) => {
+}> = ({ text, className = '', minFontSize = 14, maxFontSize = 200 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
   const [fontSize, setFontSize] = useState(minFontSize);
 
-  useEffect(() => {
+  const computeFit = useCallback(() => {
     const container = containerRef.current;
-    const textEl = textRef.current;
-    if (!container || !textEl || !text) return;
+    const measure = measureRef.current;
+    if (!container || !measure || !text) return;
 
-    const maxW = container.clientWidth - padding * 2;
-    const maxH = container.clientHeight - padding * 2;
-    if (maxW <= 0 || maxH <= 0) return;
+    // Available space = container dimensions
+    const availW = container.clientWidth;
+    const availH = container.clientHeight;
+    if (availW <= 0 || availH <= 0) return;
 
-    // Binary search for the largest font size that fits
+    // Binary search: find max fontSize where text fits
     let lo = minFontSize;
     let hi = maxFontSize;
     let best = minFontSize;
 
-    // Temporarily make text visible for measurement
-    textEl.style.visibility = 'hidden';
-    textEl.style.position = 'absolute';
-    textEl.style.width = `${maxW}px`;
-    textEl.style.whiteSpace = 'normal';
-    textEl.style.wordBreak = 'break-word';
-
     while (lo <= hi) {
       const mid = Math.floor((lo + hi) / 2);
-      textEl.style.fontSize = `${mid}px`;
-      const fits = textEl.scrollHeight <= maxH && textEl.scrollWidth <= maxW;
-      if (fits) {
+      measure.style.fontSize = `${mid}px`;
+      // scrollHeight/scrollWidth include all overflowing content
+      const textH = measure.scrollHeight;
+      const textW = measure.scrollWidth;
+      if (textH <= availH && textW <= availW) {
         best = mid;
         lo = mid + 1;
       } else {
@@ -49,70 +44,45 @@ export const AutoFitText: React.FC<{
       }
     }
 
-    // Reset measurement styles
-    textEl.style.visibility = '';
-    textEl.style.position = '';
-    textEl.style.width = '';
-    textEl.style.whiteSpace = '';
-    textEl.style.wordBreak = '';
-
     setFontSize(best);
-  }, [text, minFontSize, maxFontSize, padding]);
+  }, [text, minFontSize, maxFontSize]);
 
-  // Re-fit on window resize
+  // Compute on mount + text change
   useEffect(() => {
-    const handleResize = () => {
-      const container = containerRef.current;
-      const textEl = textRef.current;
-      if (!container || !textEl || !text) return;
+    // Small delay to ensure container has been laid out
+    requestAnimationFrame(() => {
+      computeFit();
+    });
+  }, [computeFit]);
 
-      const maxW = container.clientWidth - padding * 2;
-      const maxH = container.clientHeight - padding * 2;
-      if (maxW <= 0 || maxH <= 0) return;
-
-      let lo = minFontSize;
-      let hi = maxFontSize;
-      let best = minFontSize;
-
-      textEl.style.visibility = 'hidden';
-      textEl.style.position = 'absolute';
-      textEl.style.width = `${maxW}px`;
-      textEl.style.whiteSpace = 'normal';
-      textEl.style.wordBreak = 'break-word';
-
-      while (lo <= hi) {
-        const mid = Math.floor((lo + hi) / 2);
-        textEl.style.fontSize = `${mid}px`;
-        const fits = textEl.scrollHeight <= maxH && textEl.scrollWidth <= maxW;
-        if (fits) {
-          best = mid;
-          lo = mid + 1;
-        } else {
-          hi = mid - 1;
-        }
-      }
-
-      textEl.style.visibility = '';
-      textEl.style.position = '';
-      textEl.style.width = '';
-      textEl.style.whiteSpace = '';
-      textEl.style.wordBreak = '';
-
-      setFontSize(best);
-    };
-
+  // Re-compute on window resize
+  useEffect(() => {
+    const handleResize = () => computeFit();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [text, minFontSize, maxFontSize, padding]);
+  }, [computeFit]);
 
   return (
-    <div ref={containerRef} className="w-full h-full flex items-center justify-center overflow-hidden">
+    <div ref={containerRef} className="w-full h-full relative">
+      {/* Hidden measurement div — absolutely positioned, same width as container, word-wrap enabled */}
       <div
-        ref={textRef}
-        className={`text-center leading-tight ${className}`}
-        style={{ fontSize: `${fontSize}px` }}
+        ref={measureRef}
+        aria-hidden
+        className={`absolute top-0 left-0 w-full break-words leading-[1.2] ${className}`}
+        style={{ fontSize: `${fontSize}px`, visibility: 'hidden', pointerEvents: 'none' }}
       >
         {text}
+      </div>
+      {/* Visible text — centered */}
+      <div
+        className={`w-full h-full flex items-center justify-center`}
+      >
+        <div
+          className={`text-center break-words leading-[1.2] w-full ${className}`}
+          style={{ fontSize: `${fontSize}px` }}
+        >
+          {text}
+        </div>
       </div>
     </div>
   );

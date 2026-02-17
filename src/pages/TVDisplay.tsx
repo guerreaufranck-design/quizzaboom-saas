@@ -760,12 +760,12 @@ export const TVDisplay: React.FC = () => {
                 />
               </div>
               <div className="flex-1 anim-slide bg-white/15 backdrop-blur-xl rounded-[2rem] p-4 border-2 border-white/20 shadow-2xl">
-                <AutoFitText text={questionText} className="font-cartoon font-medium text-white" maxFontSize={150} padding={16} />
+                <AutoFitText text={questionText} className="font-medium text-white" maxFontSize={150} />
               </div>
             </div>
           ) : (
             <div className="flex-1 anim-pop bg-white/15 backdrop-blur-xl rounded-[2rem] p-6 border-2 border-white/20 shadow-2xl">
-              <AutoFitText text={questionText} className="font-cartoon font-medium text-white" maxFontSize={200} padding={24} />
+              <AutoFitText text={questionText} className="font-medium text-white" maxFontSize={200} />
             </div>
           )}
         </div>
@@ -832,13 +832,12 @@ export const TVDisplay: React.FC = () => {
 
             {/* Column: question (25%) + 4 answer cards (75%) */}
             <div className={`flex flex-col gap-1.5 ${showImage ? 'flex-1' : 'w-full h-full'}`}>
-              {/* Question — AutoFitText fills the zone */}
+              {/* Question — standard font, AutoFitText fills the zone */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-1" style={{ height: '22%' }}>
                 <AutoFitText
                   text={questionText}
-                  className="font-cartoon font-medium text-white"
+                  className="font-medium text-white"
                   maxFontSize={showImage ? 80 : 120}
-                  padding={16}
                 />
               </div>
 
@@ -862,7 +861,6 @@ export const TVDisplay: React.FC = () => {
                           text={option}
                           className="font-cartoon font-medium text-white drop-shadow-md"
                           maxFontSize={showImage ? 60 : 90}
-                          padding={4}
                         />
                       </div>
                     </div>
