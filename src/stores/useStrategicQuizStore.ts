@@ -530,39 +530,14 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       }
     }
 
-    // ── STEP 3: Persist inventory to DB (fire-and-forget, non-blocking) ──
-    // This runs AFTER effects are applied and broadcast, so it never blocks the UI
-    (async () => {
-      try {
-        const { data: playerData } = await supabase
-          .from('session_players')
-          .select('settings')
-          .eq('id', playerId)
-          .single();
-
-        const currentSettings = (playerData?.settings as Record<string, unknown>) || {};
-        const newSettings = { ...currentSettings, jokerInventory: updatedInventory };
-
-        const res = await fetch('/api/update-player', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            playerId,
-            updates: {
-              settings: newSettings,
-              updated_at: new Date().toISOString(),
-            },
-          }),
-        });
-        if (!res.ok) {
-          console.error('❌ Failed to persist joker inventory via API:', await res.text());
-        } else {
-          console.log('✅ Joker inventory persisted to DB');
-        }
-      } catch (err) {
-        console.error('Failed to persist joker inventory:', err);
-      }
-    })();
+    // ── STEP 3: Persist inventory to sessionStorage (non-blocking) ──
+    // Joker inventory is persisted client-side to survive page reloads
+    try {
+      sessionStorage.setItem('qb_joker_inventory', JSON.stringify(updatedInventory));
+      console.log('✅ Joker inventory persisted to sessionStorage');
+    } catch (err) {
+      console.error('Failed to persist joker inventory:', err);
+    }
   },
 
   selectAnswer: (answer) => {
