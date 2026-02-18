@@ -22,6 +22,7 @@ const getCountries = (t: TFunction) => [
   { code: 'NL', label: t('proSignup.countries.NL'), placeholder: 'NL123456789B01', hint: t('proSignup.hints.NL') },
   { code: 'PT', label: t('proSignup.countries.PT'), placeholder: 'PT123456789', hint: t('proSignup.hints.PT') },
   { code: 'AT', label: t('proSignup.countries.AT'), placeholder: 'ATU12345678', hint: t('proSignup.hints.AT') },
+  { code: 'IE', label: t('proSignup.countries.IE'), placeholder: 'IE1234567A', hint: t('proSignup.hints.IE') },
   { code: 'GB', label: t('proSignup.countries.GB'), placeholder: 'GB123456789', hint: t('proSignup.hints.GB') },
   { code: 'US', label: t('proSignup.countries.US'), placeholder: '12-3456789', hint: t('proSignup.hints.US') },
   { code: 'AU', label: t('proSignup.countries.AU'), placeholder: '12 345 678 901', hint: t('proSignup.hints.AU') },
