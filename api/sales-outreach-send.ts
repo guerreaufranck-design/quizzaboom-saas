@@ -327,6 +327,25 @@ function buildOutreachEmail(venueName: string, templateId: TemplateId): string {
             </tr>
           </table>
 
+          <!-- Video Demo -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">
+            <tr>
+              <td style="text-align:center;">
+                <p style="color:#7B2FD8;font-size:15px;font-weight:bold;margin:0 0 12px;">🎬 See it in action (20 seconds)</p>
+                <a href="https://youtu.be/Tva3awmMEOc" style="text-decoration:none;display:inline-block;" target="_blank">
+                  <img src="https://img.youtube.com/vi/Tva3awmMEOc/hqdefault.jpg" alt="Watch QuizzaBoom Demo" width="480" style="width:100%;max-width:480px;border-radius:10px;display:block;border:3px solid #7B2FD8;" />
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:-50px;position:relative;">
+                    <tr>
+                      <td style="text-align:center;padding-bottom:16px;">
+                        <span style="display:inline-block;background-color:rgba(123,47,216,0.9);color:#ffffff;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:bold;">▶ Watch Demo</span>
+                      </td>
+                    </tr>
+                  </table>
+                </a>
+              </td>
+            </tr>
+          </table>
+
           <!-- Closing -->
           <p style="color:#333;font-size:15px;line-height:1.6;margin:0 0 24px;">
             ${t.closing}
@@ -426,6 +445,25 @@ function buildFollowUpEmail(venueName: string, followUpCount: number): string {
               </td>
             </tr>
           </table>
+          <!-- Video Demo -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">
+            <tr>
+              <td style="text-align:center;">
+                <p style="color:#7B2FD8;font-size:15px;font-weight:bold;margin:0 0 12px;">🎬 See it in action (20 seconds)</p>
+                <a href="https://youtu.be/Tva3awmMEOc" style="text-decoration:none;display:inline-block;" target="_blank">
+                  <img src="https://img.youtube.com/vi/Tva3awmMEOc/hqdefault.jpg" alt="Watch QuizzaBoom Demo" width="480" style="width:100%;max-width:480px;border-radius:10px;display:block;border:3px solid #7B2FD8;" />
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:-50px;position:relative;">
+                    <tr>
+                      <td style="text-align:center;padding-bottom:16px;">
+                        <span style="display:inline-block;background-color:rgba(123,47,216,0.9);color:#ffffff;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:bold;">▶ Watch Demo</span>
+                      </td>
+                    </tr>
+                  </table>
+                </a>
+              </td>
+            </tr>
+          </table>
+
           <p style="color:#333;font-size:15px;line-height:1.6;margin:0 0 24px;">
             Venues already using QuizzaBoom report <strong>2x footfall</strong> on quiz nights. No credit card needed to start.
           </p>
