@@ -710,28 +710,33 @@ export const HostDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-qb-dark p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">{currentQuiz.title}</h1>
-            <p className="text-white/70">{t('host.hostDashboard')} - {t('host.session')}: {sessionCode}</p>
+            <h1 className="text-2xl md:text-4xl font-bold text-white mb-1 md:mb-2">{currentQuiz.title}</h1>
+            <p className="text-white/70 text-sm md:text-base">{t('host.hostDashboard')} - {t('host.session')}: {sessionCode}</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 md:gap-3">
             <Button
               variant="ghost"
+              size="sm"
               icon={<Monitor />}
               onClick={() => window.open(`${window.location.origin}/tv?code=${sessionCode}`, '_blank')}
             >
-              {t('host.openTV')}
+              <span className="hidden sm:inline">{t('host.openTV')}</span>
+              <span className="sm:hidden">TV</span>
             </Button>
             <Button
               variant="ghost"
+              size="sm"
               icon={<Eye />}
               onClick={() => window.open(`${window.location.origin}/join?code=${sessionCode}`, '_blank')}
             >
-              {t('host.previewPlayer')}
+              <span className="hidden sm:inline">{t('host.previewPlayer')}</span>
+              <span className="sm:hidden">Preview</span>
             </Button>
             <Button
               variant="ghost"
+              size="sm"
               icon={<Square />}
               onClick={() => {
                 if (confirm(t('host.stopConfirmation'))) {
@@ -740,7 +745,8 @@ export const HostDashboard: React.FC = () => {
               }}
               className="text-red-400 hover:text-red-300"
             >
-              {t('host.stopQuiz')}
+              <span className="hidden sm:inline">{t('host.stopQuiz')}</span>
+              <span className="sm:hidden">Stop</span>
             </Button>
           </div>
         </div>
@@ -830,7 +836,7 @@ export const HostDashboard: React.FC = () => {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {PHASE_ORDER.map((phase) => (
                   <Button
                     key={phase}

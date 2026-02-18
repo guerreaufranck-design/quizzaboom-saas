@@ -174,7 +174,7 @@ export const Dashboard: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
@@ -184,8 +184,8 @@ export const Dashboard: React.FC = () => {
                 {t('common.backToHome')}
               </Button>
               <div>
-                <h1 className="text-4xl font-bold text-white">{t('dashboard.title')}</h1>
-                <p className="text-white/70">{t('dashboard.welcomeBack', { email: user?.email })}</p>
+                <h1 className="text-2xl md:text-4xl font-bold text-white">{t('dashboard.title')}</h1>
+                <p className="text-white/70 text-sm md:text-base">{t('dashboard.welcomeBack', { email: user?.email })}</p>
               </div>
             </div>
             <div className="flex gap-2">

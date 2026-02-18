@@ -282,10 +282,10 @@ export const Pricing: React.FC = () => {
           </div>
 
           <div className="text-center mb-16">
-            <h1 className="text-6xl font-bold gradient-primary bg-clip-text text-transparent mb-4">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold gradient-primary bg-clip-text text-transparent mb-4">
               {t('pricing.title')}
             </h1>
-            <p className="text-2xl text-white/70">
+            <p className="text-lg md:text-2xl text-white/70">
               {t('pricing.subtitle')}
             </p>
           </div>

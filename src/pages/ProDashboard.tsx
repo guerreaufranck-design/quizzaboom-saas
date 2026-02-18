@@ -214,19 +214,20 @@ export const ProDashboard: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-3 md:gap-4 min-w-0">
               <Button
                 variant="ghost"
                 onClick={() => navigate('/dashboard')}
                 icon={<ArrowLeft />}
               >
-                {t('common.backToHome')}
+                <span className="hidden sm:inline">{t('common.backToHome')}</span>
+                <span className="sm:hidden">{t('common.back')}</span>
               </Button>
-              <div>
-                <h1 className="text-4xl font-bold text-white">{org.name}</h1>
-                <div className="flex items-center gap-3 mt-1">
-                  <span className="text-white/50 capitalize">{org.type.replace('_', ' ')}</span>
+              <div className="min-w-0">
+                <h1 className="text-2xl md:text-4xl font-bold text-white truncate">{org.name}</h1>
+                <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-1">
+                  <span className="text-white/50 capitalize text-sm">{org.type.replace('_', ' ')}</span>
                   <span className="px-2 py-0.5 bg-qb-purple/20 text-qb-purple text-xs font-bold rounded-full uppercase">
                     {org.subscription_plan}
                   </span>

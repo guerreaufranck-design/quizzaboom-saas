@@ -13,7 +13,7 @@ export const LanguageSelector: React.FC = () => {
   const currentLang = i18n.language?.substring(0, 2) || 'en';
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
       {LANGUAGES.map((lang) => (
         <button
           key={lang.code}
@@ -21,9 +21,9 @@ export const LanguageSelector: React.FC = () => {
             i18n.changeLanguage(lang.code);
             localStorage.setItem('qb-user-lang', lang.code);
           }}
-          className={`px-2 py-1 rounded text-sm transition-all ${
+          className={`min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg text-base transition-all ${
             currentLang === lang.code
-              ? 'bg-qb-cyan/20 text-qb-cyan font-bold'
+              ? 'bg-qb-cyan/20 text-qb-cyan font-bold ring-1 ring-qb-cyan/30'
               : 'text-white/50 hover:text-white/80 hover:bg-white/5'
           }`}
           title={lang.label}

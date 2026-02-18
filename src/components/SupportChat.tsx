@@ -100,7 +100,7 @@ export const SupportChat: React.FC = () => {
     <>
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-20 right-4 z-50 w-[340px] sm:w-[380px] max-h-[500px] bg-qb-darker border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4">
+        <div className="fixed bottom-20 right-4 left-4 sm:left-auto z-50 sm:w-[380px] max-h-[500px] bg-qb-darker border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4">
           {/* Header */}
           <div className="bg-gradient-to-r from-qb-purple to-qb-cyan px-4 py-3 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
@@ -109,7 +109,7 @@ export const SupportChat: React.FC = () => {
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-white/80 hover:text-white transition-colors"
+              className="text-white/80 hover:text-white transition-colors p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               <X className="w-5 h-5" />
             </button>
@@ -144,12 +144,12 @@ export const SupportChat: React.FC = () => {
           </div>
 
           {/* Escalation link */}
-          <div className="px-3 py-1.5 border-t border-white/5">
+          <div className="px-3 py-2 border-t border-white/5">
             <a
               href="mailto:support@quizzaboom.app"
-              className="flex items-center gap-1.5 text-xs text-white/40 hover:text-qb-cyan transition-colors"
+              className="flex items-center gap-1.5 text-xs text-white/40 hover:text-qb-cyan transition-colors py-1.5"
             >
-              <Mail className="w-3 h-3" />
+              <Mail className="w-3.5 h-3.5" />
               <span>{t('support.emailEscalation')}</span>
             </a>
           </div>
@@ -164,14 +164,14 @@ export const SupportChat: React.FC = () => {
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={t('support.placeholder')}
-                className="flex-1 bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-qb-cyan/50 transition-colors"
+                className="flex-1 bg-white/10 border border-white/10 rounded-xl px-3 py-2.5 text-base text-white placeholder-white/40 focus:outline-none focus:border-qb-cyan/50 transition-colors"
                 disabled={isLoading}
                 maxLength={500}
               />
               <button
                 onClick={sendMessage}
                 disabled={!input.trim() || isLoading}
-                className="bg-qb-purple hover:bg-qb-purple/80 disabled:opacity-30 text-white p-2 rounded-xl transition-all active:scale-90"
+                className="bg-qb-purple hover:bg-qb-purple/80 disabled:opacity-30 text-white p-2.5 rounded-xl transition-all active:scale-90 min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 <Send className="w-4 h-4" />
               </button>

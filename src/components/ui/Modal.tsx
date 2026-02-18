@@ -54,18 +54,19 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         className={cn(
           'relative bg-qb-card rounded-2xl shadow-2xl w-full',
-          'border border-white/10 overflow-hidden',
+          'border border-white/10',
           'animate-in fade-in zoom-in-95 duration-300',
+          'max-h-[90vh] flex flex-col overflow-hidden',
           sizes[size]
         )}
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between p-6 border-b border-white/10">
-            <h2 className="text-2xl font-bold text-white">{title}</h2>
+          <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10 shrink-0">
+            <h2 className="text-xl md:text-2xl font-bold text-white">{title}</h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2.5 hover:bg-white/10 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               <X className="w-5 h-5 text-white" />
             </button>
@@ -73,7 +74,7 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Content */}
-        <div className="p-6">{children}</div>
+        <div className="p-4 md:p-6 overflow-y-auto">{children}</div>
       </div>
     </div>
   );

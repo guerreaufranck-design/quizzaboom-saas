@@ -61,7 +61,7 @@ export const Settings: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 md:mb-12">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
@@ -71,8 +71,8 @@ export const Settings: React.FC = () => {
                 {t('common.back')}
               </Button>
               <div>
-                <h1 className="text-4xl font-bold text-white">{t('settings.title')}</h1>
-                <p className="text-white/70">{user.email}</p>
+                <h1 className="text-2xl md:text-4xl font-bold text-white">{t('settings.title')}</h1>
+                <p className="text-white/70 text-sm md:text-base">{user.email}</p>
               </div>
             </div>
             <LanguageSelector />
