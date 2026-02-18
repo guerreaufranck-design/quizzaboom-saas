@@ -159,6 +159,22 @@ interface Signup {
   verification_status: string;
 }
 
+interface PendingRequest {
+  id: string;
+  user_id: string;
+  name: string;
+  country: string;
+  city: string;
+  region: string;
+  business_type: string;
+  business_description: string;
+  phone: string;
+  full_name: string;
+  registration_type: string;
+  status: string;
+  created_at: string;
+}
+
 // ─── Password gate ───────────────────────────────────────────────
 function PasswordGate({ onAuth }: { onAuth: () => void }) {
   const [pw, setPw] = useState('');
@@ -326,6 +342,8 @@ export function SalesOutreach() {
   // Signups
   const [signups, setSignups] = useState<Signup[]>([]);
   const [signupsLoading, setSignupsLoading] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
 
   // Import CSV
   const [csvPreview, setCsvPreview] = useState<{ venueName: string; email: string; template: string }[]>([]);
@@ -368,6 +386,7 @@ export function SalesOutreach() {
       const data = await res.json();
       if (res.ok) {
         setSignups(data.signups || []);
+        setPendingRequests(data.pending || []);
       }
     } catch {
       // silent
@@ -375,6 +394,33 @@ export function SalesOutreach() {
       setSignupsLoading(false);
     }
   }, []);
+
+  const handleApprove = async (requestId: string, action: 'approve' | 'reject') => {
+    setApprovingId(requestId);
+    try {
+      const res = await fetch('/api/sales-outreach-approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: SALES_PASSWORD,
+          verificationRequestId: requestId,
+          action,
+        }),
+      });
+      if (res.ok) {
+        // Remove from pending list
+        setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+        // Refresh signups to show the newly approved org
+        if (action === 'approve') {
+          fetchSignups();
+        }
+      }
+    } catch {
+      // silent
+    } finally {
+      setApprovingId(null);
+    }
+  };
 
   useEffect(() => {
     if (authed && section === 'outreach') fetchLeads();
@@ -602,7 +648,10 @@ export function SalesOutreach() {
           >
             <Users className="w-4 h-4" />
             Pro Signups
-            {signups.length > 0 && (
+            {pendingRequests.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold animate-pulse">{pendingRequests.length}</span>
+            )}
+            {signups.length > 0 && pendingRequests.length === 0 && (
               <span className="ml-1 px-1.5 py-0.5 rounded-full bg-qb-cyan/20 text-qb-cyan text-xs">{signups.length}</span>
             )}
           </button>
@@ -854,6 +903,86 @@ export function SalesOutreach() {
            ══════════════════════════════════════════════════════════════ */}
         {section === 'signups' && (
           <>
+            {/* Pending Approvals */}
+            {pendingRequests.length > 0 && (
+              <Card className="border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-amber-400 flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" />
+                    Pending Approvals ({pendingRequests.length})
+                  </h2>
+                </div>
+                <div className="space-y-3">
+                  {pendingRequests.map((r) => (
+                    <div key={r.id} className="bg-qb-darker/80 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Building2 className="w-4 h-4 text-amber-400 shrink-0" />
+                          <span className="text-white font-semibold text-sm truncate">{r.name}</span>
+                          <span className="text-white/30 text-xs">({r.registration_type})</span>
+                        </div>
+                        <div className="flex flex-wrap gap-3 text-xs text-white/50">
+                          {r.business_type && (
+                            <span className="flex items-center gap-1 capitalize">
+                              <Building2 className="w-3 h-3" />
+                              {r.business_type}
+                            </span>
+                          )}
+                          {r.country && (
+                            <span className="flex items-center gap-1">
+                              <Globe className="w-3 h-3" />
+                              <span className="uppercase">{r.country}</span>
+                            </span>
+                          )}
+                          {r.city && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {r.city}{r.region ? `, ${r.region}` : ''}
+                            </span>
+                          )}
+                          {r.full_name && (
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              {r.full_name}
+                            </span>
+                          )}
+                          {r.phone && (
+                            <span className="text-white/40">{r.phone}</span>
+                          )}
+                        </div>
+                        {r.business_description && (
+                          <p className="text-white/40 text-xs mt-1 line-clamp-2">{r.business_description}</p>
+                        )}
+                        <p className="text-white/30 text-xs mt-1">
+                          Submitted {new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="success"
+                          icon={<CheckCircle2 className="w-4 h-4" />}
+                          onClick={() => handleApprove(r.id, 'approve')}
+                          loading={approvingId === r.id}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          icon={<XCircle className="w-4 h-4" />}
+                          onClick={() => handleApprove(r.id, 'reject')}
+                          loading={approvingId === r.id}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
             {/* Stats row */}
             <div className="grid grid-cols-4 gap-4">
               <Card gradient>

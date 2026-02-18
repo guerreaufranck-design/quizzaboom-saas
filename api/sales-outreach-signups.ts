@@ -25,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    // Fetch organizations with their verification requests for extra details
+    // ─── 1. Fetch approved organizations ────────────────────────
     const { data: orgs, error: orgError } = await supabase
       .from('organizations')
       .select('id, name, type, subscription_plan, subscription_status, trial_ends_at, quizzes_used_this_month, monthly_quiz_limit, created_at')
@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to fetch organizations' });
     }
 
-    // Fetch verification requests to get country + business details
+    // Fetch verification requests linked to organizations
     const orgIds = (orgs || []).map((o: { id: string }) => o.id);
     let verifications: Record<string, { country: string; business_name: string; city: string; business_type: string; status: string }> = {};
 
@@ -59,7 +59,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Combine data
     const signups = (orgs || []).map((org: {
       id: string;
       name: string;
@@ -89,7 +88,51 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
     });
 
-    return res.status(200).json({ signups, total: signups.length });
+    // ─── 2. Fetch pending verification requests (not yet approved) ──
+    const { data: pendingRequests } = await supabase
+      .from('verification_requests')
+      .select('id, user_id, country, business_name, full_name, commercial_name, business_type, city, region, business_description, phone, registration_type, detected_type, status, created_at')
+      .eq('status', 'pending_review')
+      .order('created_at', { ascending: false });
+
+    const pending = (pendingRequests || []).map((r: {
+      id: string;
+      user_id: string;
+      country: string;
+      business_name: string;
+      full_name: string;
+      commercial_name: string;
+      business_type: string;
+      city: string;
+      region: string;
+      business_description: string;
+      phone: string;
+      registration_type: string;
+      detected_type: string;
+      status: string;
+      created_at: string;
+    }) => ({
+      id: r.id,
+      user_id: r.user_id,
+      name: r.commercial_name || r.business_name || r.full_name || 'Unknown',
+      country: r.country || '',
+      city: r.city || '',
+      region: r.region || '',
+      business_type: r.business_type || r.detected_type || '',
+      business_description: r.business_description || '',
+      phone: r.phone || '',
+      full_name: r.full_name || '',
+      registration_type: r.registration_type || '',
+      status: r.status,
+      created_at: r.created_at,
+    }));
+
+    return res.status(200).json({
+      signups,
+      total: signups.length,
+      pending,
+      pendingCount: pending.length,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Sales outreach signups error:', message);
