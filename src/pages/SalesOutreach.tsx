@@ -334,7 +334,7 @@ export function SalesOutreach() {
   const [formError, setFormError] = useState('');
 
   // Main navigation tabs
-  const [section, setSection] = useState<'outreach' | 'signups' | 'import'>('outreach');
+  const [section, setSection] = useState<'outreach' | 'signups' | 'pending' | 'import'>('outreach');
 
   // Outreach sub-tabs
   const [tab, setTab] = useState<'today' | 'history'>('today');
@@ -427,8 +427,14 @@ export function SalesOutreach() {
   }, [authed, section, fetchLeads]);
 
   useEffect(() => {
-    if (authed && section === 'signups') fetchSignups();
+    if (authed && (section === 'signups' || section === 'pending')) fetchSignups();
   }, [authed, section, fetchSignups]);
+
+  // Fetch pending count on initial load so the badge appears
+  useEffect(() => {
+    if (authed) fetchSignups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed]);
 
   // ─── Add lead ─────────────────────────────────────────────────
   const addLead = async (e: React.FormEvent) => {
@@ -648,11 +654,22 @@ export function SalesOutreach() {
           >
             <Users className="w-4 h-4" />
             Pro Signups
+            {signups.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-qb-cyan/20 text-qb-cyan text-xs">{signups.length}</span>
+            )}
+          </button>
+          <button
+            onClick={() => setSection('pending')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-lg text-sm font-medium transition-all ${
+              section === 'pending'
+                ? 'bg-amber-500/20 text-amber-400 border-b-2 border-amber-400'
+                : 'text-white/50 hover:text-white/80 hover:bg-white/5'
+            }`}
+          >
+            <AlertCircle className="w-4 h-4" />
+            Pending
             {pendingRequests.length > 0 && (
               <span className="ml-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold animate-pulse">{pendingRequests.length}</span>
-            )}
-            {signups.length > 0 && pendingRequests.length === 0 && (
-              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-qb-cyan/20 text-qb-cyan text-xs">{signups.length}</span>
             )}
           </button>
           <button
@@ -901,20 +918,47 @@ export function SalesOutreach() {
         {/* ══════════════════════════════════════════════════════════════
             SECTION: PRO SIGNUPS
            ══════════════════════════════════════════════════════════════ */}
-        {section === 'signups' && (
+        {/* ══════════════════════════════════════════════════════════════
+            SECTION: PENDING APPROVALS
+           ══════════════════════════════════════════════════════════════ */}
+        {section === 'pending' && (
           <>
-            {/* Pending Approvals */}
-            {pendingRequests.length > 0 && (
-              <Card className="border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-amber-400 flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5" />
-                    Pending Approvals ({pendingRequests.length})
-                  </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-amber-400" />
+                Pending Verification Requests
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<RefreshCw className="w-4 h-4" />}
+                onClick={fetchSignups}
+                loading={signupsLoading}
+              >
+                Refresh
+              </Button>
+            </div>
+
+            {signupsLoading && pendingRequests.length === 0 ? (
+              <Card>
+                <div className="text-center py-12">
+                  <RefreshCw className="w-8 h-8 text-white/20 mx-auto mb-3 animate-spin" />
+                  <p className="text-white/40">Loading pending requests...</p>
                 </div>
-                <div className="space-y-3">
-                  {pendingRequests.map((r) => (
-                    <div key={r.id} className="bg-qb-darker/80 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+              </Card>
+            ) : pendingRequests.length === 0 ? (
+              <Card>
+                <div className="text-center py-12">
+                  <CheckCircle2 className="w-12 h-12 text-green-400/30 mx-auto mb-3" />
+                  <p className="text-white/40 text-lg">No pending requests</p>
+                  <p className="text-white/30 text-sm mt-1">All verification requests have been processed.</p>
+                </div>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {pendingRequests.map((r) => (
+                  <Card key={r.id} className="border border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <Building2 className="w-4 h-4 text-amber-400 shrink-0" />
@@ -978,11 +1022,15 @@ export function SalesOutreach() {
                         </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </Card>
+                  </Card>
+                ))}
+              </div>
             )}
+          </>
+        )}
 
+        {section === 'signups' && (
+          <>
             {/* Stats row */}
             <div className="grid grid-cols-4 gap-4">
               <Card gradient>
