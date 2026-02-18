@@ -372,6 +372,106 @@ function buildOutreachEmail(venueName: string, templateId: TemplateId): string {
 </html>`;
 }
 
+// ─── Follow-up email builder ─────────────────────────────────────
+function buildFollowUpEmail(venueName: string, followUpCount: number): string {
+  const isSecondFollowUp = followUpCount >= 2;
+
+  const subject = isSecondFollowUp
+    ? `${venueName} — last chance: free 30-day trial ending soon`
+    : `${venueName} — just checking in`;
+
+  const bodyIntro = isSecondFollowUp
+    ? `I reached out a couple of times about QuizzaBoom — the AI-powered quiz system that runs itself. I completely understand if it's not the right time, but I didn't want you to miss the <strong>free 30-day trial</strong> before we close it off.`
+    : `I sent you a note recently about <strong>QuizzaBoom</strong> — the AI-powered quiz night system. I know inboxes get busy, so I wanted to quickly follow up.`;
+
+  const reminder = isSecondFollowUp
+    ? `<strong>Quick recap:</strong> AI generates unique questions every time, set up in 90 seconds, players join via QR code on their phones, up to 250 players, real-time leaderboard on your TV. Zero prep, zero paper, zero quizmaster needed.`
+    : `<strong>The short version:</strong> QuizzaBoom lets you run professional quiz nights with zero prep. AI creates the questions, players use their phones, and your TV shows a live leaderboard. Set up takes 90 seconds.`;
+
+  const cta = isSecondFollowUp ? `Last Chance — Try Free` : `Start Your Free Trial`;
+
+  return `
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizzaBoom — Follow up</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+      <!-- Header -->
+      <tr>
+        <td style="background-color:#7B2FD8;padding:24px 32px;text-align:center;">
+          <h1 style="color:#ffffff;font-size:26px;margin:0;letter-spacing:-0.5px;">QuizzaBoom</h1>
+          <p style="color:#E0E0FF;font-size:13px;margin:5px 0 0;">AI-Powered Quiz Nights</p>
+        </td>
+      </tr>
+      <!-- Body -->
+      <tr>
+        <td style="padding:32px 32px 16px;">
+          <p style="color:#333;font-size:16px;line-height:1.6;margin:0 0 16px;">
+            Hi <strong>${venueName}</strong> team,
+          </p>
+          <p style="color:#333;font-size:15px;line-height:1.6;margin:0 0 20px;">
+            ${bodyIntro}
+          </p>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;background-color:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;">
+            <tr>
+              <td style="padding:20px;">
+                <p style="color:#333;font-size:14px;line-height:1.7;margin:0;">
+                  ${reminder}
+                </p>
+              </td>
+            </tr>
+          </table>
+          <p style="color:#333;font-size:15px;line-height:1.6;margin:0 0 24px;">
+            Venues already using QuizzaBoom report <strong>2x footfall</strong> on quiz nights. No credit card needed to start.
+          </p>
+          <!-- CTA -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="text-align:center;padding:8px 0 24px;">
+                <a href="https://quizzaboom.app/pro-signup" style="display:inline-block;padding:16px 40px;background-color:#7B2FD8;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">
+                  ${cta}
+                </a>
+              </td>
+            </tr>
+          </table>
+          <p style="color:#333;font-size:15px;line-height:1.6;margin:0 0 4px;">
+            Happy to answer any questions — just reply to this email.
+          </p>
+          <p style="color:#333;font-size:15px;line-height:1.6;margin:12px 0 0;">
+            Cheers,<br>
+            <strong>The QuizzaBoom Team</strong>
+          </p>
+        </td>
+      </tr>
+      <!-- Footer -->
+      <tr>
+        <td style="padding:20px 32px;border-top:1px solid #eee;text-align:center;">
+          <p style="color:#999;font-size:12px;margin:0 0 4px;">QuizzaBoom — AI-Powered Quiz Nights for Venues</p>
+          <p style="color:#999;font-size:12px;margin:0 0 4px;">
+            <a href="https://quizzaboom.app" style="color:#7B2FD8;text-decoration:none;">quizzaboom.app</a> | <a href="mailto:support@quizzaboom.app" style="color:#7B2FD8;text-decoration:none;">support@quizzaboom.app</a>
+          </p>
+          <p style="margin:8px 0 0;">
+            <a href="https://quizzaboom.app/unsubscribe" style="color:#bbb;font-size:11px;text-decoration:underline;">Unsubscribe</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>`;
+}
+
+function getFollowUpSubject(venueName: string, followUpCount: number): string {
+  return followUpCount >= 2
+    ? `${venueName} — last chance: free 30-day trial ending soon`
+    : `${venueName} — just checking in`;
+}
+
 // ─── API Handler ─────────────────────────────────────────────────
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setCorsHeaders(res, req.headers.origin);
@@ -395,16 +495,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let failed = 0;
 
     for (const prospect of prospects) {
-      const { venueName, email, id, template } = prospect;
+      const { venueName, email, id, template, isFollowUp, followUpCount } = prospect;
       if (!venueName || !email) {
         results.push({ email: email || 'unknown', status: 'failed' });
         failed++;
         continue;
       }
 
-      const templateId: TemplateId = template || 'pub_no_quiz';
-      const subject = getSubject(templateId, venueName);
-      const html = buildOutreachEmail(venueName, templateId);
+      let subject: string;
+      let html: string;
+
+      if (isFollowUp) {
+        // Follow-up email
+        const count = followUpCount || 1;
+        subject = getFollowUpSubject(venueName, count);
+        html = buildFollowUpEmail(venueName, count);
+      } else {
+        // Initial outreach email
+        const templateId: TemplateId = template || 'pub_no_quiz';
+        subject = getSubject(templateId, venueName);
+        html = buildOutreachEmail(venueName, templateId);
+      }
 
       try {
         const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
@@ -425,12 +536,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const status = success ? 'sent' : 'failed';
 
         if (id) {
+          const updateData: Record<string, unknown> = {
+            status,
+            sent_at: success ? new Date().toISOString() : null,
+          };
+
+          // Increment follow_up_count on successful follow-up
+          if (isFollowUp && success) {
+            const { data: current } = await supabase
+              .from('sales_outreach_leads')
+              .select('follow_up_count')
+              .eq('id', id)
+              .single();
+            updateData.follow_up_count = ((current?.follow_up_count as number) || 0) + 1;
+          }
+
           await supabase
             .from('sales_outreach_leads')
-            .update({
-              status,
-              sent_at: success ? new Date().toISOString() : null,
-            })
+            .update(updateData)
             .eq('id', id);
         }
 

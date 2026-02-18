@@ -48,8 +48,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'No rows to import' });
   }
 
-  if (rows.length > 500) {
-    return res.status(400).json({ error: 'Maximum 500 rows per import' });
+  if (rows.length > 1000) {
+    return res.status(400).json({ error: 'Maximum 1000 rows per import' });
   }
 
   try {

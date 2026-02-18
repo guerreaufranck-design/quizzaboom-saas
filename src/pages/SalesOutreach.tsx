@@ -23,10 +23,13 @@ import {
   Upload,
   FileSpreadsheet,
   AlertCircle,
+  AlertTriangle,
   Globe,
   MapPin,
   Shield,
   Sparkles,
+  RotateCcw,
+  Copy,
 } from 'lucide-react';
 
 const SALES_PASSWORD = import.meta.env.VITE_SALES_PASSWORD || '';
@@ -141,6 +144,7 @@ interface Lead {
   created_at: string;
   notes: string | null;
   template?: TemplateId;
+  follow_up_count?: number;
 }
 
 interface Signup {
@@ -326,6 +330,8 @@ export function SalesOutreach() {
   const [sending, setSending] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [followingUpId, setFollowingUpId] = useState<string | null>(null);
+  const [sendingFollowUps, setSendingFollowUps] = useState(false);
 
   // Form
   const [venueName, setVenueName] = useState('');
@@ -362,9 +368,10 @@ export function SalesOutreach() {
       });
       const data = await res.json();
       if (res.ok) {
-        const mapped = (data.leads || []).map((l: Lead & { notes?: string }) => ({
+        const mapped = (data.leads || []).map((l: Lead & { notes?: string; follow_up_count?: number }) => ({
           ...l,
           template: l.notes as TemplateId || undefined,
+          follow_up_count: l.follow_up_count ?? 0,
         }));
         setLeads(mapped);
       }
@@ -564,6 +571,132 @@ export function SalesOutreach() {
     }
   };
 
+  // ─── Follow-up helpers ──────────────────────────────────────────
+  const FOLLOW_UP_COOLDOWN_DAYS = 5;
+  const MAX_FOLLOW_UPS = 3;
+
+  const canFollowUp = (lead: Lead): boolean => {
+    if (lead.status !== 'sent') return false;
+    if (!lead.sent_at) return false;
+    if ((lead.follow_up_count ?? 0) >= MAX_FOLLOW_UPS) return false;
+    const daysSinceSent = (Date.now() - new Date(lead.sent_at).getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceSent >= FOLLOW_UP_COOLDOWN_DAYS;
+  };
+
+  const daysUntilFollowUp = (lead: Lead): number | null => {
+    if (lead.status !== 'sent' || !lead.sent_at) return null;
+    if ((lead.follow_up_count ?? 0) >= MAX_FOLLOW_UPS) return null;
+    const daysSinceSent = (Date.now() - new Date(lead.sent_at).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSinceSent >= FOLLOW_UP_COOLDOWN_DAYS) return 0;
+    return Math.ceil(FOLLOW_UP_COOLDOWN_DAYS - daysSinceSent);
+  };
+
+  const followUpOne = async (lead: Lead) => {
+    setFollowingUpId(lead.id);
+    try {
+      const res = await fetch('/api/sales-outreach-send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: SALES_PASSWORD,
+          prospects: [{
+            id: lead.id,
+            venueName: lead.venue_name,
+            email: lead.email,
+            isFollowUp: true,
+            followUpCount: (lead.follow_up_count ?? 0) + 1,
+          }],
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.results) {
+        const newStatus = data.results[0]?.status || 'failed';
+        setLeads((prev) =>
+          prev.map((l) =>
+            l.id === lead.id
+              ? {
+                  ...l,
+                  status: newStatus,
+                  sent_at: newStatus === 'sent' ? new Date().toISOString() : l.sent_at,
+                  follow_up_count: newStatus === 'sent' ? (l.follow_up_count ?? 0) + 1 : l.follow_up_count,
+                }
+              : l
+          )
+        );
+      }
+    } catch {
+      // silent
+    } finally {
+      setFollowingUpId(null);
+    }
+  };
+
+  const followUpAll = async () => {
+    const eligible = leads.filter(canFollowUp);
+    if (eligible.length === 0) return;
+
+    setSendingFollowUps(true);
+    try {
+      const res = await fetch('/api/sales-outreach-send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: SALES_PASSWORD,
+          prospects: eligible.map((l) => ({
+            id: l.id,
+            venueName: l.venue_name,
+            email: l.email,
+            isFollowUp: true,
+            followUpCount: (l.follow_up_count ?? 0) + 1,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.results) {
+        const resultMap = new Map(data.results.map((r: { email: string; status: string }) => [r.email, r.status]));
+        setLeads((prev) =>
+          prev.map((l) => {
+            const newStatus = resultMap.get(l.email);
+            if (newStatus === 'sent') {
+              return {
+                ...l,
+                status: 'sent' as const,
+                sent_at: new Date().toISOString(),
+                follow_up_count: (l.follow_up_count ?? 0) + 1,
+              };
+            }
+            if (newStatus === 'failed') return { ...l, status: 'failed' as const };
+            return l;
+          })
+        );
+      }
+    } catch {
+      // silent
+    } finally {
+      setSendingFollowUps(false);
+    }
+  };
+
+  // ─── Duplicate detection ────────────────────────────────────────
+  const getDuplicates = (leadsList: Lead[]): Map<string, string[]> => {
+    const emailMap = new Map<string, string[]>();
+    for (const lead of leadsList) {
+      const key = lead.email.toLowerCase();
+      const existing = emailMap.get(key);
+      if (existing) {
+        existing.push(lead.id);
+      } else {
+        emailMap.set(key, [lead.id]);
+      }
+    }
+    // Only keep entries with more than 1 ID (actual duplicates)
+    const dupes = new Map<string, string[]>();
+    for (const [email, ids] of emailMap) {
+      if (ids.length > 1) dupes.set(email, ids);
+    }
+    return dupes;
+  };
+
   // ─── CSV file handler ─────────────────────────────────────────
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -616,6 +749,9 @@ export function SalesOutreach() {
   const pendingCount = leads.filter((l) => l.status === 'pending').length;
   const sentCount = leads.filter((l) => l.status === 'sent').length;
   const failedCount = leads.filter((l) => l.status === 'failed').length;
+  const followUpEligible = leads.filter(canFollowUp).length;
+  const duplicateMap = getDuplicates(leads);
+  const duplicateCount = duplicateMap.size;
 
   return (
     <div className="min-h-screen bg-qb-dark p-4 md:p-8">
@@ -691,7 +827,7 @@ export function SalesOutreach() {
         {section === 'outreach' && (
           <>
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <Card gradient>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-yellow-400">{pendingCount}</p>
@@ -710,7 +846,30 @@ export function SalesOutreach() {
                   <p className="text-white/60 text-sm mt-1">Failed</p>
                 </div>
               </Card>
+              <Card gradient>
+                <div className="text-center">
+                  <p className={`text-3xl font-bold ${followUpEligible > 0 ? 'text-orange-400' : 'text-white/20'}`}>{followUpEligible}</p>
+                  <p className="text-white/60 text-sm mt-1">Follow-ups ready</p>
+                </div>
+              </Card>
             </div>
+
+            {/* Duplicate warning */}
+            {duplicateCount > 0 && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-amber-400 text-sm font-medium">
+                    {duplicateCount} duplicate email{duplicateCount > 1 ? 's' : ''} detected
+                  </p>
+                  <p className="text-amber-400/70 text-xs mt-0.5">
+                    {Array.from(duplicateMap.keys()).slice(0, 3).join(', ')}
+                    {duplicateCount > 3 ? ` and ${duplicateCount - 3} more...` : ''}
+                  </p>
+                </div>
+                <Copy className="w-4 h-4 text-amber-400/50" />
+              </div>
+            )}
 
             {/* Template selector */}
             <Card gradient>
@@ -811,17 +970,31 @@ export function SalesOutreach() {
                   Refresh
                 </Button>
               </div>
-              {pendingCount > 0 && (
-                <Button
-                  gradient
-                  size="sm"
-                  icon={<Send className="w-4 h-4" />}
-                  onClick={sendAllPending}
-                  loading={sending}
-                >
-                  Send All Pending ({pendingCount})
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {followUpEligible > 0 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    icon={<RotateCcw className="w-4 h-4" />}
+                    onClick={followUpAll}
+                    loading={sendingFollowUps}
+                    className="!bg-orange-500/20 !text-orange-400 hover:!bg-orange-500/30"
+                  >
+                    Follow-up All ({followUpEligible})
+                  </Button>
+                )}
+                {pendingCount > 0 && (
+                  <Button
+                    gradient
+                    size="sm"
+                    icon={<Send className="w-4 h-4" />}
+                    onClick={sendAllPending}
+                    loading={sending}
+                  >
+                    Send All Pending ({pendingCount})
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Leads table */}
@@ -840,6 +1013,7 @@ export function SalesOutreach() {
                         <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Email</th>
                         <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Template</th>
                         <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Status</th>
+                        <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Follow-ups</th>
                         <th className="text-left text-white/60 text-xs uppercase tracking-wider py-3 px-2">Date</th>
                         <th className="text-right text-white/60 text-xs uppercase tracking-wider py-3 px-2">Actions</th>
                       </tr>
@@ -860,10 +1034,33 @@ export function SalesOutreach() {
                             <TemplateBadge templateId={lead.template} />
                           </td>
                           <td className="py-3 px-2">
-                            <StatusBadge status={lead.status} />
+                            <div className="flex items-center gap-1.5">
+                              <StatusBadge status={lead.status} />
+                              {duplicateMap.has(lead.email.toLowerCase()) && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium text-amber-400 bg-amber-400/10" title="Duplicate email">
+                                  <Copy className="w-3 h-3" />
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-2">
+                            {lead.follow_up_count ? (
+                              <span className="text-orange-400 text-sm font-medium">
+                                {lead.follow_up_count}/{MAX_FOLLOW_UPS}
+                              </span>
+                            ) : lead.status === 'sent' ? (
+                              (() => {
+                                const days = daysUntilFollowUp(lead);
+                                if (days === null) return <span className="text-white/20 text-sm">max</span>;
+                                if (days === 0) return <span className="text-orange-400 text-sm font-medium">Ready</span>;
+                                return <span className="text-white/30 text-xs">{days}d left</span>;
+                              })()
+                            ) : (
+                              <span className="text-white/20 text-sm">—</span>
+                            )}
                           </td>
                           <td className="py-3 px-2 text-white/40 text-sm whitespace-nowrap">
-                            {new Date(lead.created_at).toLocaleDateString('en-GB', {
+                            {new Date(lead.sent_at || lead.created_at).toLocaleDateString('en-GB', {
                               day: '2-digit',
                               month: 'short',
                               hour: '2-digit',
@@ -881,6 +1078,18 @@ export function SalesOutreach() {
                                   loading={sendingId === lead.id}
                                 >
                                   Send
+                                </Button>
+                              )}
+                              {canFollowUp(lead) && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  icon={<RotateCcw className="w-3.5 h-3.5" />}
+                                  onClick={() => followUpOne(lead)}
+                                  loading={followingUpId === lead.id}
+                                  className="!bg-orange-500/15 !text-orange-400 hover:!bg-orange-500/25"
+                                >
+                                  Follow-up
                                 </Button>
                               )}
                               {lead.status === 'failed' && (
