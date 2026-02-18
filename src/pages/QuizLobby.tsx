@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useQuizStore } from '../stores/useQuizStore';
 import { useStrategicQuizStore } from '../stores/useStrategicQuizStore';
 import { useAppNavigate } from '../hooks/useAppNavigate';
-import { useUserEntitlement } from '../hooks/useUserEntitlement';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
@@ -14,7 +13,6 @@ import { supabase } from '../services/supabase/client';
 export const QuizLobby: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useAppNavigate();
-  const { consumeCredit } = useUserEntitlement();
   const {
     currentSession,
     currentQuiz,
@@ -125,8 +123,7 @@ export const QuizLobby: React.FC = () => {
     setIsStarting(true);
     setStartError(null);
     try {
-      await consumeCredit();
-      console.log('✅ Credit consumed successfully');
+      // Credit already consumed at quiz creation time (CreateQuiz.tsx)
       await startSession();
       setShowStartWarning(false);
     } catch (error) {
