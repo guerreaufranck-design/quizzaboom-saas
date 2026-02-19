@@ -785,7 +785,8 @@
     "breaksTitle": "Breaks",
     "breaksDesc": "There will be {{count}} break(s) of about {{duration}} minutes during the game. Perfect time for a drink!",
     "readyTitle": "Ready? Let's Go!",
-    "readyDesc": "The quiz is about to begin. Good luck and have fun!"
+    "readyDesc": "The quiz is about to begin. Good luck and have fun!",
+    "funFactLabel": "Did You Know?"
   },
   "tv": {
     "howToPlay": "How to Play",

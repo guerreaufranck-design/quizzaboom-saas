@@ -785,7 +785,8 @@
     "breaksTitle": "Pauses",
     "breaksDesc": "Il y aura {{count}} pause(s) d'environ {{duration}} minutes pendant la partie. Parfait pour prendre un verre !",
     "readyTitle": "Prets ? C'est parti !",
-    "readyDesc": "Le quiz va commencer. Bonne chance et amusez-vous bien !"
+    "readyDesc": "Le quiz va commencer. Bonne chance et amusez-vous bien !",
+    "funFactLabel": "Le saviez-vous ?"
   },
   "tv": {
     "howToPlay": "Comment jouer",

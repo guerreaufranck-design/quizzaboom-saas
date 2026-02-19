@@ -70,6 +70,24 @@ export const HostDashboard: React.FC = () => {
     }
   }, [quizCompleted]);
 
+  // Auto-redirect to dashboard 60s after quiz completes
+  const [autoRedirectCountdown, setAutoRedirectCountdown] = useState<number | null>(null);
+  useEffect(() => {
+    if (!quizCompleted) return;
+    setAutoRedirectCountdown(60);
+    const interval = setInterval(() => {
+      setAutoRedirectCountdown(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          endSession();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [quizCompleted]);
+
   // Get break schedule from session settings
   const sessionSettings = (currentSession?.settings as Record<string, unknown>) || {};
   const breakSchedule = sessionSettings.breakSchedule as CommercialBreakSchedule | undefined;
@@ -686,15 +704,20 @@ export const HostDashboard: React.FC = () => {
           </Card>
 
           {/* Return to Dashboard */}
-          <div className="text-center">
+          <div className="text-center space-y-3">
             <Button
               gradient
               size="xl"
               icon={<Home />}
-              onClick={() => navigate('dashboard')}
+              onClick={() => endSession()}
             >
               {t('host.backToDashboard')}
             </Button>
+            {autoRedirectCountdown !== null && autoRedirectCountdown > 0 && (
+              <p className="text-white/40 text-sm">
+                Auto-redirect in {autoRedirectCountdown}s
+              </p>
+            )}
           </div>
         </div>
       </div>

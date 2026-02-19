@@ -785,7 +785,8 @@
     "breaksTitle": "Descansos",
     "breaksDesc": "Habra {{count}} descanso(s) de unos {{duration}} minutos durante el juego. Perfecto para tomar algo!",
     "readyTitle": "Listos? Vamos!",
-    "readyDesc": "El quiz esta a punto de comenzar. Buena suerte y diviertete!"
+    "readyDesc": "El quiz esta a punto de comenzar. Buena suerte y diviertete!",
+    "funFactLabel": "Sabias que?"
   },
   "tv": {
     "howToPlay": "Cómo jugar",

@@ -785,7 +785,8 @@
     "breaksTitle": "Pausen",
     "breaksDesc": "Es wird {{count}} Pause(n) von etwa {{duration}} Minuten geben. Perfekte Zeit fur ein Getrank!",
     "readyTitle": "Bereit? Los geht's!",
-    "readyDesc": "Das Quiz beginnt gleich. Viel Gluck und viel Spass!"
+    "readyDesc": "Das Quiz beginnt gleich. Viel Gluck und viel Spass!",
+    "funFactLabel": "Wusstest du?"
   },
   "tv": {
     "howToPlay": "So wird gespielt",
