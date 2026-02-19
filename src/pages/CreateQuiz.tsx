@@ -123,14 +123,8 @@ export const CreateQuiz: React.FC = () => {
       setGenerationStep(t('create.generationSteps.connecting'));
       console.log('🎨 Starting quiz generation...');
 
-      // Consume credit/increment usage BEFORE generating (prevents abuse)
-      try {
-        await consumeCredit();
-      } catch (err) {
-        alert(t('create.error.creditConsumption', 'Failed to process quiz credit. Please try again.'));
-        setGenerationStep('');
-        return;
-      }
+      // Credit is consumed when the host actually STARTS the quiz (in QuizLobby),
+      // not here — so users can explore the dashboard and preview the quiz freely.
 
       // Build theme string — custom themes are added alongside standard themes
       const hasCustom = selectedThemes.includes('custom') && customThemes.length > 0;

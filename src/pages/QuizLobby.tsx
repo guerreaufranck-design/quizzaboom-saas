@@ -9,6 +9,7 @@ import { Modal } from '../components/ui/Modal';
 import { QRCodeDisplay } from '../components/ui/QRCodeDisplay';
 import { ArrowLeft, Users, Play, Copy, Check, Share2, Clock, AlertTriangle, Loader2, Monitor, Users2, Eye, X, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../services/supabase/client';
+import { useUserEntitlement } from '../hooks/useUserEntitlement';
 
 export const QuizLobby: React.FC = () => {
   const { t } = useTranslation();
@@ -27,6 +28,7 @@ export const QuizLobby: React.FC = () => {
   } = useQuizStore();
 
   const { allQuestions, loadQuestions } = useStrategicQuizStore();
+  const { consumeCredit } = useUserEntitlement();
   const [copied, setCopied] = useState(false);
   const [copiedTV, setCopiedTV] = useState(false);
   const [showStartWarning, setShowStartWarning] = useState(false);
@@ -123,7 +125,8 @@ export const QuizLobby: React.FC = () => {
     setIsStarting(true);
     setStartError(null);
     try {
-      // Credit already consumed at quiz creation time (CreateQuiz.tsx)
+      // Consume credit NOW — only when the host actually starts the quiz
+      await consumeCredit();
       await startSession();
       setShowStartWarning(false);
     } catch (error) {
