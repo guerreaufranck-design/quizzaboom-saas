@@ -51,7 +51,8 @@ export const CreateQuiz: React.FC = () => {
     includeJokers: true,
   });
   const [customQuestionCount, setCustomQuestionCount] = useState('15');
-  const [customThemeText, setCustomThemeText] = useState('');
+  const [customThemes, setCustomThemes] = useState<string[]>([]);
+  const [customThemeInput, setCustomThemeInput] = useState('');
 
   // Multi-theme toggle using functional setState to avoid stale closures
   const toggleTheme = useCallback((category: ThemeCategory) => {
@@ -131,10 +132,10 @@ export const CreateQuiz: React.FC = () => {
         return;
       }
 
-      // Build theme string — custom is now one theme among others
-      const hasCustom = selectedThemes.includes('custom') && customThemeText.trim();
-      const standardThemes = selectedThemeObjects.filter(t => t.category !== 'custom').map(t => t.label);
-      const allThemeLabels = hasCustom ? [...standardThemes, customThemeText.trim()] : standardThemes;
+      // Build theme string — custom themes are added alongside standard themes
+      const hasCustom = selectedThemes.includes('custom') && customThemes.length > 0;
+      const standardThemeLabels = selectedThemeObjects.filter(t => t.category !== 'custom').map(t => t.label);
+      const allThemeLabels = hasCustom ? [...standardThemeLabels, ...customThemes] : standardThemeLabels;
       const themeLabel = allThemeLabels.join(' + ');
       const modeLabel = THEME_MODES[selectedMode].label;
       const subThemesStr = (activeSubThemes.length > 0 && !hasCustom) ? ` (focus: ${activeSubThemes.join(', ')})` : '';
@@ -291,27 +292,82 @@ export const CreateQuiz: React.FC = () => {
                   );
                 })}
               </div>
-              {/* Custom theme input */}
+              {/* Custom themes — up to 5 tags */}
               {selectedThemes.includes('custom') && (
                 <div className="mt-4 p-4 bg-qb-darker rounded-lg border border-qb-cyan/30">
-                  <label className="block text-sm text-white/80 mb-2">{t('create.customThemeLabel', 'Describe your theme')}</label>
-                  <input
-                    type="text"
-                    value={customThemeText}
-                    onChange={(e) => setCustomThemeText(e.target.value)}
-                    placeholder={t('create.customThemePlaceholder', 'e.g. History of Rock Music, Local Cuisine of Tenerife, FC Barcelona Trivia...')}
-                    disabled={isLoading}
-                    maxLength={200}
-                    className="w-full px-4 py-3 bg-qb-dark border border-white/20 rounded-lg text-white placeholder-white/40 focus:border-qb-cyan focus:outline-none focus:ring-2 focus:ring-qb-cyan/30"
-                  />
-                  <p className="text-xs text-white/50 mt-2">{t('create.customThemeHint', 'The AI will generate questions about this specific topic')}</p>
+                  <label className="block text-sm text-white/80 mb-2">{t('create.customThemeLabel', 'Add your custom themes (up to 5)')}</label>
+                  {/* Tags display */}
+                  {customThemes.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {customThemes.map((theme, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-qb-cyan/20 border border-qb-cyan/40 rounded-full text-sm text-qb-cyan font-medium"
+                        >
+                          {theme}
+                          <button
+                            type="button"
+                            onClick={() => setCustomThemes(prev => prev.filter((_, i) => i !== idx))}
+                            className="hover:text-white transition-colors ml-0.5"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {/* Input for new theme */}
+                  {customThemes.length < 5 && (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={customThemeInput}
+                        onChange={(e) => setCustomThemeInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && customThemeInput.trim()) {
+                            e.preventDefault();
+                            const newTheme = customThemeInput.trim();
+                            if (!customThemes.includes(newTheme)) {
+                              setCustomThemes(prev => [...prev, newTheme]);
+                            }
+                            setCustomThemeInput('');
+                          }
+                        }}
+                        placeholder={t('create.customThemePlaceholder', 'e.g. Harry Potter, 80s Music, FC Barcelona...')}
+                        disabled={isLoading}
+                        maxLength={100}
+                        className="flex-1 px-4 py-3 bg-qb-dark border border-white/20 rounded-lg text-white placeholder-white/40 focus:border-qb-cyan focus:outline-none focus:ring-2 focus:ring-qb-cyan/30"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (customThemeInput.trim()) {
+                            const newTheme = customThemeInput.trim();
+                            if (!customThemes.includes(newTheme)) {
+                              setCustomThemes(prev => [...prev, newTheme]);
+                            }
+                            setCustomThemeInput('');
+                          }
+                        }}
+                        disabled={!customThemeInput.trim() || isLoading}
+                        className="px-4 py-3 bg-qb-cyan/20 border border-qb-cyan/40 rounded-lg text-qb-cyan font-bold hover:bg-qb-cyan/30 disabled:opacity-30 transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
+                  )}
+                  <p className="text-xs text-white/50 mt-2">
+                    {customThemes.length < 5
+                      ? t('create.customThemeHint', 'Type a theme and press Enter — {{remaining}} remaining', { remaining: 5 - customThemes.length })
+                      : t('create.customThemeMax', 'Maximum 5 custom themes reached')}
+                  </p>
                 </div>
               )}
 
-              {selectedThemes.length > 1 && (
+              {(selectedThemes.length > 1 || customThemes.length > 0) && (
                 <div className="mt-3 flex items-center gap-2 text-sm text-qb-cyan">
                   <Sparkles className="w-4 h-4" />
-                  <span>{t('create.multiThemeSelected', { count: selectedThemes.length, themes: selectedThemeObjects.filter(t => t.category !== 'custom').map(t => t.label).join(' + ') })}</span>
+                  <span>{t('create.multiThemeSelected', { count: selectedThemes.filter(t => t !== 'custom').length + customThemes.length, themes: [...selectedThemeObjects.filter(t => t.category !== 'custom').map(t => t.label), ...customThemes].join(' + ') })}</span>
                 </div>
               )}
 
