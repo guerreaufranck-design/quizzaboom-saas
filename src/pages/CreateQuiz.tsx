@@ -25,7 +25,7 @@ const BREAK_DURATION_OPTIONS = [
 export const CreateQuiz: React.FC = () => {
   const { t } = useTranslation();
   const { generateQuiz, createSession, isLoading, generationProgress } = useQuizStore();
-  const { consumeCredit, canCreate, reason, quizUsage } = useUserEntitlement();
+  const { canCreate, reason, quizUsage } = useUserEntitlement();
   const navigate = useAppNavigate();
   const [selectedThemes, setSelectedThemes] = useState<ThemeCategory[]>(['general']);
   const [selectedMode, setSelectedMode] = useState<ThemeMode>('standard');

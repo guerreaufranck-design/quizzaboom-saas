@@ -26,7 +26,6 @@ import {
   Download,
 } from 'lucide-react';
 import { useQuizAudio } from '../hooks/useQuizAudio';
-import { useAppNavigate } from '../hooks/useAppNavigate';
 import { useCountdown } from '../hooks/useCountdown';
 import type { GamePhase } from '../types/gamePhases';
 import { PHASE_DURATIONS, PHASE_ORDER } from '../types/gamePhases';
@@ -51,7 +50,6 @@ export const HostDashboard: React.FC = () => {
   const answerStatsRef = useRef<AnswerStat[]>([]);
   const jokerEventsRef = useRef<JokerEvent[]>([]);
   const { stopAll, onPhaseChange, toggleMute, isMuted } = useQuizAudio();
-  const navigate = useAppNavigate();
 
   const displaySeconds = useCountdown(phaseEndTime, () => {
     if (isPlaying) handlePhaseComplete();
