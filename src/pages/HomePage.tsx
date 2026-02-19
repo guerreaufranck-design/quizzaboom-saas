@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useAppNavigate } from '../hooks/useAppNavigate';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { LanguageSelector } from '../components/LanguageSelector';
+import { LanguageHeroSelector } from '../components/LanguageHeroSelector';
 import { AnimatedLogo } from '../components/AnimatedLogo';
 import {
   Tv, Smartphone, Bot, Globe, Timer, BarChart3,
@@ -79,8 +79,7 @@ export const HomePage: React.FC = () => {
     <div className="min-h-screen bg-qb-dark">
       {/* ============ HEADER ============ */}
       <div className="container mx-auto px-4 pt-6">
-        <div className="flex justify-between items-center">
-          <LanguageSelector />
+        <div className="flex justify-end items-center">
           <Button
             variant="ghost"
             onClick={handleAuth}
@@ -97,6 +96,11 @@ export const HomePage: React.FC = () => {
           <div className="max-w-5xl mx-auto">
             {/* Animated Logo */}
             <AnimatedLogo banner className="mx-auto max-w-4xl mb-8" />
+
+            {/* Language Selector — prominent, centered */}
+            <div className="mb-10">
+              <LanguageHeroSelector />
+            </div>
 
             <div className="text-center">
               {/* Badge */}
