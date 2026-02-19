@@ -574,8 +574,14 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       return;
     }
 
-    const isCorrect = answer === currentQuestion?.correct_answer;
+    const correctAnswer = currentQuestion?.correct_answer;
+    const isCorrect = answer === correctAnswer
+      || (!!answer && !!correctAnswer && answer.trim().toLowerCase() === correctAnswer.trim().toLowerCase());
     const timestamp = Date.now();
+
+    if (answer !== correctAnswer && isCorrect) {
+      console.warn('⚠️ Answer matched after normalization:', JSON.stringify({ answer, correctAnswer }));
+    }
 
     // Check double points from both live state AND sessionStorage fallback
     const basePoints = 5;
@@ -767,7 +773,7 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
             isCorrect,
             answerText: answer,
             timeTaken: timestamp - (get().phaseEndTime
-              ? get().phaseEndTime! - 24000  // answer_selection = 24s
+              ? get().phaseEndTime! - 20000  // answer_selection = 20s
               : timestamp),
           }
         });

@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createHash } from 'crypto';
 
 // --- Constants ---
-export const SECONDS_PER_QUESTION = 85; // theme(14) + display(15) + answer(24) + results(25) + intermission(7)
+export const SECONDS_PER_QUESTION = 81; // theme(14) + display(15) + answer(20) + results(25) + intermission(7)
 export const MINUTES_PER_QUESTION = SECONDS_PER_QUESTION / 60;
 export const QUESTIONS_PER_STAGE = 5;
 export const BATCH_SIZE = 15;
@@ -461,25 +461,31 @@ export async function generateBatchWithRetry(
             q.question_text = q.question_text.substring(0, 147) + '...';
           }
           if (q.options) {
+            // Store original options before truncation to reliably map correct_answer
+            const originalOptions: string[] = [...q.options];
             q.options = q.options.map((opt: string) =>
               opt.length > 60 ? opt.substring(0, 57) + '...' : opt
             );
-            // If correct_answer was truncated in options, update it to match
+            // Update correct_answer to match truncated option using original→truncated mapping
             if (q.correct_answer) {
-              const matchingOption = q.options.find(
-                (opt: string) => opt === q.correct_answer || q.correct_answer.startsWith(opt.replace('...', ''))
+              const originalIndex = originalOptions.findIndex(
+                (orig: string) => orig === q.correct_answer
               );
-              if (matchingOption && matchingOption !== q.correct_answer) {
-                q.correct_answer = matchingOption;
-              }
-              // Also ensure correct_answer is exactly one of the options
-              if (!q.options.includes(q.correct_answer)) {
-                // Fallback: find the closest match
-                const bestMatch = q.options.find((opt: string) =>
-                  q.correct_answer.toLowerCase().startsWith(opt.replace('...', '').toLowerCase())
+              if (originalIndex !== -1) {
+                // Direct match: correct_answer was one of the original options → use truncated version
+                q.correct_answer = q.options[originalIndex];
+              } else {
+                // Gemini returned correct_answer not exactly matching any option — try normalized match
+                const normalizedCorrect = q.correct_answer.trim().toLowerCase();
+                const normalizedIndex = originalOptions.findIndex(
+                  (orig: string) => orig.trim().toLowerCase() === normalizedCorrect
                 );
-                if (bestMatch) {
-                  q.correct_answer = bestMatch;
+                if (normalizedIndex !== -1) {
+                  q.correct_answer = q.options[normalizedIndex];
+                } else {
+                  // Last resort: correct_answer text not found in options at all — force it to first option
+                  console.warn(`⚠️ correct_answer "${q.correct_answer}" not found in options: ${JSON.stringify(q.options)} — defaulting to first option`);
+                  q.correct_answer = q.options[0];
                 }
               }
             }

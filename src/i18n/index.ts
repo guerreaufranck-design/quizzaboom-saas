@@ -21,9 +21,8 @@ i18n
       escapeValue: false,
     },
     detection: {
-      // 1. Check if user explicitly chose a language (saved by LanguageSelector)
-      // 2. Detect browser language for new visitors
-      order: ['localStorage', 'navigator', 'htmlTag'],
+      // Only use explicitly saved preference — default to English for all new visitors
+      order: ['localStorage'],
       lookupLocalStorage: 'qb-user-lang',
       caches: [],  // Don't auto-cache — only LanguageSelector saves explicitly
     },

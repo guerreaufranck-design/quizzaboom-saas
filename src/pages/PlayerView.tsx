@@ -351,7 +351,8 @@ export const PlayerView: React.FC = () => {
       // Play sound
       if (hasAnswered && currentQuestion) {
         const correctAnswer = currentQuestion.correct_answer;
-        const wasCorrect = selectedAnswer === correctAnswer;
+        const wasCorrect = selectedAnswer === correctAnswer
+          || (!!selectedAnswer && !!correctAnswer && selectedAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase());
         if (wasCorrect) {
           playCorrectSound();
           setTimeout(() => playApplause(), 300);
@@ -639,9 +640,11 @@ export const PlayerView: React.FC = () => {
                 {['A', 'B', 'C', 'D'].map((letter) => {
                   const optionIndex = ['A', 'B', 'C', 'D'].indexOf(letter);
                   const optionText = currentQuestion?.options?.[optionIndex];
+                  const normalize = (s?: string | null) => s?.trim().toLowerCase() ?? '';
                   const isPreSelected = preSelectedAnswer === optionText && !hasAnswered;
                   const isFinalAnswer = selectedAnswer === optionText && hasAnswered;
-                  const isCorrectOption = optionText === currentQuestion?.correct_answer;
+                  const isCorrectOption = optionText === currentQuestion?.correct_answer
+                    || normalize(optionText) === normalize(currentQuestion?.correct_answer);
                   const isResultsPhase = currentPhase === 'results';
 
                   let buttonClass = 'bg-qb-darker hover:bg-qb-purple';

@@ -47,7 +47,7 @@ export const CreateQuiz: React.FC = () => {
   const [formData, setFormData] = useState({
     questionCount: 15,  // Default to 15 questions
     difficulty: 'medium' as 'easy' | 'medium' | 'hard',
-    language: 'fr' as QuizGenRequest['language'],
+    language: 'en' as QuizGenRequest['language'],
     includeJokers: true,
   });
   const [customQuestionCount, setCustomQuestionCount] = useState('15');
