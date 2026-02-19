@@ -718,7 +718,7 @@ export const PlayerView: React.FC = () => {
               {currentPhase === 'results' && currentQuestion?.fun_fact && (
                 <div className="mt-3 p-3 bg-yellow-500/10 border-2 border-yellow-500/40 rounded-lg">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-yellow-400 font-bold">💡 {t('player.funFact', 'Le saviez-vous ?')}</span>
+                    <span className="text-yellow-400 font-bold">💡 {t('player.funFactLabel')}</span>
                   </div>
                   <p className="text-white/90 text-sm leading-relaxed">
                     {currentQuestion.fun_fact}
