@@ -5,11 +5,20 @@ import { useQuizStore } from '../stores/useQuizStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Shield, Ban, Coins, Star, Clock, X, Trophy, Flame } from 'lucide-react';
+import { AutoFitText } from '../components/AutoFitText';
 import { useCountdown } from '../hooks/useCountdown';
 import { useQuizAudio } from '../hooks/useQuizAudio';
 import { supabase } from '../services/supabase/client';
 import { CommentaryPopupChain } from '../components/CommentaryPopupChain';
 import { TutorialSlides } from '../components/TutorialSlides';
+
+/** Distinct color schemes for answer options A/B/C/D — matches TV style */
+const MOBILE_OPTION_COLORS = [
+  { bg: 'from-red-500 to-orange-500', border: 'border-red-400', label: 'bg-red-700', letter: 'A' },
+  { bg: 'from-blue-500 to-indigo-500', border: 'border-blue-400', label: 'bg-blue-700', letter: 'B' },
+  { bg: 'from-green-500 to-emerald-500', border: 'border-green-400', label: 'bg-green-700', letter: 'C' },
+  { bg: 'from-purple-500 to-pink-500', border: 'border-purple-400', label: 'bg-purple-700', letter: 'D' },
+];
 
 export const PlayerView: React.FC = () => {
   const { t } = useTranslation();
@@ -583,168 +592,228 @@ export const PlayerView: React.FC = () => {
           </Card>
         ) : (
           <>
-            {/* Jokers — compact 4-column row */}
-            <Card className="p-2 bg-white/10 backdrop-blur-lg border-white/20">
-              <div className="grid grid-cols-4 gap-2">
-                {sessionEnabledJokers.protection && (
-                  <Button
-                    size="sm"
-                    onClick={() => handleJokerAction('protection')}
-                    disabled={!jokersEnabled || playerInventory.protection === 0 || isProtected}
-                    className="h-16 flex-col bg-blue-600 hover:bg-blue-700 disabled:opacity-30 px-1"
-                  >
-                    <Shield className="w-6 h-6 mb-0.5" />
-                    <span className="font-bold text-[10px] leading-tight">{t('player.jokerProtection')}</span>
-                    <span className="text-[9px] opacity-80">{playerInventory.protection === 0 ? t('player.jokerUsed') : playerInventory.protection > 1 ? `${playerInventory.protection}x` : t('player.jokerReady')}</span>
-                  </Button>
-                )}
-
-                {sessionEnabledJokers.double_points && (
-                  <Button
-                    size="sm"
-                    onClick={() => handleJokerAction('double_points')}
-                    disabled={!jokersEnabled || playerInventory.double_points === 0 || hasDoublePoints}
-                    className="h-16 flex-col bg-purple-600 hover:bg-purple-700 disabled:opacity-30 px-1"
-                  >
-                    <Star className="w-6 h-6 mb-0.5" />
-                    <span className="font-bold text-[10px] leading-tight">{t('player.jokerDouble')}</span>
-                    <span className="text-[9px] opacity-80">{playerInventory.double_points === 0 ? t('player.jokerUsed') : playerInventory.double_points > 1 ? `${playerInventory.double_points}x` : t('player.jokerReady')}</span>
-                  </Button>
-                )}
-
-                {sessionEnabledJokers.block && (
-                  <Button
-                    size="sm"
-                    onClick={() => handleJokerAction('block')}
-                    disabled={!jokersEnabled || playerInventory.block === 0}
-                    className="h-16 flex-col bg-red-600 hover:bg-red-700 disabled:opacity-30 px-1"
-                  >
-                    <Ban className="w-6 h-6 mb-0.5" />
-                    <span className="font-bold text-[10px] leading-tight">{t('player.jokerBlock')}</span>
-                    <span className="text-[9px] opacity-80">{playerInventory.block === 0 ? t('player.jokerUsed') : playerInventory.block > 1 ? `${playerInventory.block}x` : t('player.jokerReady')}</span>
-                  </Button>
-                )}
-
-                {sessionEnabledJokers.steal && (
-                  <Button
-                    size="sm"
-                    onClick={() => handleJokerAction('steal')}
-                    disabled={!jokersEnabled || playerInventory.steal === 0}
-                    className="h-16 flex-col bg-yellow-600 hover:bg-yellow-700 disabled:opacity-30 px-1"
-                  >
-                    <Coins className="w-6 h-6 mb-0.5" />
-                    <span className="font-bold text-[10px] leading-tight">{t('player.jokerSteal')}</span>
-                    <span className="text-[9px] opacity-80">{playerInventory.steal === 0 ? t('player.jokerUsed') : playerInventory.steal > 1 ? `${playerInventory.steal}x` : t('player.jokerReady')}</span>
-                  </Button>
-                )}
-              </div>
-            </Card>
-
-            {(currentPhase === 'question_display' || currentPhase === 'answer_selection') && currentQuestion?.image_url && (
+            {/* Jokers — only visible during theme_announcement */}
+            {currentPhase === 'theme_announcement' && (
               <Card className="p-2 bg-white/10 backdrop-blur-lg border-white/20">
-                <img
-                  src={currentQuestion.image_url}
-                  alt=""
-                  className="w-full h-28 object-cover rounded-xl"
-                />
+                <div className="grid grid-cols-4 gap-2">
+                  {sessionEnabledJokers.protection && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleJokerAction('protection')}
+                      disabled={!jokersEnabled || playerInventory.protection === 0 || isProtected}
+                      className="h-16 flex-col bg-blue-600 hover:bg-blue-700 disabled:opacity-30 px-1"
+                    >
+                      <Shield className="w-6 h-6 mb-0.5" />
+                      <span className="font-bold text-[10px] leading-tight">{t('player.jokerProtection')}</span>
+                      <span className="text-[9px] opacity-80">{playerInventory.protection === 0 ? t('player.jokerUsed') : playerInventory.protection > 1 ? `${playerInventory.protection}x` : t('player.jokerReady')}</span>
+                    </Button>
+                  )}
+
+                  {sessionEnabledJokers.double_points && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleJokerAction('double_points')}
+                      disabled={!jokersEnabled || playerInventory.double_points === 0 || hasDoublePoints}
+                      className="h-16 flex-col bg-purple-600 hover:bg-purple-700 disabled:opacity-30 px-1"
+                    >
+                      <Star className="w-6 h-6 mb-0.5" />
+                      <span className="font-bold text-[10px] leading-tight">{t('player.jokerDouble')}</span>
+                      <span className="text-[9px] opacity-80">{playerInventory.double_points === 0 ? t('player.jokerUsed') : playerInventory.double_points > 1 ? `${playerInventory.double_points}x` : t('player.jokerReady')}</span>
+                    </Button>
+                  )}
+
+                  {sessionEnabledJokers.block && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleJokerAction('block')}
+                      disabled={!jokersEnabled || playerInventory.block === 0}
+                      className="h-16 flex-col bg-red-600 hover:bg-red-700 disabled:opacity-30 px-1"
+                    >
+                      <Ban className="w-6 h-6 mb-0.5" />
+                      <span className="font-bold text-[10px] leading-tight">{t('player.jokerBlock')}</span>
+                      <span className="text-[9px] opacity-80">{playerInventory.block === 0 ? t('player.jokerUsed') : playerInventory.block > 1 ? `${playerInventory.block}x` : t('player.jokerReady')}</span>
+                    </Button>
+                  )}
+
+                  {sessionEnabledJokers.steal && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleJokerAction('steal')}
+                      disabled={!jokersEnabled || playerInventory.steal === 0}
+                      className="h-16 flex-col bg-yellow-600 hover:bg-yellow-700 disabled:opacity-30 px-1"
+                    >
+                      <Coins className="w-6 h-6 mb-0.5" />
+                      <span className="font-bold text-[10px] leading-tight">{t('player.jokerSteal')}</span>
+                      <span className="text-[9px] opacity-80">{playerInventory.steal === 0 ? t('player.jokerUsed') : playerInventory.steal > 1 ? `${playerInventory.steal}x` : t('player.jokerReady')}</span>
+                    </Button>
+                  )}
+                </div>
               </Card>
             )}
 
-            {/* Answer buttons */}
-            <Card className="p-3 bg-white/10 backdrop-blur-lg border-white/20">
-              <div className="grid grid-cols-2 gap-2">
-                {['A', 'B', 'C', 'D'].map((letter) => {
-                  const optionIndex = ['A', 'B', 'C', 'D'].indexOf(letter);
-                  const optionText = currentQuestion?.options?.[optionIndex];
-                  const normalize = (s?: string | null) => s?.trim().toLowerCase() ?? '';
-                  const isPreSelected = preSelectedAnswer === optionText && !hasAnswered;
-                  const isFinalAnswer = selectedAnswer === optionText && hasAnswered;
-                  const isCorrectOption = optionText === currentQuestion?.correct_answer
-                    || normalize(optionText) === normalize(currentQuestion?.correct_answer);
-                  const isResultsPhase = currentPhase === 'results';
+            {/* ── Question Display phase: question + image (read only) ── */}
+            {currentPhase === 'question_display' && currentQuestion && (
+              <Card className="p-3 bg-white/10 backdrop-blur-lg border-white/20">
+                {currentQuestion.image_url && (
+                  <img
+                    src={currentQuestion.image_url}
+                    alt=""
+                    className="w-full h-40 object-cover rounded-xl mb-3"
+                  />
+                )}
+                <div className="h-32">
+                  <AutoFitText
+                    text={currentQuestion.question_text}
+                    className="font-bold text-white"
+                    maxFontSize={48}
+                  />
+                </div>
+              </Card>
+            )}
 
-                  let buttonClass = 'bg-qb-darker hover:bg-qb-purple';
-                  if (isResultsPhase && isCorrectOption) {
-                    buttonClass = 'bg-green-500 border-4 border-green-300 scale-105';
-                  } else if (isResultsPhase && isFinalAnswer && !isCorrectOption) {
-                    buttonClass = 'bg-red-500 border-4 border-red-300';
-                  } else if (isFinalAnswer) {
-                    buttonClass = 'bg-qb-cyan border-4 border-white scale-105';
-                  } else if (isPreSelected) {
-                    buttonClass = 'bg-qb-cyan/60 border-4 border-dashed border-white/70 scale-105';
-                  }
+            {/* ── Answer Selection + Results: question + image + colored answer cards ── */}
+            {(currentPhase === 'answer_selection' || currentPhase === 'results') && currentQuestion && (
+              <>
+                {/* Question image */}
+                {currentQuestion.image_url && (
+                  <div className="rounded-xl overflow-hidden">
+                    <img
+                      src={currentQuestion.image_url}
+                      alt=""
+                      className="w-full h-32 object-cover"
+                    />
+                  </div>
+                )}
 
-                  return (
-                    <Button
-                      key={letter}
-                      size="xl"
-                      onClick={() => handleAnswerSelect(letter as 'A' | 'B' | 'C' | 'D')}
-                      disabled={!answersEnabled}
-                      className={`h-28 text-6xl font-bold ${buttonClass} disabled:opacity-30`}
-                    >
-                      {letter}
-                    </Button>
-                  );
-                })}
-              </div>
+                {/* Question text */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 h-20">
+                  <AutoFitText
+                    text={currentQuestion.question_text}
+                    className="font-bold text-white"
+                    maxFontSize={36}
+                  />
+                </div>
 
-              {/* Pre-selected: show confirm button */}
-              {preSelectedAnswer && !hasAnswered && currentPhase === 'answer_selection' && (
-                <div className="mt-3 p-2 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg text-center">
-                  {canChangeAnswer ? (
-                    <Button
-                      size="lg"
-                      onClick={() => confirmAnswer()}
-                      className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 w-full"
-                    >
-                      {t('player.confirmAnswer')}
-                    </Button>
-                  ) : (
+                {/* 4 colored answer cards — 2x2 grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  {(currentQuestion.options || []).map((option, idx) => {
+                    const color = MOBILE_OPTION_COLORS[idx] || MOBILE_OPTION_COLORS[0];
+                    const normalize = (s?: string | null) => s?.trim().toLowerCase() ?? '';
+                    const isPreSelected = preSelectedAnswer === option && !hasAnswered;
+                    const isFinalAnswer = selectedAnswer === option && hasAnswered;
+                    const isCorrectOption = option === currentQuestion.correct_answer
+                      || normalize(option) === normalize(currentQuestion.correct_answer);
+                    const isResultsPhase = currentPhase === 'results';
+
+                    // Determine card styling
+                    let ringClass = '';
+                    let scaleClass = '';
+                    let overlayBg = `bg-gradient-to-br ${color.bg}`;
+                    let borderClass = `border-2 ${color.border}`;
+                    let opacityClass = '';
+
+                    if (isResultsPhase && isCorrectOption) {
+                      overlayBg = 'bg-gradient-to-br from-green-500 to-emerald-500';
+                      borderClass = 'border-2 border-green-300';
+                      ringClass = 'ring-4 ring-green-300/70';
+                      scaleClass = 'scale-[1.03]';
+                    } else if (isResultsPhase && isFinalAnswer && !isCorrectOption) {
+                      overlayBg = 'bg-gradient-to-br from-red-500 to-red-700';
+                      borderClass = 'border-2 border-red-300';
+                      ringClass = 'ring-4 ring-red-300/70';
+                      opacityClass = 'opacity-70';
+                    } else if (isResultsPhase) {
+                      opacityClass = 'opacity-50';
+                    } else if (isFinalAnswer) {
+                      ringClass = 'ring-4 ring-white';
+                      scaleClass = 'scale-[1.03]';
+                    } else if (isPreSelected) {
+                      ringClass = 'ring-4 ring-white/80 ring-dashed';
+                      scaleClass = 'scale-[1.03]';
+                    }
+
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleAnswerSelect(['A', 'B', 'C', 'D'][idx] as 'A' | 'B' | 'C' | 'D')}
+                        disabled={!answersEnabled}
+                        className={`${overlayBg} ${borderClass} ${ringClass} ${scaleClass} ${opacityClass} rounded-xl flex flex-col h-24 overflow-hidden transition-all duration-200 active:scale-95 disabled:active:scale-100`}
+                      >
+                        {/* Letter badge */}
+                        <div className={`${color.label} w-8 h-8 rounded-lg flex items-center justify-center shrink-0 m-1.5 shadow-inner`}>
+                          <span className="text-lg font-bold text-white">{color.letter}</span>
+                        </div>
+                        {/* Option text */}
+                        <div className="flex-1 min-h-0 px-2 pb-1.5">
+                          <AutoFitText
+                            text={option}
+                            className="font-bold text-white drop-shadow-md"
+                            maxFontSize={28}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Pre-selected: show confirm button */}
+                {preSelectedAnswer && !hasAnswered && currentPhase === 'answer_selection' && (
+                  <div className="p-2 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg text-center">
+                    {canChangeAnswer ? (
+                      <Button
+                        size="lg"
+                        onClick={() => confirmAnswer()}
+                        className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 w-full"
+                      >
+                        {t('player.confirmAnswer')}
+                      </Button>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2">
+                        <Clock className="w-5 h-5 text-yellow-400 animate-pulse" />
+                        <p className="text-sm font-bold text-yellow-300">{t('player.answerLocking')}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {hasAnswered && currentPhase === 'answer_selection' && (
+                  <div className="p-2 bg-blue-500/20 border-2 border-blue-500 rounded-lg text-center">
+                    <p className="text-lg font-bold text-blue-400">✅ {t('player.answerSubmitted')}</p>
+                  </div>
+                )}
+
+                {currentPhase === 'results' && currentPlayer && currentPlayer.current_streak >= 3 && (
+                  <div className="p-2 bg-orange-500/20 border-2 border-orange-400 rounded-lg text-center animate-pulse">
                     <div className="flex items-center justify-center gap-2">
-                      <Clock className="w-5 h-5 text-yellow-400 animate-pulse" />
-                      <p className="text-sm font-bold text-yellow-300">{t('player.answerLocking')}</p>
+                      <Flame className="w-5 h-5 text-orange-400" />
+                      <span className="text-lg font-bold text-orange-300">
+                        {t('player.streakBadge', { count: currentPlayer.current_streak })}
+                      </span>
+                      <Flame className="w-5 h-5 text-orange-400" />
                     </div>
-                  )}
-                </div>
-              )}
-
-              {hasAnswered && (
-                <div className="mt-3 p-2 bg-blue-500/20 border-2 border-blue-500 rounded-lg text-center">
-                  <p className="text-lg font-bold text-blue-400">✅ {t('player.answerSubmitted')}</p>
-                </div>
-              )}
-
-              {currentPhase === 'results' && currentPlayer && currentPlayer.current_streak >= 3 && (
-                <div className="mt-2 p-2 bg-orange-500/20 border-2 border-orange-400 rounded-lg text-center animate-pulse">
-                  <div className="flex items-center justify-center gap-2">
-                    <Flame className="w-5 h-5 text-orange-400" />
-                    <span className="text-lg font-bold text-orange-300">
-                      {t('player.streakBadge', { count: currentPlayer.current_streak })}
-                    </span>
-                    <Flame className="w-5 h-5 text-orange-400" />
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Commentary popups */}
-              {currentPhase === 'results' && commentaryPopups.length > 0 && (
-                <div className="mt-3">
-                  <CommentaryPopupChain popups={commentaryPopups} variant="player" />
-                </div>
-              )}
-
-              {/* Fun fact */}
-              {currentPhase === 'results' && currentQuestion?.fun_fact && (
-                <div className="mt-3 p-3 bg-yellow-500/10 border-2 border-yellow-500/40 rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-yellow-400 font-bold">💡 {t('player.funFactLabel')}</span>
+                {/* Commentary popups */}
+                {currentPhase === 'results' && commentaryPopups.length > 0 && (
+                  <div>
+                    <CommentaryPopupChain popups={commentaryPopups} variant="player" />
                   </div>
-                  <p className="text-white/90 text-sm leading-relaxed">
-                    {currentQuestion.fun_fact}
-                  </p>
-                </div>
-              )}
-            </Card>
+                )}
+
+                {/* Fun fact */}
+                {currentPhase === 'results' && currentQuestion?.fun_fact && (
+                  <div className="p-3 bg-yellow-500/10 border-2 border-yellow-500/40 rounded-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-yellow-400 font-bold">💡 {t('player.funFactLabel')}</span>
+                    </div>
+                    <p className="text-white/90 text-sm leading-relaxed">
+                      {currentQuestion.fun_fact}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
           </>
         )}
       </div>
