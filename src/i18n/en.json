@@ -763,7 +763,8 @@
     "streakBadge": "Streak x{{count}}!",
     "streakFire": "On Fire!",
     "lateJoinWelcome": "You joined mid-game!",
-    "lateJoinDesc": "The quiz is already in progress. You'll start scoring from the next question. Good luck!"
+    "lateJoinDesc": "The quiz is already in progress. You'll start scoring from the next question. Good luck!",
+    "funFactLabel": "Did You Know?"
   },
   "quizTutorial": {
     "welcomeTitle": "Welcome to QuizzaBoom!",

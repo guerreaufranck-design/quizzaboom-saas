@@ -763,7 +763,8 @@
     "streakBadge": "Série x{{count}} !",
     "streakFire": "En feu !",
     "lateJoinWelcome": "Vous rejoignez en cours de partie !",
-    "lateJoinDesc": "Le quiz est deja en cours. Vous marquerez des points a partir de la prochaine question. Bonne chance !"
+    "lateJoinDesc": "Le quiz est deja en cours. Vous marquerez des points a partir de la prochaine question. Bonne chance !",
+    "funFactLabel": "Le saviez-vous ?"
   },
   "quizTutorial": {
     "welcomeTitle": "Bienvenue sur QuizzaBoom !",

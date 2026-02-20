@@ -574,6 +574,10 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       return;
     }
 
+    // ⚡ CRITICAL: Mark as answered IMMEDIATELY (before any async work)
+    // This prevents double-submit when broadcast + DB poll both trigger setPhaseData
+    set({ hasAnswered: true, answerSubmittedAt: Date.now() });
+
     const correctAnswer = currentQuestion?.correct_answer;
     const isCorrect = answer === correctAnswer
       || (!!answer && !!correctAnswer && answer.trim().toLowerCase() === correctAnswer.trim().toLowerCase());
@@ -783,10 +787,9 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
       console.error('❌ Submit answer error:', error);
     }
 
+    // Update selected answer (hasAnswered already set at top of function)
     set({
       selectedAnswer: answer,
-      hasAnswered: true,
-      answerSubmittedAt: timestamp,
     });
 
     // Persist answer state so reconnecting player knows they already answered

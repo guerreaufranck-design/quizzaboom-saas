@@ -54,7 +54,7 @@ export const PlayerView: React.FC = () => {
   // ===== RECONNECTION ROBUSTE =====
   // 3 mécanismes complémentaires : polling DB + visibility/pageshow/focus + health check Realtime
 
-  const pollPhaseFromDB = async () => {
+  const pollPhaseFromDB = async (forceSync = false) => {
     if (!currentSession?.id) return;
 
     try {
@@ -99,8 +99,12 @@ export const PlayerView: React.FC = () => {
           || (dbPhase.questionIndex === localQIdx && dbEndTime > localEnd)
           || (dbPhase.phase === 'quiz_complete' && localPhase !== 'quiz_complete');
 
-        if (isNewer && (dbPhase.phase !== localPhase || dbPhase.questionIndex !== localQIdx)) {
-          console.log('🔄 Poll detected NEWER phase:', localPhase, '→', dbPhase.phase, 'Q:', localQIdx, '→', dbPhase.questionIndex);
+        // forceSync: after phone wake, always accept DB phase if it differs
+        // This fixes the bug where player is stuck on old phase after sleep
+        const isDifferentPhase = dbPhase.phase !== localPhase || dbPhase.questionIndex !== localQIdx;
+
+        if ((isNewer || forceSync) && isDifferentPhase) {
+          console.log('🔄 Poll detected phase change:', localPhase, '→', dbPhase.phase, 'Q:', localQIdx, '→', dbPhase.questionIndex, forceSync ? '(force sync after wake)' : '');
           setPhaseData(dbPhase as any);
         }
       }
@@ -127,14 +131,14 @@ export const PlayerView: React.FC = () => {
     reconnectingRef.current = true;
     console.log('🔄 Reconnecting (visibility/pageshow/focus)...');
 
-    // Reconnect channel + sync phase from DB
+    // Reconnect channel + sync phase from DB (forceSync=true after wake)
     reconnectToSession(currentSession.id, sessionCode);
-    pollPhaseFromDB();
+    pollPhaseFromDB(true);
 
     // Retry after 1.5s — network may not be ready immediately after phone wake
     setTimeout(() => {
       reconnectToSession(currentSession!.id, sessionCode!);
-      pollPhaseFromDB();
+      pollPhaseFromDB(true);
     }, 1500);
 
     // Reset debounce after 3s

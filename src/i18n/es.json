@@ -763,7 +763,8 @@
     "streakBadge": "Racha x{{count}}!",
     "streakFire": "En llamas!",
     "lateJoinWelcome": "¡Te uniste a mitad del juego!",
-    "lateJoinDesc": "El quiz ya esta en curso. Empezaras a sumar puntos desde la proxima pregunta. ¡Buena suerte!"
+    "lateJoinDesc": "El quiz ya esta en curso. Empezaras a sumar puntos desde la proxima pregunta. ¡Buena suerte!",
+    "funFactLabel": "¿Sabias que?"
   },
   "quizTutorial": {
     "welcomeTitle": "Bienvenido a QuizzaBoom!",

@@ -356,25 +356,33 @@ PROFESSIONAL QUIZ STANDARDS (apply to ALL modes):
    - 2-4 word general category (e.g., "Marine Biology", "European History")
    - NEVER include the answer in the micro-theme
 
-8. IMAGE SEARCH TERM (CRITICAL — must NEVER reveal the correct answer):
+8. IMAGE SEARCH TERM (CRITICAL — the image must illustrate the QUESTION TOPIC, NEVER the answer):
    - Provide a 2-3 word ENGLISH search term for finding a relevant photo on Unsplash
    - Must be CONCRETE and VISUAL (objects, places, animals — not abstract concepts)
-   - The image MUST illustrate the GENERAL THEME or CATEGORY, NEVER the specific answer
-   - ⛔ ABSOLUTE RULE: The image_search_term must NEVER contain ANY word from the correct_answer. Not even a partial match. If the answer is "Saturn", the search term must NOT contain "Saturn" or "saturn" in any form.
-   - ⛔ The image_search_term must NEVER directly depict, show, or represent the correct answer. The photo should be about the TOPIC of the question, not the answer.
-   - SELF-CHECK before finalizing: "If a player sees this image, can they guess the correct answer?" If YES → change the search term immediately.
-   - ABSOLUTELY FORBIDDEN: if the question is "In which country is X forbidden?", the image must NOT be about that country. Use a generic image like "chewing gum" or "public transport"
-   - ABSOLUTELY FORBIDDEN: if the question is "Who invented X?", the image must NOT show the inventor. Use the invention itself or a generic lab/workshop
-   - ABSOLUTELY FORBIDDEN: if the answer is a specific place, person, animal or object, the search term must NOT contain that answer
-   - Good examples: Q="Which planet has the most moons?" → image="solar system planets" (NOT "saturn" or "jupiter")
-   - Good examples: Q="In which country is it illegal to chew gum?" → image="chewing gum pack" (NOT "singapore")
-   - Good examples: Q="What animal is the fastest?" → image="running race track" (NOT "cheetah")
-   - Good examples: Q="Who wrote Romeo and Juliet?" → image="theater stage play" (NOT "shakespeare")
-   - EXCEPTION for visual identification questions (see rule 3): the image_search_term MUST be the correct answer (e.g., "axolotl", "pangolin") since showing the subject IS the question
-   - Think: "What broad visual context helps the player understand the topic WITHOUT giving away the answer?"
-   - Bad: Question "What is the capital of Japan?" → image_search_term: "Tokyo" (gives away the answer!)
-   - Bad: Question "Which fruit has the most vitamin C?" → image_search_term: "guava fruit" (gives away the answer!)
-   - If the question is about a specific thing (e.g., a painting, an animal species), show the CATEGORY not the specific item
+
+   ⛔⛔⛔ THE #1 RULE: The image must represent the GENERAL TOPIC of the question, NOT the answer, NOT any specific option.
+
+   - The image illustrates WHAT THE QUESTION IS ABOUT (the subject/category), never WHAT THE ANSWER IS
+   - Example: Q="What is the capital of France?" → The question is ABOUT France/capitals → image="european city skyline" (NOT "paris eiffel tower")
+   - Example: Q="Which planet has rings?" → The question is ABOUT planets → image="solar system" (NOT "saturn")
+   - Example: Q="What animal is the fastest?" → The question is ABOUT animal speed → image="running race track" (NOT "cheetah")
+   - Example: Q="Who painted the Mona Lisa?" → The question is ABOUT painting/art → image="art museum gallery" (NOT "da vinci" or "mona lisa")
+   - Example: Q="Who wrote Romeo and Juliet?" → The question is ABOUT literature/theater → image="theater stage play" (NOT "shakespeare")
+   - Example: Q="In which country is it illegal to chew gum?" → The question is ABOUT chewing gum laws → image="chewing gum pack" (NOT "singapore")
+
+   ⛔ ABSOLUTE RULES:
+   - image_search_term must NEVER contain ANY word from correct_answer (not even partial match)
+   - image_search_term must NEVER contain ANY word from ANY of the 4 answer options
+   - image_search_term must NEVER directly depict, show, or represent the correct answer
+   - If the answer is a person, the image must NOT show that person — show their field/domain instead
+   - If the answer is a place, the image must NOT show that place — show the broader category instead
+   - If the answer is an animal, the image must NOT show that animal — show the context (habitat, speed, etc.)
+
+   - SELF-CHECK: "If a player sees this image, can they guess the correct answer?" If YES → change immediately
+   - SECOND CHECK: "Does this image show or strongly suggest ANY of the 4 options?" If YES → change immediately
+
+   - EXCEPTION for visual identification questions (see rule 3): the image_search_term MUST be the correct answer since showing the subject IS the question
+   - When in doubt, use a VERY GENERIC image about the broad topic category
 
 9. TRANSLATION & LANGUAGE QUALITY (CRITICAL for non-English quizzes):
    - Language: ${fullLanguage}
@@ -493,16 +501,28 @@ export async function generateBatchWithRetry(
               }
             }
           }
-          // Guard: strip image_search_term if it contains the correct answer (spoiler prevention)
+          // Guard: strip image_search_term if it contains the correct answer OR any option (spoiler prevention)
           if (q.image_search_term && q.correct_answer) {
             const visualIdTexts = ["What is this?", "Qu'est-ce que c'est ?", "Was ist das?", "¿Qué es esto?"];
             const isVisualIdQuestion = visualIdTexts.includes(q.question_text);
             if (!isVisualIdQuestion) {
-              const answerWords = q.correct_answer.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
               const searchLower = q.image_search_term.toLowerCase();
-              const hasSpoiler = answerWords.some((word: string) => searchLower.includes(word));
+              // Check correct answer words
+              const answerWords = q.correct_answer.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
+              let hasSpoiler = answerWords.some((word: string) => searchLower.includes(word));
+              // Also check ALL option words (not just correct answer) — image should not suggest any option
+              if (!hasSpoiler && q.options) {
+                for (const option of q.options) {
+                  const optionWords = option.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
+                  if (optionWords.some((word: string) => searchLower.includes(word))) {
+                    hasSpoiler = true;
+                    console.warn(`⚠️ image_search_term "${q.image_search_term}" contains option word from "${option}"`);
+                    break;
+                  }
+                }
+              }
               if (hasSpoiler) {
-                console.warn(`⚠️ image_search_term "${q.image_search_term}" contains answer "${q.correct_answer}" — replacing with micro_theme`);
+                console.warn(`⚠️ image_search_term "${q.image_search_term}" is a spoiler — replacing with micro_theme`);
                 q.image_search_term = q.micro_theme || 'abstract colorful background';
               }
             }

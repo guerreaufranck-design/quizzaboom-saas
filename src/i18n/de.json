@@ -763,7 +763,8 @@
     "streakBadge": "Serie x{{count}}!",
     "streakFire": "Auf Feuer!",
     "lateJoinWelcome": "Du bist mitten im Spiel beigetreten!",
-    "lateJoinDesc": "Das Quiz lauft bereits. Du sammelst Punkte ab der nachsten Frage. Viel Gluck!"
+    "lateJoinDesc": "Das Quiz lauft bereits. Du sammelst Punkte ab der nachsten Frage. Viel Gluck!",
+    "funFactLabel": "Wusstest du?"
   },
   "quizTutorial": {
     "welcomeTitle": "Willkommen bei QuizzaBoom!",
