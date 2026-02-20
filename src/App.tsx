@@ -23,6 +23,7 @@ import { BarQuizNight } from './pages/BarQuizNight';
 import { BlogIndex } from './pages/BlogIndex';
 import { HowToRunSuccessfulPubQuiz } from './pages/blog/HowToRunSuccessfulPubQuiz';
 import { SalesOutreach } from './pages/SalesOutreach';
+import { SupportAdmin } from './pages/SupportAdmin';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SupportChat } from './components/SupportChat';
@@ -88,6 +89,7 @@ function App() {
       <Route path="/blog" element={<BlogIndex />} />
       <Route path="/blog/how-to-run-successful-pub-quiz-night" element={<HowToRunSuccessfulPubQuiz />} />
       <Route path="/sales-outreach" element={<SalesOutreach />} />
+      <Route path="/support-admin" element={<SupportAdmin />} />
       <Route path="*" element={<HomePage />} />
     </Routes>
     <SupportChat />

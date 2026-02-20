@@ -1105,8 +1105,13 @@
     "title": "Soporte QuizzaBoom",
     "welcomeMessage": "Hola! Soy el asistente de QuizzaBoom. Como puedo ayudarte? Puedo responder preguntas sobre como crear quiz, unirte a partidas, precios y mucho mas!",
     "placeholder": "Haz tu pregunta...",
-    "errorMessage": "Ups, algo fallo. Intentalo de nuevo o escribenos a support@quizzaboom.app",
-    "emailEscalation": "Necesitas mas ayuda? Escribe a support@quizzaboom.app"
+    "errorMessage": "Ups, algo fallo. Intentalo de nuevo.",
+    "emailEscalation": "Necesitas mas ayuda? Escribe a support@quizzaboom.app",
+    "checkingHuman": "Verificando si un agente humano esta disponible...",
+    "humanJoined": "Un agente de soporte se ha unido a la conversacion",
+    "agentLabel": "Agente",
+    "resolvedMessage": "Esta conversacion ha sido resuelta.",
+    "newConversation": "Nuevo chat"
   },
   "settings": {
     "title": "Configuración",
