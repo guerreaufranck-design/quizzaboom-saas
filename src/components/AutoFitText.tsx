@@ -1,9 +1,11 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React from 'react';
 
 /**
- * AutoFitText — dynamically scales text to FILL its parent container.
- * Uses binary search to find the maximum font size that fits without overflow.
- * NEVER clips text — always fully visible.
+ * AutoFitText — scales font size based on text length.
+ * Simple, reliable approach: longer text = smaller font.
+ * No DOM measurement needed — works perfectly inside CSS animations.
+ *
+ * The text fills ~75% of the container (12.5% padding on each side).
  */
 export const AutoFitText: React.FC<{
   text: string;
@@ -11,79 +13,45 @@ export const AutoFitText: React.FC<{
   minFontSize?: number;
   maxFontSize?: number;
 }> = ({ text, className = '', minFontSize = 14, maxFontSize = 200 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const measureRef = useRef<HTMLDivElement>(null);
-  const [fontSize, setFontSize] = useState(minFontSize);
+  const len = text?.length || 0;
 
-  const computeFit = useCallback(() => {
-    const container = containerRef.current;
-    const measure = measureRef.current;
-    if (!container || !measure || !text) return;
+  // Calculate font size: inverse relationship between text length and font size
+  // Short text → large font, long text → small font
+  let fontSize: number;
 
-    // Available space = container dimensions
-    const availW = container.clientWidth;
-    const availH = container.clientHeight;
-    if (availW <= 0 || availH <= 0) return;
+  if (len <= 10) {
+    fontSize = maxFontSize;
+  } else if (len <= 30) {
+    // Lerp from 100% to 70% of max
+    const t = (len - 10) / 20;
+    fontSize = maxFontSize * (1 - t * 0.3);
+  } else if (len <= 60) {
+    // Lerp from 70% to 45% of max
+    const t = (len - 30) / 30;
+    fontSize = maxFontSize * (0.7 - t * 0.25);
+  } else if (len <= 100) {
+    // Lerp from 45% to 30% of max
+    const t = (len - 60) / 40;
+    fontSize = maxFontSize * (0.45 - t * 0.15);
+  } else if (len <= 180) {
+    // Lerp from 30% to 18% of max
+    const t = (len - 100) / 80;
+    fontSize = maxFontSize * (0.30 - t * 0.12);
+  } else {
+    // Very long text: 18% of max
+    fontSize = maxFontSize * 0.18;
+  }
 
-    // Binary search: find max fontSize where text fits
-    let lo = minFontSize;
-    let hi = maxFontSize;
-    let best = minFontSize;
-
-    while (lo <= hi) {
-      const mid = Math.floor((lo + hi) / 2);
-      measure.style.fontSize = `${mid}px`;
-      // scrollHeight/scrollWidth include all overflowing content
-      const textH = measure.scrollHeight;
-      const textW = measure.scrollWidth;
-      if (textH <= availH && textW <= availW) {
-        best = mid;
-        lo = mid + 1;
-      } else {
-        hi = mid - 1;
-      }
-    }
-
-    setFontSize(best);
-  }, [text, minFontSize, maxFontSize]);
-
-  // Compute on mount + text change — retry after CSS animations settle
-  useEffect(() => {
-    requestAnimationFrame(() => computeFit());
-    // Retry after animations (anim-slide/anim-pop) to get correct container size
-    const t1 = setTimeout(computeFit, 400);
-    const t2 = setTimeout(computeFit, 900);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [computeFit]);
-
-  // Re-compute on window resize
-  useEffect(() => {
-    const handleResize = () => computeFit();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [computeFit]);
+  // Clamp between min and max
+  fontSize = Math.max(minFontSize, Math.min(maxFontSize, Math.round(fontSize)));
 
   return (
-    <div ref={containerRef} className="w-full h-full relative overflow-hidden">
-      {/* Hidden measurement div — absolutely positioned, same width as container, word-wrap enabled */}
+    <div className="w-full h-full flex items-center justify-center overflow-hidden px-[8%] py-[6%]">
       <div
-        ref={measureRef}
-        aria-hidden
-        className={`absolute top-0 left-0 w-full break-words leading-[1.2] ${className}`}
-        style={{ fontSize: `${fontSize}px`, visibility: 'hidden', pointerEvents: 'none' }}
+        className={`text-center break-words leading-[1.15] w-full ${className}`}
+        style={{ fontSize: `${fontSize}px` }}
       >
         {text}
-      </div>
-      {/* Visible text — centered */}
-      <div
-        className={`w-full h-full flex items-center justify-center overflow-hidden`}
-      >
-        <div
-          className={`text-center break-words leading-[1.2] w-full ${className}`}
-          style={{ fontSize: `${fontSize}px` }}
-        >
-          {text}
-        </div>
       </div>
     </div>
   );
