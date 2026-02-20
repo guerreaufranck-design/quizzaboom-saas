@@ -119,6 +119,7 @@ export const PlayerView: React.FC = () => {
   };
 
   // Debounced reconnect — prevents multiple simultaneous reconnection attempts
+  // Retries after a short delay in case the network isn't ready immediately after wake
   const handleReconnect = () => {
     if (reconnectingRef.current) return;
     if (!currentSession?.id || !sessionCode) return;
@@ -128,11 +129,16 @@ export const PlayerView: React.FC = () => {
 
     // Reconnect channel + sync phase from DB
     reconnectToSession(currentSession.id, sessionCode);
-    // Also poll immediately to catch any missed phase changes
     pollPhaseFromDB();
 
-    // Reset debounce after 2s
-    setTimeout(() => { reconnectingRef.current = false; }, 2000);
+    // Retry after 1.5s — network may not be ready immediately after phone wake
+    setTimeout(() => {
+      reconnectToSession(currentSession!.id, sessionCode!);
+      pollPhaseFromDB();
+    }, 1500);
+
+    // Reset debounce after 3s
+    setTimeout(() => { reconnectingRef.current = false; }, 3000);
   };
 
   useEffect(() => {
@@ -169,13 +175,11 @@ export const PlayerView: React.FC = () => {
       }
     };
 
-    // 2. pageshow (iOS Safari — fire quand la page revient du bfcache)
-    const handlePageShow = (event: PageTransitionEvent) => {
-      if (event.persisted) {
-        console.log('📱 pageshow (bfcache) — reconnecting...');
-        keepAwake();
-        handleReconnect();
-      }
+    // 2. pageshow (iOS Safari bfcache + Android navigation back)
+    const handlePageShow = () => {
+      console.log('📱 pageshow — reconnecting...');
+      keepAwake();
+      handleReconnect();
     };
 
     // 3. focus (onglet reprend le focus)
@@ -184,9 +188,16 @@ export const PlayerView: React.FC = () => {
       handleReconnect();
     };
 
+    // 4. online (network restored after phone sleep or connectivity drop)
+    const handleOnline = () => {
+      console.log('🌐 Network back online — reconnecting...');
+      handleReconnect();
+    };
+
     document.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('pageshow', handlePageShow);
     window.addEventListener('focus', handleFocus);
+    window.addEventListener('online', handleOnline);
 
     // === Polling continu de la phase depuis la DB ===
     // Fast poll (3s) quand Realtime est mort, slow poll (5s) quand il est sain
@@ -209,6 +220,7 @@ export const PlayerView: React.FC = () => {
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('pageshow', handlePageShow);
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleOnline);
       if (wakeLockRef.current) {
         try { wakeLockRef.current.release(); } catch (_) {}
       }

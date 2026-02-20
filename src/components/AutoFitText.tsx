@@ -47,12 +47,13 @@ export const AutoFitText: React.FC<{
     setFontSize(best);
   }, [text, minFontSize, maxFontSize]);
 
-  // Compute on mount + text change
+  // Compute on mount + text change — retry after CSS animations settle
   useEffect(() => {
-    // Small delay to ensure container has been laid out
-    requestAnimationFrame(() => {
-      computeFit();
-    });
+    requestAnimationFrame(() => computeFit());
+    // Retry after animations (anim-slide/anim-pop) to get correct container size
+    const t1 = setTimeout(computeFit, 400);
+    const t2 = setTimeout(computeFit, 900);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [computeFit]);
 
   // Re-compute on window resize
@@ -63,7 +64,7 @@ export const AutoFitText: React.FC<{
   }, [computeFit]);
 
   return (
-    <div ref={containerRef} className="w-full h-full relative">
+    <div ref={containerRef} className="w-full h-full relative overflow-hidden">
       {/* Hidden measurement div — absolutely positioned, same width as container, word-wrap enabled */}
       <div
         ref={measureRef}
@@ -75,7 +76,7 @@ export const AutoFitText: React.FC<{
       </div>
       {/* Visible text — centered */}
       <div
-        className={`w-full h-full flex items-center justify-center`}
+        className={`w-full h-full flex items-center justify-center overflow-hidden`}
       >
         <div
           className={`text-center break-words leading-[1.2] w-full ${className}`}
