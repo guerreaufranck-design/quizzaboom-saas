@@ -322,8 +322,15 @@ function ConversationDetail({
       (payload) => {
         const newMsg = payload.new as Message;
         setMessages((prev) => {
-          // Avoid duplicates
+          // Avoid duplicates by real ID
           if (prev.some((m) => m.id === newMsg.id)) return prev;
+          // Replace optimistic temp message with real one (same role + content)
+          const tempIdx = prev.findIndex((m) => m.id.startsWith('temp-') && m.role === newMsg.role && m.content === newMsg.content);
+          if (tempIdx !== -1) {
+            const updated = [...prev];
+            updated[tempIdx] = newMsg;
+            return updated;
+          }
           return [...prev, newMsg];
         });
       }
@@ -363,9 +370,10 @@ function ConversationDetail({
     setSending(true);
     setInput('');
 
-    // Optimistic update
+    // Optimistic update with temp marker
+    const tempId = `temp-${Date.now()}`;
     const tempMsg: Message = {
-      id: `temp-${Date.now()}`,
+      id: tempId,
       role: 'HUMAN',
       content,
       created_at: new Date().toISOString(),
@@ -374,6 +382,15 @@ function ConversationDetail({
 
     await adminAPI('send_message', { conversationId, content });
     setSending(false);
+
+    // Remove the temp message — the real one will arrive via Realtime or is already there
+    setMessages((prev) => {
+      const withoutTemp = prev.filter((m) => m.id !== tempId);
+      // If the real message already arrived via Realtime, keep it; otherwise re-add the temp
+      const hasReal = withoutTemp.some((m) => m.role === 'HUMAN' && m.content === content && !m.id.startsWith('temp-'));
+      if (hasReal) return withoutTemp;
+      return prev; // keep temp until real one arrives
+    });
 
     // Update conversation status locally
     setConversation((prev) => prev ? { ...prev, status: 'HUMAN_HANDLING' } : null);

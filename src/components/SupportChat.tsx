@@ -116,16 +116,20 @@ export const SupportChat: React.FC = () => {
         filter: `conversation_id=eq.${conversationId}`,
       },
       (payload) => {
-        const msg = payload.new as { role: string; content: string };
+        const msg = payload.new as { id: string; role: string; content: string };
         // Only add HUMAN and SYSTEM messages (USER and AI are already added locally)
         if (msg.role === 'HUMAN' || msg.role === 'SYSTEM') {
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: msg.role === 'HUMAN' ? 'human' : 'system',
-              text: msg.content,
-            },
-          ]);
+          setMessages((prev) => {
+            // Deduplicate by content+role to avoid duplicates with polling
+            if (prev.some((m) => m.text === msg.content && m.role === (msg.role === 'HUMAN' ? 'human' : 'system'))) return prev;
+            return [
+              ...prev,
+              {
+                role: msg.role === 'HUMAN' ? 'human' : 'system',
+                text: msg.content,
+              },
+            ];
+          });
         }
       }
     );
@@ -151,6 +155,52 @@ export const SupportChat: React.FC = () => {
       supabase.removeChannel(channel);
     };
   }, [conversationId]);
+
+  // ── Polling fallback: fetch new messages when human is handling ──
+  useEffect(() => {
+    if (!conversationId) return;
+    // Only poll when waiting for or receiving human responses
+    if (conversationStatus !== 'WAITING_HUMAN' && conversationStatus !== 'HUMAN_HANDLING') return;
+
+    const poll = async () => {
+      try {
+        const { data: conv } = await supabase
+          .from('support_conversations')
+          .select('status')
+          .eq('id', conversationId)
+          .single();
+
+        if (conv && conv.status !== conversationStatus) {
+          setConversationStatus(conv.status);
+        }
+
+        const { data: dbMessages } = await supabase
+          .from('support_messages')
+          .select('role, content, created_at')
+          .eq('conversation_id', conversationId)
+          .order('created_at', { ascending: true });
+
+        if (dbMessages && dbMessages.length > 0) {
+          const freshMessages: ChatMessage[] = dbMessages.map((m) => ({
+            role: m.role === 'USER' ? 'user' : m.role === 'HUMAN' ? 'human' : m.role === 'SYSTEM' ? 'system' : 'model',
+            text: m.content,
+          }));
+          setMessages((prev) => {
+            // Only update if there are genuinely new messages
+            if (freshMessages.length > prev.length) {
+              return freshMessages;
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        console.error('Polling support chat failed:', err);
+      }
+    };
+
+    const interval = setInterval(poll, 3000);
+    return () => clearInterval(interval);
+  }, [conversationId, conversationStatus]);
 
   // ── Send message ─────────────────────────────────────────────────
   const sendMessage = async () => {
