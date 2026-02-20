@@ -156,9 +156,9 @@ export const SupportChat: React.FC = () => {
     };
   }, [conversationId]);
 
-  // ── Polling fallback: fetch new messages when human is handling ──
-  // Track the last known DB message count to detect new messages
-  const lastDbCountRef = useRef(0);
+  // ── Polling fallback: fetch new messages via server API ───────────
+  // Uses /api/support-poll (service_role_key) to bypass any RLS issues
+  const lastPollCountRef = useRef(0);
 
   useEffect(() => {
     if (!conversationId) return;
@@ -167,33 +167,29 @@ export const SupportChat: React.FC = () => {
 
     const poll = async () => {
       try {
-        // Poll conversation status
-        const { data: conv } = await supabase
-          .from('support_conversations')
-          .select('status')
-          .eq('id', conversationId)
-          .single();
+        const res = await fetch('/api/support-poll', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ conversationId }),
+        });
 
-        if (conv && conv.status !== conversationStatus) {
-          setConversationStatus(conv.status);
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        // Update conversation status
+        if (data.status && data.status !== conversationStatus) {
+          setConversationStatus(data.status);
         }
 
-        // Poll messages — always replace with DB truth to avoid count mismatches
-        const { data: dbMessages } = await supabase
-          .from('support_messages')
-          .select('role, content, created_at')
-          .eq('conversation_id', conversationId)
-          .order('created_at', { ascending: true });
-
-        if (dbMessages && dbMessages.length > 0) {
-          // Only update if there are new messages in DB since last poll
-          if (dbMessages.length !== lastDbCountRef.current) {
-            lastDbCountRef.current = dbMessages.length;
-            const freshMessages: ChatMessage[] = dbMessages.map((m) => ({
+        // Update messages from DB (source of truth)
+        if (data.messages && data.messages.length > 0) {
+          if (data.messages.length !== lastPollCountRef.current) {
+            lastPollCountRef.current = data.messages.length;
+            const freshMessages: ChatMessage[] = data.messages.map((m: { role: string; content: string }) => ({
               role: m.role === 'USER' ? 'user' : m.role === 'HUMAN' ? 'human' : m.role === 'SYSTEM' ? 'system' : 'model',
               text: m.content,
             }));
-            // Replace local messages with DB truth (source of truth)
             setMessages(freshMessages);
           }
         }
