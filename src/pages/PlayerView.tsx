@@ -507,10 +507,10 @@ export const PlayerView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-qb-dark">
+    <div className="h-[100dvh] bg-qb-dark flex flex-col overflow-hidden">
       <TargetSelectorModal />
 
-      <div className="max-w-2xl mx-auto p-3 space-y-2">
+      <div className="max-w-2xl mx-auto p-3 flex flex-col gap-2 flex-1 min-h-0 w-full">
         {/* Header: player info + score + active effects — compact */}
         <Card className="p-3 bg-gradient-to-br from-qb-purple via-qb-magenta to-qb-cyan">
           <div className="flex items-center justify-between">
@@ -653,15 +653,15 @@ export const PlayerView: React.FC = () => {
 
             {/* ── Question Display phase: question + image (read only) ── */}
             {currentPhase === 'question_display' && currentQuestion && (
-              <Card className="p-3 bg-white/10 backdrop-blur-lg border-white/20">
+              <Card className="p-3 bg-white/10 backdrop-blur-lg border-white/20 flex-1 flex flex-col min-h-0">
                 {currentQuestion.image_url && (
                   <img
                     src={currentQuestion.image_url}
                     alt=""
-                    className="w-full h-40 object-cover rounded-xl mb-3"
+                    className="w-full h-40 object-cover rounded-xl mb-3 shrink-0"
                   />
                 )}
-                <div className="h-32">
+                <div className="flex-1 min-h-[80px]">
                   <AutoFitText
                     text={currentQuestion.question_text}
                     className="font-bold text-white"
@@ -673,20 +673,20 @@ export const PlayerView: React.FC = () => {
 
             {/* ── Answer Selection + Results: question + image + colored answer cards ── */}
             {(currentPhase === 'answer_selection' || currentPhase === 'results') && currentQuestion && (
-              <>
+              <div className="flex flex-col gap-2 flex-1 min-h-0">
                 {/* Question image */}
                 {currentQuestion.image_url && (
-                  <div className="rounded-xl overflow-hidden">
+                  <div className="rounded-xl overflow-hidden shrink-0">
                     <img
                       src={currentQuestion.image_url}
                       alt=""
-                      className="w-full h-32 object-cover"
+                      className="w-full h-28 object-cover"
                     />
                   </div>
                 )}
 
-                {/* Question text */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 h-20">
+                {/* Question text — flexible height based on text length */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 shrink-0" style={{ minHeight: '60px', height: currentQuestion.question_text.length > 80 ? '25%' : '18%' }}>
                   <AutoFitText
                     text={currentQuestion.question_text}
                     className="font-bold text-white"
@@ -694,8 +694,8 @@ export const PlayerView: React.FC = () => {
                   />
                 </div>
 
-                {/* 4 colored answer cards — 2x2 grid */}
-                <div className="grid grid-cols-2 gap-2">
+                {/* 4 colored answer cards — 2x2 grid, fills remaining space */}
+                <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
                   {(currentQuestion.options || []).map((option, idx) => {
                     const color = MOBILE_OPTION_COLORS[idx] || MOBILE_OPTION_COLORS[0];
                     const normalize = (s?: string | null) => s?.trim().toLowerCase() ?? '';
@@ -737,18 +737,18 @@ export const PlayerView: React.FC = () => {
                         key={idx}
                         onClick={() => handleAnswerSelect(['A', 'B', 'C', 'D'][idx] as 'A' | 'B' | 'C' | 'D')}
                         disabled={!answersEnabled}
-                        className={`${overlayBg} ${borderClass} ${ringClass} ${scaleClass} ${opacityClass} rounded-xl flex flex-col h-24 overflow-hidden transition-all duration-200 active:scale-95 disabled:active:scale-100`}
+                        className={`${overlayBg} ${borderClass} ${ringClass} ${scaleClass} ${opacityClass} rounded-xl flex flex-col overflow-hidden transition-all duration-200 active:scale-95 disabled:active:scale-100`}
                       >
                         {/* Letter badge */}
-                        <div className={`${color.label} w-8 h-8 rounded-lg flex items-center justify-center shrink-0 m-1.5 shadow-inner`}>
-                          <span className="text-lg font-bold text-white">{color.letter}</span>
+                        <div className={`${color.label} w-7 h-7 rounded-lg flex items-center justify-center shrink-0 m-1.5 shadow-inner`}>
+                          <span className="text-base font-bold text-white">{color.letter}</span>
                         </div>
                         {/* Option text */}
                         <div className="flex-1 min-h-0 px-2 pb-1.5">
                           <AutoFitText
                             text={option}
                             className="font-bold text-white drop-shadow-md"
-                            maxFontSize={28}
+                            maxFontSize={26}
                           />
                         </div>
                       </button>
@@ -803,7 +803,7 @@ export const PlayerView: React.FC = () => {
 
                 {/* Fun fact */}
                 {currentPhase === 'results' && currentQuestion?.fun_fact && (
-                  <div className="p-3 bg-yellow-500/10 border-2 border-yellow-500/40 rounded-lg">
+                  <div className="p-3 bg-yellow-500/10 border-2 border-yellow-500/40 rounded-lg shrink-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-yellow-400 font-bold">💡 {t('player.funFactLabel')}</span>
                     </div>
@@ -812,7 +812,7 @@ export const PlayerView: React.FC = () => {
                     </p>
                   </div>
                 )}
-              </>
+              </div>
             )}
           </>
         )}

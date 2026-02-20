@@ -1,54 +1,95 @@
-import React from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 
 /**
- * AutoFitText — scales font size based on text length.
- * Simple, reliable approach: longer text = smaller font.
- * No DOM measurement needed — works perfectly inside CSS animations.
+ * AutoFitText — dynamically scales font size to fit its container.
+ * Uses actual DOM measurement for accurate sizing across all languages.
+ * Falls back to a length-based estimate for the first render (avoids flash).
  *
- * The text fills ~75% of the container (12.5% padding on each side).
+ * Works perfectly inside CSS animations — re-measures on resize.
  */
 export const AutoFitText: React.FC<{
   text: string;
   className?: string;
   minFontSize?: number;
   maxFontSize?: number;
-}> = ({ text, className = '', minFontSize = 14, maxFontSize = 200 }) => {
-  const len = text?.length || 0;
+}> = ({ text, className = '', minFontSize = 12, maxFontSize = 200 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const [fontSize, setFontSize] = useState<number>(() => {
+    // Quick initial estimate based on text length (avoids layout flash)
+    const len = text?.length || 0;
+    if (len <= 10) return maxFontSize;
+    if (len <= 30) return Math.round(maxFontSize * 0.7);
+    if (len <= 60) return Math.round(maxFontSize * 0.5);
+    if (len <= 100) return Math.round(maxFontSize * 0.35);
+    if (len <= 150) return Math.round(maxFontSize * 0.25);
+    if (len <= 250) return Math.round(maxFontSize * 0.18);
+    return Math.round(maxFontSize * 0.14);
+  });
 
-  // Calculate font size: inverse relationship between text length and font size
-  // Short text → large font, long text → small font
-  let fontSize: number;
+  const fitText = useCallback(() => {
+    const container = containerRef.current;
+    const textEl = textRef.current;
+    if (!container || !textEl || !text) return;
 
-  if (len <= 10) {
-    fontSize = maxFontSize;
-  } else if (len <= 30) {
-    // Lerp from 100% to 70% of max
-    const t = (len - 10) / 20;
-    fontSize = maxFontSize * (1 - t * 0.3);
-  } else if (len <= 60) {
-    // Lerp from 70% to 45% of max
-    const t = (len - 30) / 30;
-    fontSize = maxFontSize * (0.7 - t * 0.25);
-  } else if (len <= 100) {
-    // Lerp from 45% to 30% of max
-    const t = (len - 60) / 40;
-    fontSize = maxFontSize * (0.45 - t * 0.15);
-  } else if (len <= 180) {
-    // Lerp from 30% to 18% of max
-    const t = (len - 100) / 80;
-    fontSize = maxFontSize * (0.30 - t * 0.12);
-  } else {
-    // Very long text: 18% of max
-    fontSize = maxFontSize * 0.18;
-  }
+    const containerW = container.clientWidth * 0.88; // 6% padding each side
+    const containerH = container.clientHeight * 0.90; // 5% padding each side
 
-  // Clamp between min and max
-  fontSize = Math.max(minFontSize, Math.min(maxFontSize, Math.round(fontSize)));
+    if (containerW <= 0 || containerH <= 0) return;
+
+    // Binary search for the largest font size that fits
+    let lo = minFontSize;
+    let hi = Math.min(maxFontSize, containerH); // Can't be taller than container
+    let best = lo;
+
+    while (lo <= hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      textEl.style.fontSize = `${mid}px`;
+
+      // Check if text fits within the container
+      const fits = textEl.scrollWidth <= containerW + 1 && textEl.scrollHeight <= containerH + 1;
+
+      if (fits) {
+        best = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+
+    // Apply the best size found
+    if (best !== fontSize) {
+      setFontSize(best);
+    }
+    textEl.style.fontSize = `${best}px`;
+  }, [text, minFontSize, maxFontSize, fontSize]);
+
+  // Measure on mount, text change, and container resize
+  useEffect(() => {
+    fitText();
+
+    // Re-measure on window resize
+    const handleResize = () => fitText();
+    window.addEventListener('resize', handleResize);
+
+    // ResizeObserver for container changes (e.g. animation, flex recalc)
+    let ro: ResizeObserver | null = null;
+    if (containerRef.current && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => fitText());
+      ro.observe(containerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      ro?.disconnect();
+    };
+  }, [fitText]);
 
   return (
-    <div className="w-full h-full flex items-center justify-center overflow-hidden px-[8%] py-[6%]">
+    <div ref={containerRef} className="w-full h-full flex items-center justify-center overflow-hidden px-[6%] py-[5%]">
       <div
-        className={`text-center break-words leading-[1.15] w-full ${className}`}
+        ref={textRef}
+        className={`text-center break-words leading-[1.18] w-full ${className}`}
         style={{ fontSize: `${fontSize}px` }}
       >
         {text}

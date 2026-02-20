@@ -832,8 +832,8 @@ export const TVDisplay: React.FC = () => {
 
             {/* Column: question (25%) + 4 answer cards (75%) */}
             <div className={`flex flex-col gap-1.5 ${showImage ? 'flex-1' : 'w-full h-full'}`}>
-              {/* Question — standard font, AutoFitText fills the zone */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-1" style={{ height: '22%' }}>
+              {/* Question — dynamic height based on text length */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-1 shrink-0" style={{ minHeight: '15%', height: questionText.length > 100 ? '30%' : questionText.length > 60 ? '25%' : '20%' }}>
                 <AutoFitText
                   text={questionText}
                   className="font-medium text-white"
