@@ -157,6 +157,9 @@ export const SupportChat: React.FC = () => {
   }, [conversationId]);
 
   // ── Polling fallback: fetch new messages when human is handling ──
+  // Track the last known DB message count to detect new messages
+  const lastDbCountRef = useRef(0);
+
   useEffect(() => {
     if (!conversationId) return;
     // Only poll when waiting for or receiving human responses
@@ -164,6 +167,7 @@ export const SupportChat: React.FC = () => {
 
     const poll = async () => {
       try {
+        // Poll conversation status
         const { data: conv } = await supabase
           .from('support_conversations')
           .select('status')
@@ -174,6 +178,7 @@ export const SupportChat: React.FC = () => {
           setConversationStatus(conv.status);
         }
 
+        // Poll messages — always replace with DB truth to avoid count mismatches
         const { data: dbMessages } = await supabase
           .from('support_messages')
           .select('role, content, created_at')
@@ -181,23 +186,24 @@ export const SupportChat: React.FC = () => {
           .order('created_at', { ascending: true });
 
         if (dbMessages && dbMessages.length > 0) {
-          const freshMessages: ChatMessage[] = dbMessages.map((m) => ({
-            role: m.role === 'USER' ? 'user' : m.role === 'HUMAN' ? 'human' : m.role === 'SYSTEM' ? 'system' : 'model',
-            text: m.content,
-          }));
-          setMessages((prev) => {
-            // Only update if there are genuinely new messages
-            if (freshMessages.length > prev.length) {
-              return freshMessages;
-            }
-            return prev;
-          });
+          // Only update if there are new messages in DB since last poll
+          if (dbMessages.length !== lastDbCountRef.current) {
+            lastDbCountRef.current = dbMessages.length;
+            const freshMessages: ChatMessage[] = dbMessages.map((m) => ({
+              role: m.role === 'USER' ? 'user' : m.role === 'HUMAN' ? 'human' : m.role === 'SYSTEM' ? 'system' : 'model',
+              text: m.content,
+            }));
+            // Replace local messages with DB truth (source of truth)
+            setMessages(freshMessages);
+          }
         }
       } catch (err) {
         console.error('Polling support chat failed:', err);
       }
     };
 
+    // Poll immediately on first run, then every 3s
+    poll();
     const interval = setInterval(poll, 3000);
     return () => clearInterval(interval);
   }, [conversationId, conversationStatus]);
