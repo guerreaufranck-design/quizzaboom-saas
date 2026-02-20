@@ -140,22 +140,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       content: message,
     });
 
-    // ── 3. If human is handling, skip AI ─────────────────────────────
-    if (conversationStatus === 'HUMAN_HANDLING') {
+    // ── 3. If human is handling or waiting, skip AI ─────────────────
+    if (conversationStatus === 'HUMAN_HANDLING' || conversationStatus === 'WAITING_HUMAN') {
       // Update conversation timestamp
       await supabase
         .from('support_conversations')
         .update({ updated_at: new Date().toISOString() })
         .eq('id', conversationId);
 
-      return res.status(200).json({
-        reply: language === 'French' || language === 'fr'
+      const waitingReply = conversationStatus === 'WAITING_HUMAN'
+        ? (language === 'French' || language === 'fr'
+          ? 'Votre demande a été transmise à notre équipe. Un agent va vous répondre très bientôt !'
+          : language === 'German' || language === 'de'
+          ? 'Ihre Anfrage wurde an unser Team weitergeleitet. Ein Agent wird Ihnen sehr bald antworten!'
+          : language === 'Spanish' || language === 'es'
+          ? '¡Su solicitud ha sido enviada a nuestro equipo. Un agente le responderá muy pronto!'
+          : 'Your request has been forwarded to our team. An agent will reply very soon!')
+        : (language === 'French' || language === 'fr'
           ? 'Un agent humain s\'occupe de votre conversation. Il va vous répondre sous peu !'
           : language === 'German' || language === 'de'
           ? 'Ein menschlicher Agent kümmert sich um Ihre Konversation. Er wird Ihnen in Kürze antworten!'
           : language === 'Spanish' || language === 'es'
           ? 'Un agente humano está atendiendo su conversación. ¡Le responderá en breve!'
-          : 'A human agent is handling your conversation. They will reply shortly!',
+          : 'A human agent is handling your conversation. They will reply shortly!');
+
+      return res.status(200).json({
+        reply: waitingReply,
         conversationId,
         escalated: false,
       });
