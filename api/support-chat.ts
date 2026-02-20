@@ -168,6 +168,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         reply: waitingReply,
         conversationId,
         escalated: false,
+        status: conversationStatus,
       });
     }
 

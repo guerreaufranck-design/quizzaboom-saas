@@ -246,9 +246,11 @@ export const SupportChat: React.FC = () => {
       // Add AI reply
       setMessages((prev) => [...prev, { role: 'model', text: data.reply }]);
 
-      // Handle escalation
+      // Handle escalation or status update from API
       if (data.escalated) {
         setConversationStatus('WAITING_HUMAN');
+      } else if (data.status && data.status !== conversationStatus) {
+        setConversationStatus(data.status);
       }
     } catch {
       setMessages((prev) => [
