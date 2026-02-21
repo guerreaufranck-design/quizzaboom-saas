@@ -610,53 +610,62 @@ export const TVDisplay: React.FC = () => {
               )}
             </div>
           ) : topPlayers.length > 0 ? (
-            /* Individual Leaderboard — top 8 */
-            <div className="bg-black/30 backdrop-blur-xl rounded-2xl p-4 border-2 border-yellow-400/50 flex-1 min-h-0">
+            /* Individual Leaderboard — auto-scrolling for all players */
+            <div className="bg-black/30 backdrop-blur-xl rounded-2xl p-4 border-2 border-yellow-400/50 flex-1 min-h-0 overflow-hidden">
               <h2 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-3">
                 <Trophy className="w-7 h-7 text-yellow-300" />
                 {t('tv.finalRanking')}
                 <Trophy className="w-7 h-7 text-yellow-300" />
               </h2>
-              <div className="space-y-1.5">
-                {topPlayers.slice(0, 8).map((player, index) => (
-                  <div
-                    key={player.id}
-                    className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${
-                      index === 0
-                        ? 'bg-yellow-500/40 border-2 border-yellow-300 scale-[1.02] shadow-lg shadow-yellow-500/30'
-                        : index === 1
-                        ? 'bg-gray-400/20 border border-gray-300'
-                        : index === 2
-                        ? 'bg-orange-700/30 border border-orange-500'
-                        : 'bg-white/10 border border-white/20'
-                    }`}
-                  >
-                    <div className="text-2xl font-bold text-white/80 w-12 text-center">
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                    </div>
-                    <div className="text-2xl">{player.avatar_emoji}</div>
-                    <div className="flex-1">
-                      <div className="text-xl font-bold text-white">
-                        {player.player_name}
+              <style>{`
+                @keyframes scrollLeaderboard {
+                  0% { transform: translateY(0); }
+                  5% { transform: translateY(0); }
+                  95% { transform: translateY(var(--scroll-distance)); }
+                  100% { transform: translateY(var(--scroll-distance)); }
+                }
+              `}</style>
+              <div className="overflow-hidden h-full relative">
+                <div
+                  className="space-y-1.5"
+                  style={topPlayers.length > 8 ? {
+                    ['--scroll-distance' as string]: `calc(-${(topPlayers.length - 8) * 56}px)`,
+                    animation: `scrollLeaderboard ${Math.max(15, topPlayers.length * 1.5)}s linear infinite`,
+                  } : {}}
+                >
+                  {topPlayers.map((player, index) => (
+                    <div
+                      key={player.id}
+                      className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${
+                        index === 0
+                          ? 'bg-yellow-500/40 border-2 border-yellow-300 scale-[1.02] shadow-lg shadow-yellow-500/30'
+                          : index === 1
+                          ? 'bg-gray-400/20 border border-gray-300'
+                          : index === 2
+                          ? 'bg-orange-700/30 border border-orange-500'
+                          : 'bg-white/10 border border-white/20'
+                      }`}
+                    >
+                      <div className="text-2xl font-bold text-white/80 w-12 text-center">
+                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                       </div>
-                      <div className="text-sm text-white/70">
-                        {t('tv.playerStats', { correct: player.correct_answers, total: player.questions_answered })}
+                      <div className="text-2xl">{player.avatar_emoji}</div>
+                      <div className="flex-1">
+                        <div className="text-xl font-bold text-white">
+                          {player.player_name}
+                        </div>
+                        <div className="text-sm text-white/70">
+                          {t('tv.playerStats', { correct: player.correct_answers, total: player.questions_answered })}
+                        </div>
+                      </div>
+                      <div className="text-xl font-bold text-yellow-300">
+                        {player.total_score}
+                        {index === 0 && <Star className="inline w-6 h-6 ml-2 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />}
                       </div>
                     </div>
-                    <div className="text-xl font-bold text-yellow-300">
-                      {player.total_score}
-                      {index === 0 && <Star className="inline w-6 h-6 ml-2 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {topPlayers.length > 8 && (
-                <div className="mt-3 text-center">
-                  <p className="text-white/70 text-lg">
-                    {t('tv.andMorePlayers', { count: topPlayers.length - 8, defaultValue: `... et ${topPlayers.length - 8} autres joueur(s) en compétition !` })}
-                  </p>
+                  ))}
                 </div>
-              )}
+              </div>
             </div>
           ) : null}
 
@@ -744,10 +753,17 @@ export const TVDisplay: React.FC = () => {
         <div className="h-full flex flex-col relative z-10">
           {/* Top bar */}
           <div className="flex items-center justify-between shrink-0 mb-2">
-            <div className="anim-pop bg-yellow-400 rounded-2xl px-5 py-1.5 shadow-lg shadow-yellow-500/30">
-              <span className="font-cartoon text-2xl font-bold text-gray-900">
-                Question {currentQuestionIndex + 1}/{allQuestions.length}
-              </span>
+            <div className="flex items-center gap-3">
+              <div className="anim-pop bg-yellow-400 rounded-2xl px-5 py-1.5 shadow-lg shadow-yellow-500/30">
+                <span className="font-cartoon text-2xl font-bold text-gray-900">
+                  Question {currentQuestionIndex + 1}/{allQuestions.length}
+                </span>
+              </div>
+              {currentThemeTitle && (
+                <div className="anim-pop bg-white/15 backdrop-blur-xl rounded-2xl px-4 py-1.5 border border-white/20">
+                  <span className="text-xl font-bold text-yellow-300">{currentThemeTitle}</span>
+                </div>
+              )}
             </div>
             <div className="anim-timer bg-white/20 backdrop-blur-xl rounded-2xl px-6 py-1.5 border-2 border-white/30">
               <div className="flex items-center gap-2">
@@ -805,10 +821,17 @@ export const TVDisplay: React.FC = () => {
         <div className="h-full flex flex-col relative z-10">
           {/* Top bar — compact */}
           <div className="flex items-center justify-between shrink-0 mb-1">
-            <div className="anim-pop bg-yellow-400 rounded-xl px-4 py-1 shadow-lg">
-              <span className="font-cartoon text-xl font-bold text-gray-900">
-                Q{currentQuestionIndex + 1}/{allQuestions.length}
-              </span>
+            <div className="flex items-center gap-2">
+              <div className="anim-pop bg-yellow-400 rounded-xl px-4 py-1 shadow-lg">
+                <span className="font-cartoon text-xl font-bold text-gray-900">
+                  Q{currentQuestionIndex + 1}/{allQuestions.length}
+                </span>
+              </div>
+              {currentThemeTitle && (
+                <div className="bg-white/10 rounded-xl px-3 py-1 border border-white/15">
+                  <span className="text-base font-bold text-yellow-300">{currentThemeTitle}</span>
+                </div>
+              )}
             </div>
             <div className={`bg-white/15 backdrop-blur-xl rounded-xl px-5 py-1 border-2 ${
               isUrgent ? 'border-red-400 anim-timer' : 'border-white/20'

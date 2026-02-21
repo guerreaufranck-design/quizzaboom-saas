@@ -607,7 +607,21 @@ export const useStrategicQuizStore = create<StrategicQuizState>((set, get) => ({
 
     let pointsToAdd = 0;
     if (isCorrect) {
-      pointsToAdd = hasDoublePoints ? basePoints * 2 : basePoints;
+      // Speed bonus: 0-3 extra points based on how fast the answer was given
+      // phaseEndTime is the deadline; the earlier you answer, the more bonus you get
+      let speedBonus = 0;
+      const endTime = get().phaseEndTime;
+      if (endTime) {
+        const msRemaining = Math.max(0, endTime - timestamp);
+        const secondsRemaining = msRemaining / 1000;
+        // 20s phase: >15s left = 3pts, >10s = 2pts, >5s = 1pt, else 0
+        if (secondsRemaining > 15) speedBonus = 3;
+        else if (secondsRemaining > 10) speedBonus = 2;
+        else if (secondsRemaining > 5) speedBonus = 1;
+      }
+
+      const rawPoints = basePoints + speedBonus;
+      pointsToAdd = hasDoublePoints ? rawPoints * 2 : rawPoints;
     }
 
     console.log('🎯 Scoring:', { isCorrect, hasDoublePoints, basePoints, pointsToAdd, effectsState: JSON.stringify(activeEffects.doublePoints) });

@@ -46,6 +46,7 @@ export const PlayerView: React.FC = () => {
     commentaryPopups,
     initializeInventory,
     tutorialSlides,
+    currentThemeTitle,
   } = useStrategicQuizStore();
   const displaySeconds = useCountdown(phaseEndTime);
   const { playCorrectSound, playWrongSound, playApplause } = useQuizAudio();
@@ -649,6 +650,14 @@ export const PlayerView: React.FC = () => {
                   )}
                 </div>
               </Card>
+            )}
+
+            {/* Theme name — shown during theme_announcement below jokers */}
+            {currentPhase === 'theme_announcement' && currentThemeTitle && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 text-center shrink-0">
+                <p className="text-xs text-white/60 uppercase tracking-wider font-bold mb-0.5">{t('player.phaseUseJokers')}</p>
+                <p className="text-lg font-bold text-yellow-300">{currentThemeTitle}</p>
+              </div>
             )}
 
             {/* ── Question Display phase: question + image (read only) ── */}
