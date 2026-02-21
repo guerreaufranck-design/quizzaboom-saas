@@ -47,6 +47,7 @@ export const PlayerView: React.FC = () => {
     initializeInventory,
     tutorialSlides,
     currentThemeTitle,
+    phaseTimeRemaining,
   } = useStrategicQuizStore();
   const displaySeconds = useCountdown(phaseEndTime);
   const { playCorrectSound, playWrongSound, playApplause } = useQuizAudio();
@@ -657,6 +658,34 @@ export const PlayerView: React.FC = () => {
               <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 text-center shrink-0">
                 <p className="text-xs text-white/60 uppercase tracking-wider font-bold mb-0.5">{t('player.phaseUseJokers')}</p>
                 <p className="text-lg font-bold text-yellow-300">{currentThemeTitle}</p>
+              </div>
+            )}
+
+            {/* Countdown timer — shown during theme_announcement for urgency */}
+            {currentPhase === 'theme_announcement' && (
+              <div className="flex flex-col items-center justify-center shrink-0 py-2">
+                <div className={`relative w-20 h-20 rounded-full flex items-center justify-center ${
+                  displaySeconds <= 3 ? 'animate-pulse' : ''
+                }`}>
+                  {/* Circular progress ring */}
+                  <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="5" />
+                    <circle
+                      cx="40" cy="40" r="35" fill="none"
+                      stroke={displaySeconds <= 3 ? '#ef4444' : displaySeconds <= 5 ? '#f59e0b' : '#22d3ee'}
+                      strokeWidth="5"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 35}`}
+                      strokeDashoffset={`${2 * Math.PI * 35 * (1 - displaySeconds / Math.max(phaseTimeRemaining, displaySeconds, 1))}`}
+                      style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s ease' }}
+                    />
+                  </svg>
+                  <span className={`text-3xl font-mono font-black ${
+                    displaySeconds <= 3 ? 'text-red-400' : displaySeconds <= 5 ? 'text-amber-400' : 'text-cyan-300'
+                  }`}>
+                    {displaySeconds}
+                  </span>
+                </div>
               </div>
             )}
 
