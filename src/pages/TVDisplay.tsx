@@ -934,6 +934,13 @@ export const TVDisplay: React.FC = () => {
             />
           </div>
         )}
+
+        {/* Timer — absolute top-right, out of flex flow */}
+        <div className="absolute top-4 right-6 z-20 inline-flex items-center gap-2 px-5 py-2 bg-black/30 backdrop-blur-xl rounded-2xl border border-white/20">
+          <Clock className="w-6 h-6 text-white/80" />
+          <span className="text-3xl font-mono font-bold text-white">{displaySeconds}</span>
+        </div>
+
         <div className="max-w-7xl mx-auto h-full flex flex-col items-center relative z-10">
           {/* Top: correct answer header — shrink-0 */}
           <div className="text-center shrink-0 pt-2">
@@ -946,7 +953,7 @@ export const TVDisplay: React.FC = () => {
             </div>
           </div>
 
-          {/* Middle: commentary + fun fact — flex-1, overflow hidden */}
+          {/* Middle: commentary + fun fact — flex-1, all remaining space */}
           <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center overflow-hidden">
             {/* Commentary popups (show on top when present) */}
             {commentaryPopups.length > 0 && (
@@ -967,14 +974,6 @@ export const TVDisplay: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Bottom: timer — shrink-0 */}
-          <div className="inline-flex items-center gap-4 px-8 py-3 bg-white/10 rounded-3xl shrink-0 mb-2">
-            <Clock className="w-8 h-8 text-white" />
-            <span className="text-4xl font-mono font-bold text-white">
-              {displaySeconds}
-            </span>
           </div>
         </div>
       </div>
