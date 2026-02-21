@@ -759,16 +759,16 @@ export const PlayerView: React.FC = () => {
                         disabled={!answersEnabled}
                         className={`${overlayBg} ${borderClass} ${ringClass} ${scaleClass} rounded-xl flex flex-col overflow-hidden transition-all duration-200 active:scale-95 disabled:active:scale-100`}
                       >
-                        {/* Letter badge */}
-                        <div className={`${color.label} w-7 h-7 rounded-lg flex items-center justify-center shrink-0 m-1.5 shadow-inner`}>
-                          <span className="text-base font-bold text-white">{color.letter}</span>
+                        {/* Letter badge — compact */}
+                        <div className={`${color.label} w-6 h-6 rounded-md flex items-center justify-center shrink-0 ml-1.5 mt-1 shadow-inner`}>
+                          <span className="text-sm font-bold text-white">{color.letter}</span>
                         </div>
-                        {/* Option text */}
-                        <div className="flex-1 min-h-0 px-2 pb-1.5">
+                        {/* Option text — overflow hidden ensures no bleed */}
+                        <div className="flex-1 min-h-0 px-2 pb-1 overflow-hidden">
                           <AutoFitText
                             text={option}
                             className="font-bold text-white drop-shadow-md"
-                            maxFontSize={26}
+                            maxFontSize={22}
                           />
                         </div>
                       </button>
