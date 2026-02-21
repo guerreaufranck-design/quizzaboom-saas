@@ -2,8 +2,12 @@ import React, { useRef, useEffect, useState } from 'react';
 
 /**
  * AutoFitText — dynamically scales font size to fit its container.
- * Uses actual DOM measurement for accurate sizing across all languages.
- * Falls back to a length-based estimate for the first render (avoids flash).
+ * Uses a hidden measurement div for accurate binary-search sizing.
+ * Works across all languages (FR, DE, ES, EN) regardless of text length.
+ *
+ * The outer div is the "viewport" (overflow-hidden, takes full parent size).
+ * A hidden offscreen clone measures text height at various font sizes.
+ * Once the best size is found, it's applied to the visible text.
  */
 export const AutoFitText: React.FC<{
   text: string;
@@ -12,39 +16,55 @@ export const AutoFitText: React.FC<{
   maxFontSize?: number;
 }> = ({ text, className = '', minFontSize = 12, maxFontSize = 200 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
   const [fontSize, setFontSize] = useState<number>(minFontSize);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
-    const fitText = () => {
+    if (!text) return;
+
+    const measure = () => {
       const container = containerRef.current;
-      const textEl = textRef.current;
-      if (!container || !textEl || !text) return;
+      if (!container) return;
 
-      // Use the container's actual rendered size (inside padding)
-      const containerW = container.clientWidth;
-      const containerH = container.clientHeight;
+      // Available space = container size minus padding (4% top/bottom, 5% left/right)
+      const rect = container.getBoundingClientRect();
+      const availW = Math.floor(rect.width * 0.90);
+      const availH = Math.floor(rect.height * 0.92);
 
-      if (containerW <= 0 || containerH <= 0) {
-        // Container not yet sized (animation pending) — retry next frame
-        rafRef.current = requestAnimationFrame(fitText);
+      if (availW <= 0 || availH <= 0) {
+        // Container not rendered yet — retry
+        rafRef.current = requestAnimationFrame(measure);
         return;
       }
 
-      // Binary search for the largest font size that fits
+      // Create offscreen measurement element
+      const probe = document.createElement('div');
+      probe.style.cssText = `
+        position:absolute; left:-9999px; top:-9999px;
+        width:${availW}px;
+        word-wrap:break-word; overflow-wrap:break-word;
+        text-align:center; line-height:1.18;
+        visibility:hidden; pointer-events:none;
+      `;
+      // Copy font-related computed styles from container
+      const cs = window.getComputedStyle(container);
+      probe.style.fontFamily = cs.fontFamily;
+      probe.style.fontWeight = cs.fontWeight || '400';
+      probe.textContent = text;
+      document.body.appendChild(probe);
+
+      // Binary search for largest fitting font size
       let lo = minFontSize;
-      let hi = Math.min(maxFontSize, Math.round(containerH * 0.95));
+      let hi = Math.min(maxFontSize, availH);
       let best = lo;
 
       while (lo <= hi) {
         const mid = Math.floor((lo + hi) / 2);
-        textEl.style.fontSize = `${mid}px`;
+        probe.style.fontSize = `${mid}px`;
+        const h = probe.scrollHeight;
 
-        // scrollHeight is the true content height after word-wrap
-        const fits = textEl.scrollHeight <= containerH && textEl.scrollWidth <= containerW;
-
-        if (fits) {
+        if (h <= availH) {
           best = mid;
           lo = mid + 1;
         } else {
@@ -52,29 +72,29 @@ export const AutoFitText: React.FC<{
         }
       }
 
-      textEl.style.fontSize = `${best}px`;
+      document.body.removeChild(probe);
       setFontSize(best);
     };
 
-    // Run after a frame so the container has its final size
+    // Run immediately + after animations (500ms)
     rafRef.current = requestAnimationFrame(() => {
-      fitText();
-      // Re-run after animations settle (CSS animations take ~500ms)
-      setTimeout(fitText, 600);
+      measure();
+      timerRef.current = setTimeout(measure, 550);
     });
 
-    // ResizeObserver for container changes (flex recalc, window resize)
+    // ResizeObserver for container changes
     let ro: ResizeObserver | null = null;
     if (containerRef.current && typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
         cancelAnimationFrame(rafRef.current);
-        rafRef.current = requestAnimationFrame(fitText);
+        rafRef.current = requestAnimationFrame(measure);
       });
       ro.observe(containerRef.current);
     }
 
     return () => {
       cancelAnimationFrame(rafRef.current);
+      clearTimeout(timerRef.current);
       ro?.disconnect();
     };
   }, [text, minFontSize, maxFontSize]);
@@ -86,7 +106,6 @@ export const AutoFitText: React.FC<{
       style={{ padding: '4% 5%' }}
     >
       <div
-        ref={textRef}
         className={`text-center break-words leading-[1.18] w-full ${className}`}
         style={{ fontSize: `${fontSize}px` }}
       >
