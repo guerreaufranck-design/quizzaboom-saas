@@ -711,7 +711,7 @@ export const PlayerView: React.FC = () => {
 
             {/* ── Answer Selection: question + 4 colored answer cards ── */}
             {currentPhase === 'answer_selection' && currentQuestion && (
-              <div className="flex flex-col gap-2 flex-1 min-h-0">
+              <div className="flex flex-col gap-1.5 flex-1 min-h-0 overflow-hidden">
                 {/* Question image */}
                 {currentQuestion.image_url && (
                   <div className="rounded-xl overflow-hidden shrink-0">
@@ -723,17 +723,17 @@ export const PlayerView: React.FC = () => {
                   </div>
                 )}
 
-                {/* Question text — fixed 18% height, overflow hidden, AutoFitText scales */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-1 overflow-hidden shrink-0" style={{ height: '18%' }}>
+                {/* Question text — capped height, can shrink if needed, overflow hidden */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-1 overflow-hidden shrink min-h-0" style={{ maxHeight: '20%', minHeight: '40px' }}>
                   <AutoFitText
                     text={currentQuestion.question_text}
                     className="font-bold text-white"
-                    maxFontSize={28}
+                    maxFontSize={26}
                   />
                 </div>
 
                 {/* 4 colored answer cards — 2x2 grid, fills remaining space */}
-                <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
+                <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0 overflow-hidden">
                   {(currentQuestion.options || []).map((option, idx) => {
                     const color = MOBILE_OPTION_COLORS[idx] || MOBILE_OPTION_COLORS[0];
                     const isPreSelected = preSelectedAnswer === option && !hasAnswered;
@@ -757,18 +757,18 @@ export const PlayerView: React.FC = () => {
                         key={idx}
                         onClick={() => handleAnswerSelect(['A', 'B', 'C', 'D'][idx] as 'A' | 'B' | 'C' | 'D')}
                         disabled={!answersEnabled}
-                        className={`${overlayBg} ${borderClass} ${ringClass} ${scaleClass} rounded-xl flex flex-col overflow-hidden transition-all duration-200 active:scale-95 disabled:active:scale-100`}
+                        className={`${overlayBg} ${borderClass} ${ringClass} ${scaleClass} rounded-xl flex flex-col min-h-0 overflow-hidden transition-all duration-200 active:scale-95 disabled:active:scale-100`}
                       >
                         {/* Letter badge — compact */}
-                        <div className={`${color.label} w-6 h-6 rounded-md flex items-center justify-center shrink-0 ml-1.5 mt-1 shadow-inner`}>
-                          <span className="text-sm font-bold text-white">{color.letter}</span>
+                        <div className={`${color.label} w-5 h-5 rounded-md flex items-center justify-center shrink-0 ml-1.5 mt-1 shadow-inner`}>
+                          <span className="text-xs font-bold text-white">{color.letter}</span>
                         </div>
                         {/* Option text — overflow hidden ensures no bleed */}
-                        <div className="flex-1 min-h-0 px-2 pb-1 overflow-hidden">
+                        <div className="flex-1 min-h-0 px-1.5 pb-1 overflow-hidden">
                           <AutoFitText
                             text={option}
                             className="font-bold text-white drop-shadow-md"
-                            maxFontSize={22}
+                            maxFontSize={20}
                           />
                         </div>
                       </button>
@@ -778,10 +778,10 @@ export const PlayerView: React.FC = () => {
 
                 {/* Pre-selected: show confirm button */}
                 {preSelectedAnswer && !hasAnswered && (
-                  <div className="p-2 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg text-center shrink-0">
+                  <div className="p-1.5 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg text-center shrink-0">
                     {canChangeAnswer ? (
                       <Button
-                        size="lg"
+                        size="md"
                         onClick={() => confirmAnswer()}
                         className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 w-full"
                       >
@@ -789,16 +789,16 @@ export const PlayerView: React.FC = () => {
                       </Button>
                     ) : (
                       <div className="flex items-center justify-center gap-2">
-                        <Clock className="w-5 h-5 text-yellow-400 animate-pulse" />
-                        <p className="text-sm font-bold text-yellow-300">{t('player.answerLocking')}</p>
+                        <Clock className="w-4 h-4 text-yellow-400 animate-pulse" />
+                        <p className="text-xs font-bold text-yellow-300">{t('player.answerLocking')}</p>
                       </div>
                     )}
                   </div>
                 )}
 
                 {hasAnswered && (
-                  <div className="p-2 bg-blue-500/20 border-2 border-blue-500 rounded-lg text-center shrink-0">
-                    <p className="text-lg font-bold text-blue-400">✅ {t('player.answerSubmitted')}</p>
+                  <div className="p-1.5 bg-blue-500/20 border-2 border-blue-500 rounded-lg text-center shrink-0">
+                    <p className="text-sm font-bold text-blue-400">{t('player.answerSubmitted')}</p>
                   </div>
                 )}
               </div>

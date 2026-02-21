@@ -23,6 +23,7 @@ export const AutoFitText: React.FC<{
   useEffect(() => {
     if (!text) return;
 
+    let retryCount = 0;
     const measure = () => {
       const container = containerRef.current;
       if (!container) return;
@@ -33,10 +34,14 @@ export const AutoFitText: React.FC<{
       const rawH = container.offsetHeight;
 
       if (rawW <= 0 || rawH <= 0) {
-        // Container not rendered yet — retry
-        rafRef.current = requestAnimationFrame(measure);
+        // Container not rendered yet — retry with backoff (helps Android Chrome)
+        retryCount++;
+        if (retryCount < 10) {
+          setTimeout(() => { rafRef.current = requestAnimationFrame(measure); }, retryCount * 50);
+        }
         return;
       }
+      retryCount = 0;
 
       // Subtract padding (4% top/bottom, 5% left/right)
       const availW = Math.floor(rawW * 0.90);
