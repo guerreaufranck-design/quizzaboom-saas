@@ -4,12 +4,10 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import {
   Lock,
-  BarChart3,
   RefreshCw,
   Ticket,
   Users,
   CheckCircle2,
-  XCircle,
   Clock,
   Plus,
   Trash2,
@@ -19,7 +17,6 @@ import {
   TrendingUp,
   Zap,
   Gift,
-  Calendar,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -427,16 +424,6 @@ function CodeRow({ code, onRefresh }: { code: PromoCode; onRefresh: () => void }
       )}
     </div>
   );
-}
-
-function timeAgo(date: string) {
-  const diff = Date.now() - new Date(date).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
 }
 
 // ─── Main Component ─────────────────────────────────────────────
