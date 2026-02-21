@@ -784,13 +784,13 @@ export const TVDisplay: React.FC = () => {
                   onError={() => setQuestionImgVisible(false)}
                 />
               </div>
-              <div className="flex-1 anim-slide bg-white/15 backdrop-blur-xl rounded-[2rem] p-4 border-2 border-white/20 shadow-2xl">
-                <AutoFitText text={questionText} className="font-medium text-white" maxFontSize={150} />
+              <div className="flex-1 min-h-0 anim-slide bg-white/15 backdrop-blur-xl rounded-[2rem] p-4 border-2 border-white/20 shadow-2xl overflow-hidden">
+                <AutoFitText text={questionText} className="font-medium text-white" maxFontSize={120} />
               </div>
             </div>
           ) : (
-            <div className="flex-1 anim-pop bg-white/15 backdrop-blur-xl rounded-[2rem] p-6 border-2 border-white/20 shadow-2xl">
-              <AutoFitText text={questionText} className="font-medium text-white" maxFontSize={200} />
+            <div className="flex-1 min-h-0 anim-pop bg-white/15 backdrop-blur-xl rounded-[2rem] p-6 border-2 border-white/20 shadow-2xl overflow-hidden">
+              <AutoFitText text={questionText} className="font-medium text-white" maxFontSize={150} />
             </div>
           )}
         </div>
@@ -849,8 +849,8 @@ export const TVDisplay: React.FC = () => {
             </div>
           </div>
 
-          {/* Main: image left + (question + answers) */}
-          <div className={`flex-1 min-h-0 flex ${showImage ? 'gap-3' : 'flex-col'}`}>
+          {/* Main content area — fills remaining viewport height */}
+          <div className={`flex-1 min-h-0 flex ${showImage ? 'gap-3' : 'flex-col gap-1.5'}`}>
             {showImage && (
               <div className="w-[35%] shrink-0 flex items-center justify-center anim-pop">
                 <img
@@ -862,44 +862,52 @@ export const TVDisplay: React.FC = () => {
               </div>
             )}
 
-            {/* Column: question (25%) + 4 answer cards (75%) */}
-            <div className={`flex flex-col gap-1.5 ${showImage ? 'flex-1' : 'w-full h-full'}`}>
-              {/* Question — dynamic height based on text length */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-1 shrink-0" style={{ minHeight: '15%', height: questionText.length > 100 ? '30%' : questionText.length > 60 ? '25%' : '20%' }}>
-                <AutoFitText
-                  text={questionText}
-                  className="font-medium text-white"
-                  maxFontSize={showImage ? 80 : 120}
-                />
-              </div>
-
-              {/* 4 answer cards — AutoFitText in each */}
-              <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0">
-                {options.map((option, idx) => {
-                  const color = OPTION_COLORS[idx] || OPTION_COLORS[0];
-                  return (
-                    <div
-                      key={idx}
-                      className={`rounded-2xl bg-gradient-to-br ${color.bg} border-2 ${color.border} flex flex-col shadow-lg anim-slide overflow-hidden`}
-                      style={{ animationDelay: `${idx * 0.1}s`, animationFillMode: 'backwards' }}
-                    >
-                      {/* Letter badge — top left */}
-                      <div className={`w-12 h-12 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner m-2`}>
-                        <span className="font-cartoon text-3xl font-semibold text-white">{color.letter}</span>
+            {/* Question + answers column — when image is shown, this is the right side */}
+            {showImage ? (
+              <div className="flex-1 flex flex-col gap-1.5 min-h-0">
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-1 overflow-hidden shrink-0" style={{ height: '20%' }}>
+                  <AutoFitText text={questionText} className="font-medium text-white" maxFontSize={50} />
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0">
+                  {options.map((option, idx) => {
+                    const color = OPTION_COLORS[idx] || OPTION_COLORS[0];
+                    return (
+                      <div key={idx} className={`rounded-2xl bg-gradient-to-br ${color.bg} border-2 ${color.border} flex flex-col shadow-lg anim-slide overflow-hidden`} style={{ animationDelay: `${idx * 0.1}s`, animationFillMode: 'backwards' }}>
+                        <div className={`w-12 h-12 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner m-2`}>
+                          <span className="font-cartoon text-3xl font-semibold text-white">{color.letter}</span>
+                        </div>
+                        <div className="flex-1 min-h-0 px-3 pb-2">
+                          <AutoFitText text={option} className="font-cartoon font-medium text-white drop-shadow-md" maxFontSize={50} />
+                        </div>
                       </div>
-                      {/* Answer — AutoFitText fills ALL remaining space */}
-                      <div className="flex-1 min-h-0 px-3 pb-2">
-                        <AutoFitText
-                          text={option}
-                          className="font-cartoon font-medium text-white drop-shadow-md"
-                          maxFontSize={showImage ? 60 : 90}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Question — exactly 20% of height, overflow hidden */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-1 overflow-hidden shrink-0" style={{ height: '20%' }}>
+                  <AutoFitText text={questionText} className="font-medium text-white" maxFontSize={70} />
+                </div>
+                {/* 4 answer cards — take all remaining space */}
+                <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0">
+                  {options.map((option, idx) => {
+                    const color = OPTION_COLORS[idx] || OPTION_COLORS[0];
+                    return (
+                      <div key={idx} className={`rounded-2xl bg-gradient-to-br ${color.bg} border-2 ${color.border} flex flex-col shadow-lg anim-slide overflow-hidden`} style={{ animationDelay: `${idx * 0.1}s`, animationFillMode: 'backwards' }}>
+                        <div className={`w-12 h-12 rounded-xl ${color.label} flex items-center justify-center shrink-0 shadow-inner m-2`}>
+                          <span className="font-cartoon text-3xl font-semibold text-white">{color.letter}</span>
+                        </div>
+                        <div className="flex-1 min-h-0 px-3 pb-2">
+                          <AutoFitText text={option} className="font-cartoon font-medium text-white drop-shadow-md" maxFontSize={80} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -926,36 +934,45 @@ export const TVDisplay: React.FC = () => {
             />
           </div>
         )}
-        <div className="max-w-7xl mx-auto h-full flex flex-col items-center justify-center relative z-10">
-          <div className="text-8xl mb-3 animate-bounce">✅</div>
-          <h1 className="text-7xl font-bold text-white mb-6">{t('tv.correctAnswer')}</h1>
-          <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-10 mb-6">
-            <p className={`${correctAnswerClass} font-bold text-white`}>
-              {correctAnswer}
-            </p>
+        <div className="max-w-7xl mx-auto h-full flex flex-col items-center relative z-10">
+          {/* Top: correct answer header — shrink-0 */}
+          <div className="text-center shrink-0 pt-2">
+            <div className="text-6xl mb-2 animate-bounce">✅</div>
+            <h1 className="text-5xl font-bold text-white mb-3">{t('tv.correctAnswer')}</h1>
+            <div className="bg-white/20 backdrop-blur-xl rounded-3xl px-10 py-6 mb-3 inline-block">
+              <p className={`${correctAnswerClass} font-bold text-white`}>
+                {correctAnswer}
+              </p>
+            </div>
           </div>
 
-          {/* Commentary popups (show on top when present) */}
-          {commentaryPopups.length > 0 && (
-            <div className="mb-4 max-w-4xl w-full">
-              <CommentaryPopupChain popups={commentaryPopups} variant="tv" />
-            </div>
-          )}
-
-          {/* Fun fact (always show below commentary if present) */}
-          {currentQuestion?.fun_fact && (
-            <div className="bg-yellow-500/10 backdrop-blur-xl border-2 border-yellow-400/50 rounded-2xl p-8 mb-6 max-w-5xl">
-              <div className="flex items-center gap-4 mb-4">
-                <Lightbulb className="w-14 h-14 text-yellow-300" />
-                <span className="text-yellow-300 font-bold text-5xl">{t('tv.funFact')}</span>
+          {/* Middle: commentary + fun fact — flex-1, overflow hidden */}
+          <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center overflow-hidden">
+            {/* Commentary popups (show on top when present) */}
+            {commentaryPopups.length > 0 && (
+              <div className="mb-3 max-w-4xl w-full shrink-0">
+                <CommentaryPopupChain popups={commentaryPopups} variant="tv" />
               </div>
-              <p className="text-white/95 text-5xl leading-relaxed font-medium">{currentQuestion.fun_fact}</p>
-            </div>
-          )}
+            )}
 
-          <div className="inline-flex items-center gap-4 px-8 py-4 bg-white/10 rounded-3xl">
-            <Clock className="w-10 h-10 text-white" />
-            <span className="text-5xl font-mono font-bold text-white">
+            {/* Fun fact — scales text down to fit available space */}
+            {currentQuestion?.fun_fact && (
+              <div className="bg-yellow-500/10 backdrop-blur-xl border-2 border-yellow-400/50 rounded-2xl p-6 max-w-5xl w-full flex-1 min-h-0 overflow-hidden">
+                <div className="flex items-center gap-3 mb-2 shrink-0">
+                  <Lightbulb className="w-10 h-10 text-yellow-300" />
+                  <span className="text-yellow-300 font-bold text-3xl">{t('tv.funFact')}</span>
+                </div>
+                <div className="flex-1 min-h-0 h-full">
+                  <AutoFitText text={currentQuestion.fun_fact} className="font-medium text-white/95" maxFontSize={60} minFontSize={16} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom: timer — shrink-0 */}
+          <div className="inline-flex items-center gap-4 px-8 py-3 bg-white/10 rounded-3xl shrink-0 mb-2">
+            <Clock className="w-8 h-8 text-white" />
+            <span className="text-4xl font-mono font-bold text-white">
               {displaySeconds}
             </span>
           </div>
