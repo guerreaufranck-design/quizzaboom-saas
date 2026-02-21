@@ -17,7 +17,7 @@ export const AutoFitText: React.FC<{
 }> = ({ text, className = '', minFontSize = 12, maxFontSize = 200 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [fontSize, setFontSize] = useState<number>(minFontSize);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
@@ -94,7 +94,7 @@ export const AutoFitText: React.FC<{
 
     return () => {
       cancelAnimationFrame(rafRef.current);
-      clearTimeout(timerRef.current);
+      if (timerRef.current) clearTimeout(timerRef.current);
       ro?.disconnect();
     };
   }, [text, minFontSize, maxFontSize]);
