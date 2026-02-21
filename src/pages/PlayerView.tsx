@@ -723,12 +723,12 @@ export const PlayerView: React.FC = () => {
                   </div>
                 )}
 
-                {/* Question text — capped height, can shrink if needed, overflow hidden */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-1 overflow-hidden shrink min-h-0" style={{ maxHeight: '20%', minHeight: '40px' }}>
+                {/* Question text — fixed pixel height, never shrinks below, AutoFitText scales text */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-1 overflow-hidden shrink-0" style={{ height: '56px' }}>
                   <AutoFitText
                     text={currentQuestion.question_text}
                     className="font-bold text-white"
-                    maxFontSize={26}
+                    maxFontSize={22}
                   />
                 </div>
 
