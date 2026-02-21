@@ -30,7 +30,9 @@ import {
   Sparkles,
   RotateCcw,
   Copy,
+  Ticket,
 } from 'lucide-react';
+import { PromoTrackingPanel } from './PromoTracking';
 
 const SALES_PASSWORD = import.meta.env.VITE_SALES_PASSWORD || '';
 
@@ -340,7 +342,7 @@ export function SalesOutreach() {
   const [formError, setFormError] = useState('');
 
   // Main navigation tabs
-  const [section, setSection] = useState<'outreach' | 'signups' | 'pending' | 'import'>('outreach');
+  const [section, setSection] = useState<'outreach' | 'signups' | 'pending' | 'import' | 'promo'>('outreach');
 
   // Outreach sub-tabs
   const [tab, setTab] = useState<'today' | 'history'>('today');
@@ -818,6 +820,17 @@ export function SalesOutreach() {
           >
             <Upload className="w-4 h-4" />
             Import CSV
+          </button>
+          <button
+            onClick={() => setSection('promo')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-lg text-sm font-medium transition-all ${
+              section === 'promo'
+                ? 'bg-pink-500/20 text-pink-400 border-b-2 border-pink-400'
+                : 'text-white/50 hover:text-white/80 hover:bg-white/5'
+            }`}
+          >
+            <Ticket className="w-4 h-4" />
+            Promo Codes
           </button>
         </div>
 
@@ -1526,6 +1539,11 @@ export function SalesOutreach() {
             )}
           </>
         )}
+
+        {/* ══════════════════════════════════════════════════════════════
+            SECTION: PROMO CODES
+           ══════════════════════════════════════════════════════════════ */}
+        {section === 'promo' && <PromoTrackingPanel />}
       </div>
     </div>
   );
