@@ -764,7 +764,9 @@
     "streakFire": "On Fire!",
     "lateJoinWelcome": "You joined mid-game!",
     "lateJoinDesc": "The quiz is already in progress. You'll start scoring from the next question. Good luck!",
-    "funFactLabel": "Did You Know?"
+    "funFactLabel": "Did You Know?",
+    "correctAnswer": "Correct!",
+    "wrongAnswer": "Wrong!"
   },
   "quizTutorial": {
     "welcomeTitle": "Welcome to QuizzaBoom!",

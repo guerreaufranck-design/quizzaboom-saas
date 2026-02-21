@@ -671,8 +671,8 @@ export const PlayerView: React.FC = () => {
               </Card>
             )}
 
-            {/* ── Answer Selection + Results: question + image + colored answer cards ── */}
-            {(currentPhase === 'answer_selection' || currentPhase === 'results') && currentQuestion && (
+            {/* ── Answer Selection: question + 4 colored answer cards ── */}
+            {currentPhase === 'answer_selection' && currentQuestion && (
               <div className="flex flex-col gap-2 flex-1 min-h-0">
                 {/* Question image */}
                 {currentQuestion.image_url && (
@@ -698,33 +698,15 @@ export const PlayerView: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
                   {(currentQuestion.options || []).map((option, idx) => {
                     const color = MOBILE_OPTION_COLORS[idx] || MOBILE_OPTION_COLORS[0];
-                    const normalize = (s?: string | null) => s?.trim().toLowerCase() ?? '';
                     const isPreSelected = preSelectedAnswer === option && !hasAnswered;
                     const isFinalAnswer = selectedAnswer === option && hasAnswered;
-                    const isCorrectOption = option === currentQuestion.correct_answer
-                      || normalize(option) === normalize(currentQuestion.correct_answer);
-                    const isResultsPhase = currentPhase === 'results';
 
-                    // Determine card styling
                     let ringClass = '';
                     let scaleClass = '';
-                    let overlayBg = `bg-gradient-to-br ${color.bg}`;
-                    let borderClass = `border-2 ${color.border}`;
-                    let opacityClass = '';
+                    const overlayBg = `bg-gradient-to-br ${color.bg}`;
+                    const borderClass = `border-2 ${color.border}`;
 
-                    if (isResultsPhase && isCorrectOption) {
-                      overlayBg = 'bg-gradient-to-br from-green-500 to-emerald-500';
-                      borderClass = 'border-2 border-green-300';
-                      ringClass = 'ring-4 ring-green-300/70';
-                      scaleClass = 'scale-[1.03]';
-                    } else if (isResultsPhase && isFinalAnswer && !isCorrectOption) {
-                      overlayBg = 'bg-gradient-to-br from-red-500 to-red-700';
-                      borderClass = 'border-2 border-red-300';
-                      ringClass = 'ring-4 ring-red-300/70';
-                      opacityClass = 'opacity-70';
-                    } else if (isResultsPhase) {
-                      opacityClass = 'opacity-50';
-                    } else if (isFinalAnswer) {
+                    if (isFinalAnswer) {
                       ringClass = 'ring-4 ring-white';
                       scaleClass = 'scale-[1.03]';
                     } else if (isPreSelected) {
@@ -737,7 +719,7 @@ export const PlayerView: React.FC = () => {
                         key={idx}
                         onClick={() => handleAnswerSelect(['A', 'B', 'C', 'D'][idx] as 'A' | 'B' | 'C' | 'D')}
                         disabled={!answersEnabled}
-                        className={`${overlayBg} ${borderClass} ${ringClass} ${scaleClass} ${opacityClass} rounded-xl flex flex-col overflow-hidden transition-all duration-200 active:scale-95 disabled:active:scale-100`}
+                        className={`${overlayBg} ${borderClass} ${ringClass} ${scaleClass} rounded-xl flex flex-col overflow-hidden transition-all duration-200 active:scale-95 disabled:active:scale-100`}
                       >
                         {/* Letter badge */}
                         <div className={`${color.label} w-7 h-7 rounded-lg flex items-center justify-center shrink-0 m-1.5 shadow-inner`}>
@@ -757,8 +739,8 @@ export const PlayerView: React.FC = () => {
                 </div>
 
                 {/* Pre-selected: show confirm button */}
-                {preSelectedAnswer && !hasAnswered && currentPhase === 'answer_selection' && (
-                  <div className="p-2 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg text-center">
+                {preSelectedAnswer && !hasAnswered && (
+                  <div className="p-2 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg text-center shrink-0">
                     {canChangeAnswer ? (
                       <Button
                         size="lg"
@@ -776,44 +758,85 @@ export const PlayerView: React.FC = () => {
                   </div>
                 )}
 
-                {hasAnswered && currentPhase === 'answer_selection' && (
-                  <div className="p-2 bg-blue-500/20 border-2 border-blue-500 rounded-lg text-center">
+                {hasAnswered && (
+                  <div className="p-2 bg-blue-500/20 border-2 border-blue-500 rounded-lg text-center shrink-0">
                     <p className="text-lg font-bold text-blue-400">✅ {t('player.answerSubmitted')}</p>
-                  </div>
-                )}
-
-                {currentPhase === 'results' && currentPlayer && currentPlayer.current_streak >= 3 && (
-                  <div className="p-2 bg-orange-500/20 border-2 border-orange-400 rounded-lg text-center animate-pulse">
-                    <div className="flex items-center justify-center gap-2">
-                      <Flame className="w-5 h-5 text-orange-400" />
-                      <span className="text-lg font-bold text-orange-300">
-                        {t('player.streakBadge', { count: currentPlayer.current_streak })}
-                      </span>
-                      <Flame className="w-5 h-5 text-orange-400" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Commentary popups */}
-                {currentPhase === 'results' && commentaryPopups.length > 0 && (
-                  <div>
-                    <CommentaryPopupChain popups={commentaryPopups} variant="player" />
-                  </div>
-                )}
-
-                {/* Fun fact */}
-                {currentPhase === 'results' && currentQuestion?.fun_fact && (
-                  <div className="p-3 bg-yellow-500/10 border-2 border-yellow-500/40 rounded-lg shrink-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-yellow-400 font-bold">💡 {t('player.funFactLabel')}</span>
-                    </div>
-                    <p className="text-white/90 text-sm leading-relaxed">
-                      {currentQuestion.fun_fact}
-                    </p>
                   </div>
                 )}
               </div>
             )}
+
+            {/* ── Results: correct answer reveal + commentary + fun fact ── */}
+            {currentPhase === 'results' && currentQuestion && (() => {
+              const correctAnswer = currentQuestion.correct_answer || '';
+              const normalize = (s?: string | null) => s?.trim().toLowerCase() ?? '';
+              const correctIdx = (currentQuestion.options || []).findIndex(
+                opt => opt === correctAnswer || normalize(opt) === normalize(correctAnswer)
+              );
+              const correctLetter = correctIdx >= 0 ? ['A', 'B', 'C', 'D'][correctIdx] : '?';
+              const correctColor = correctIdx >= 0 ? MOBILE_OPTION_COLORS[correctIdx] : MOBILE_OPTION_COLORS[2];
+              const wasCorrect = selectedAnswer != null && normalize(selectedAnswer) === normalize(correctAnswer);
+
+              return (
+                <div className="flex flex-col gap-2 flex-1 min-h-0">
+                  {/* Was your answer correct? */}
+                  <div className={`p-3 rounded-xl text-center shrink-0 ${
+                    wasCorrect
+                      ? 'bg-green-500/20 border-2 border-green-400'
+                      : 'bg-red-500/20 border-2 border-red-400'
+                  }`}>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-2xl">{wasCorrect ? '✅' : '❌'}</span>
+                      <span className={`text-lg font-bold ${wasCorrect ? 'text-green-300' : 'text-red-300'}`}>
+                        {wasCorrect ? t('player.correctAnswer') : t('player.wrongAnswer')}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Correct answer card — big, prominent with letter badge */}
+                  <div className={`bg-gradient-to-br from-green-500 to-emerald-500 border-2 border-green-300 rounded-xl p-4 shrink-0`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`${correctColor.label} w-10 h-10 rounded-xl flex items-center justify-center shadow-inner shrink-0`}>
+                        <span className="text-xl font-bold text-white">{correctLetter}</span>
+                      </div>
+                      <p className="text-xl font-bold text-white flex-1">{correctAnswer}</p>
+                    </div>
+                  </div>
+
+                  {/* Streak badge */}
+                  {currentPlayer && currentPlayer.current_streak >= 3 && (
+                    <div className="p-2 bg-orange-500/20 border-2 border-orange-400 rounded-lg text-center shrink-0 animate-pulse">
+                      <div className="flex items-center justify-center gap-2">
+                        <Flame className="w-5 h-5 text-orange-400" />
+                        <span className="text-lg font-bold text-orange-300">
+                          {t('player.streakBadge', { count: currentPlayer.current_streak })}
+                        </span>
+                        <Flame className="w-5 h-5 text-orange-400" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Commentary popups — fills available space */}
+                  {commentaryPopups.length > 0 && (
+                    <div className="flex-1 min-h-0 overflow-y-auto">
+                      <CommentaryPopupChain popups={commentaryPopups} variant="player" />
+                    </div>
+                  )}
+
+                  {/* Fun fact */}
+                  {currentQuestion?.fun_fact && (
+                    <div className="p-3 bg-yellow-500/10 border-2 border-yellow-500/40 rounded-lg shrink-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-yellow-400 font-bold">💡 {t('player.funFactLabel')}</span>
+                      </div>
+                      <p className="text-white/90 text-sm leading-relaxed">
+                        {currentQuestion.fun_fact}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </>
         )}
       </div>

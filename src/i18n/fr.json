@@ -764,7 +764,9 @@
     "streakFire": "En feu !",
     "lateJoinWelcome": "Vous rejoignez en cours de partie !",
     "lateJoinDesc": "Le quiz est deja en cours. Vous marquerez des points a partir de la prochaine question. Bonne chance !",
-    "funFactLabel": "Le saviez-vous ?"
+    "funFactLabel": "Le saviez-vous ?",
+    "correctAnswer": "Bonne reponse !",
+    "wrongAnswer": "Mauvaise reponse !"
   },
   "quizTutorial": {
     "welcomeTitle": "Bienvenue sur QuizzaBoom !",
