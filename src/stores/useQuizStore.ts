@@ -4,6 +4,7 @@ import { supabase } from '../services/supabase/client';
 import { generateMultiStageQuiz, type GenerationProgress } from '../services/gemini';
 import { v4 as uuidv4 } from 'uuid';
 import { useOrganizationStore } from './useOrganizationStore';
+import i18n from '../i18n';
 
 // Simple MD5-like hash for question deduplication (browser-compatible)
 function simpleHash(str: string): string {
@@ -501,6 +502,13 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         isLoading: false,
         currentView: initialView,
       });
+
+      // Set app language to match quiz language (player device may be in different language)
+      const quizLang = (quiz as Record<string, unknown>).language as string;
+      if (quizLang && ['en', 'fr', 'de', 'es'].includes(quizLang) && i18n.language !== quizLang) {
+        i18n.changeLanguage(quizLang);
+        console.log('🌐 Player language set to quiz language:', quizLang);
+      }
 
       navigateToView(initialView);
       get().saveSessionState();

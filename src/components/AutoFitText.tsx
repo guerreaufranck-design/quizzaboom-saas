@@ -2,12 +2,12 @@ import React, { useRef, useEffect, useState } from 'react';
 
 /**
  * AutoFitText — dynamically scales font size to fit its container.
- * Uses a hidden measurement div for accurate binary-search sizing.
+ * Uses an offscreen probe element for accurate binary-search measurement.
  * Works across all languages (FR, DE, ES, EN) regardless of text length.
  *
- * The outer div is the "viewport" (overflow-hidden, takes full parent size).
- * A hidden offscreen clone measures text height at various font sizes.
- * Once the best size is found, it's applied to the visible text.
+ * IMPORTANT: Uses offsetWidth/offsetHeight (not getBoundingClientRect)
+ * because CSS animations with transform:scale affect getBoundingClientRect
+ * but NOT offsetWidth/offsetHeight.
  */
 export const AutoFitText: React.FC<{
   text: string;
@@ -27,34 +27,44 @@ export const AutoFitText: React.FC<{
       const container = containerRef.current;
       if (!container) return;
 
-      // Available space = container size minus padding (4% top/bottom, 5% left/right)
-      const rect = container.getBoundingClientRect();
-      const availW = Math.floor(rect.width * 0.90);
-      const availH = Math.floor(rect.height * 0.92);
+      // offsetWidth/offsetHeight are NOT affected by CSS transforms (scale animations)
+      // This gives the true CSS layout size, not the visually transformed size
+      const rawW = container.offsetWidth;
+      const rawH = container.offsetHeight;
 
-      if (availW <= 0 || availH <= 0) {
+      if (rawW <= 0 || rawH <= 0) {
         // Container not rendered yet — retry
         rafRef.current = requestAnimationFrame(measure);
         return;
       }
 
+      // Subtract padding (4% top/bottom, 5% left/right)
+      const availW = Math.floor(rawW * 0.90);
+      const availH = Math.floor(rawH * 0.92);
+
       // Create offscreen measurement element
       const probe = document.createElement('div');
-      probe.style.cssText = `
-        position:absolute; left:-9999px; top:-9999px;
-        width:${availW}px;
-        word-wrap:break-word; overflow-wrap:break-word;
-        text-align:center; line-height:1.18;
-        visibility:hidden; pointer-events:none;
-      `;
-      // Copy font-related computed styles from container
+      probe.style.cssText = [
+        'position:absolute',
+        'left:-9999px',
+        'top:-9999px',
+        `width:${availW}px`,
+        'word-wrap:break-word',
+        'overflow-wrap:break-word',
+        'text-align:center',
+        'line-height:1.18',
+        'visibility:hidden',
+        'pointer-events:none',
+      ].join(';');
+
+      // Copy font styles
       const cs = window.getComputedStyle(container);
       probe.style.fontFamily = cs.fontFamily;
       probe.style.fontWeight = cs.fontWeight || '400';
       probe.textContent = text;
       document.body.appendChild(probe);
 
-      // Binary search for largest fitting font size
+      // Binary search: find largest font size where text fits in availH
       let lo = minFontSize;
       let hi = Math.min(maxFontSize, availH);
       let best = lo;
@@ -62,9 +72,8 @@ export const AutoFitText: React.FC<{
       while (lo <= hi) {
         const mid = Math.floor((lo + hi) / 2);
         probe.style.fontSize = `${mid}px`;
-        const h = probe.scrollHeight;
 
-        if (h <= availH) {
+        if (probe.scrollHeight <= availH) {
           best = mid;
           lo = mid + 1;
         } else {
@@ -76,18 +85,21 @@ export const AutoFitText: React.FC<{
       setFontSize(best);
     };
 
-    // Run immediately + after animations (500ms)
+    // Measure after layout (rAF) + re-measure after CSS animations settle
     rafRef.current = requestAnimationFrame(() => {
       measure();
-      timerRef.current = setTimeout(measure, 550);
+      // Re-measure after animations (pop-in/slide-up are ~500ms)
+      timerRef.current = setTimeout(measure, 600);
     });
 
-    // ResizeObserver for container changes
+    // ResizeObserver for container changes (window resize, flex recalc)
     let ro: ResizeObserver | null = null;
     if (containerRef.current && typeof ResizeObserver !== 'undefined') {
+      let debounceTimer: NodeJS.Timeout | null = null;
       ro = new ResizeObserver(() => {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = requestAnimationFrame(measure);
+        // Debounce: only measure after resize stops (avoids mid-animation flicker)
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(measure, 100);
       });
       ro.observe(containerRef.current);
     }

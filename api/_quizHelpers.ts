@@ -135,6 +135,11 @@ export function buildBatchPrompt(
   const diversityAngle = diversityAngles[(currentDay + randomSeed) % diversityAngles.length];
   const diversityAngle2 = diversityAngles[(currentDay + randomSeed + 5) % diversityAngles.length];
 
+  // Detect if theme contains custom/specific topics (not just generic categories)
+  const genericCategories = ['general knowledge', 'sports', 'history', 'geography', 'science', 'entertainment', 'arts', 'food', 'mixed topics', 'culture générale', 'sport', 'histoire', 'géographie', 'sciences', 'divertissement', 'arts', 'cuisine'];
+  const themeLower = theme.toLowerCase();
+  const isCustomTheme = !genericCategories.some(cat => themeLower.startsWith(cat) || themeLower.startsWith(cat.replace('é', 'e')));
+
   const batchContext = totalBatches > 1
     ? `This is BATCH ${batchIndex + 1} of ${totalBatches} for this quiz. `
     : '';
@@ -256,11 +261,17 @@ ${dedupWarning}
 🔄 FRESHNESS & DIVERSITY (EXTREMELY IMPORTANT):
 This quiz will be played in a bar/venue where REGULARS come back every week. They have ALREADY seen hundreds of quiz questions.
 You MUST generate questions they have NEVER encountered before. Avoid the "classic" overused quiz questions that appear in every trivia night.
-
+${isCustomTheme ? `
+⚠️ CUSTOM THEME — STRICT ADHERENCE REQUIRED:
+The user chose a SPECIFIC custom theme: "${theme}"
+ALL questions MUST be strictly about this theme. Do NOT deviate.
+Do NOT add unrelated topics, do NOT mix in generic categories.
+Every single question must be directly relevant to: "${theme}"
+Explore DIFFERENT angles and sub-topics WITHIN this specific theme for variety.` : `
 DIVERSITY DIRECTIVE FOR THIS SESSION:
 - Primary angle: ${diversityAngle}
 - Secondary angle: ${diversityAngle2}
-- Mix BOTH angles across your stages for maximum variety
+- Mix BOTH angles across your stages for maximum variety`}
 
 ANTI-REPETITION RULES:
 - NEVER ask about: the capital of France, the Mona Lisa painter, the highest mountain, the longest river, the speed of light, the largest ocean — these are in EVERY quiz

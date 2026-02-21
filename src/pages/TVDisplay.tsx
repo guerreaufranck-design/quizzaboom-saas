@@ -128,6 +128,15 @@ export const TVDisplay: React.FC = () => {
 
       console.log('✅ Quiz loaded:', quiz.title);
 
+      // Set i18n language to match quiz language (TV may be on different device)
+      if (quiz.language && ['en', 'fr', 'de', 'es'].includes(quiz.language)) {
+        const { default: i18n } = await import('../i18n');
+        if (i18n.language !== quiz.language) {
+          await i18n.changeLanguage(quiz.language);
+          console.log('🌐 TV language set to:', quiz.language);
+        }
+      }
+
       await loadQuestions(quiz.id);
       console.log('✅ Questions loaded');
 
