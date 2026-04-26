@@ -95,8 +95,27 @@ export function cleanAndParseJSON(text: string): BatchResult {
   let cleaned = text.trim().replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
   const firstBrace = cleaned.indexOf('{');
   if (firstBrace > 0) cleaned = cleaned.substring(firstBrace);
-  const lastBrace = cleaned.lastIndexOf('}');
-  if (lastBrace < cleaned.length - 1) cleaned = cleaned.substring(0, lastBrace + 1);
+
+  // Extract the first balanced JSON object (handles cases where Gemini
+  // appends extra text or a second object after the main payload).
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let endIndex = -1;
+  for (let i = 0; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+    if (escape) { escape = false; continue; }
+    if (ch === '\\') { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) { endIndex = i; break; }
+    }
+  }
+  if (endIndex !== -1) cleaned = cleaned.substring(0, endIndex + 1);
+
   return JSON.parse(cleaned);
 }
 
@@ -149,14 +168,15 @@ export function buildBatchPrompt(
 Use COMPLETELY DIFFERENT sub-topics and angles. DO NOT repeat any questions or themes from previous batches.`
     : '';
 
+  const DEDUP_PROMPT_LIMIT = 30;
   const dedupWarning = previousQuestions.length > 0
     ? `\n⚠️ DUPLICATE PREVENTION (CRITICAL — READ CAREFULLY):
-The following ${Math.min(previousQuestions.length, 100)} questions have ALREADY been used in previous quizzes by this creator.
+The following ${Math.min(previousQuestions.length, DEDUP_PROMPT_LIMIT)} questions have ALREADY been used in previous quizzes by this creator.
 You MUST NOT repeat them, rephrase them, or ask about the SAME FACT/TOPIC/ANSWER.
 "Similar" means: same correct answer, same historical event, same person, same statistic, same concept.
 Example: if "What is the capital of France?" was asked before, do NOT ask "Which city is the French capital?" or "Where is the French government located?"
 Generate COMPLETELY FRESH questions about DIFFERENT facts, events, and topics:
-${previousQuestions.slice(0, 100).map((q, i) => `${i + 1}. "${q}"`).join('\n')}\n`
+${previousQuestions.slice(0, DEDUP_PROMPT_LIMIT).map((q, i) => `${i + 1}. "${q}"`).join('\n')}\n`
     : '';
 
   const isFunnyMode = theme.toLowerCase().includes('funny mode') || theme.toLowerCase().includes('mode humour') || theme.toLowerCase().includes('modo humor') || theme.toLowerCase().includes('lustig');
